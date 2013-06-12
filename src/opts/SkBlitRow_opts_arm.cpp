@@ -22,8 +22,16 @@ extern const SkBlitRow::Proc32 sk_blitrow_platform_32_procs_arm[] = {
     nullptr, nullptr, nullptr, nullptr,
 };
 
+
+extern SkBlitRow::Proc32 skia_androidopt_PlatformProcs32(unsigned flags) __attribute__((weak));
+extern SkBlitRow::Proc16 skia_androidopt_PlatformProcs565(unsigned flags) __attribute__((weak));
+
 SkBlitRow::Proc16 SkBlitRow::PlatformFactory565(unsigned flags) {
-    return SK_ARM_NEON_WRAP(sk_blitrow_platform_565_procs_arm)[flags];
+    if (skia_androidopt_PlatformProcs565 && skia_androidopt_PlatformProcs565(flags) ) {
+        return  skia_androidopt_PlatformProcs565(flags);
+    } else {
+        return SK_ARM_NEON_WRAP(sk_blitrow_platform_565_procs_arm)[flags];
+    }
 }
 
 SkBlitRow::ColorProc16 SkBlitRow::PlatformColorFactory565(unsigned flags) {
@@ -31,5 +39,9 @@ SkBlitRow::ColorProc16 SkBlitRow::PlatformColorFactory565(unsigned flags) {
 }
 
 SkBlitRow::Proc32 SkBlitRow::PlatformProcs32(unsigned flags) {
-    return SK_ARM_NEON_WRAP(sk_blitrow_platform_32_procs_arm)[flags];
+    if (skia_androidopt_PlatformProcs32 && skia_androidopt_PlatformProcs32(flags) ) {
+        return  skia_androidopt_PlatformProcs32(flags);
+    } else {
+        return SK_ARM_NEON_WRAP(sk_blitrow_platform_32_procs_arm)[flags];
+    }
 }

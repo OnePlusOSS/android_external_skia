@@ -139,6 +139,14 @@ public:
          *  to the specified device coordinates.
          */
         virtual void shadeSpan(int x, int y, SkPMColor[], int count) = 0;
+        enum SkShaderIds {
+            kSkBitmapProcShader_Class = 0x1,
+            kSkShader_OtherClass      = 0x2,
+        };
+
+        virtual void beginRect(int x, int y, int width);
+        virtual void endRect();
+        virtual SkShaderIds getID() { return kSkShader_OtherClass; }
 
         virtual void shadeSpan4f(int x, int y, SkPM4f[], int count);
 

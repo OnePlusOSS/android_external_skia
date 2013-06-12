@@ -14,6 +14,12 @@
 #include "SkShader.h"
 #include "SkSmallAllocator.h"
 
+#ifdef QC_STRONG
+#define QC_WEAK
+#else
+#define QC_WEAK __attribute__((weak))
+#endif
+
 class SkRasterBlitter : public SkBlitter {
 public:
     SkRasterBlitter(const SkPixmap& device) : fDevice(device) {}
@@ -166,9 +172,9 @@ public:
     SkARGB32_Shader_Blitter(const SkPixmap& device, const SkPaint& paint,
                             SkShader::Context* shaderContext);
     virtual ~SkARGB32_Shader_Blitter();
-    void blitH(int x, int y, int width) override;
+    void blitH(int x, int y, int width) override QC_WEAK;
     void blitV(int x, int y, int height, SkAlpha alpha) override;
-    void blitRect(int x, int y, int width, int height) override;
+    void blitRect(int x, int y, int width, int height) override QC_WEAK;
     void blitAntiH(int x, int y, const SkAlpha[], const int16_t[]) override;
     void blitMask(const SkMask&, const SkIRect&) override;
     

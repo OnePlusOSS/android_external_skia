@@ -671,13 +671,16 @@ LOCAL_SHARED_LIBRARIES := \
 	libicui18n \
 	libft2 \
 	libdng_sdk \
-	libpiex
+	libpiex \
+	libexpat \
+	libcutils
 
 LOCAL_STATIC_LIBRARIES := \
 	libgif \
 	libwebp-decode \
 	libwebp-encode \
 	libsfntly
+
 
 LOCAL_C_INCLUDES := \
 	external/libjpeg-turbo \
@@ -824,6 +827,13 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE := libskia
 LOCAL_WHOLE_STATIC_LIBRARIES := libskia_static
+LOCAL_SHARED_LIBRARIES := \
+        libcutils
+
+ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+#        LOCAL_WHOLE_STATIC_LIBRARIES += libqc-skia
+endif
+
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
 	$(LOCAL_PATH)/include/codec \
 	$(LOCAL_PATH)/include/android \

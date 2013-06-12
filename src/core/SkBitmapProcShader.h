@@ -16,6 +16,13 @@
 struct SkBitmapProcState;
 class SkBitmapProvider;
 
+#ifdef QC_STRONG
+#define QC_WEAK
+#else
+#define QC_WEAK __attribute__((weak))
+#endif
+
+
 class SkBitmapProcShader : public SkShader {
 public:
     SkBitmapProcShader(const SkBitmap& src, TileMode tx, TileMode ty,
@@ -41,7 +48,13 @@ protected:
         BitmapProcShaderContext(const SkShader&, const ContextRec&, SkBitmapProcState*);
         ~BitmapProcShaderContext() override;
 
-        void shadeSpan(int x, int y, SkPMColor dstC[], int count) override;
+        // override beginRect and endRect
+        virtual void beginRect(int x, int y, int width);
+        virtual void endRect();
+
+        virtual SkShaderIds getID() { return kSkBitmapProcShader_Class; }
+
+        void shadeSpan(int x, int y, SkPMColor dstC[], int count) override QC_WEAK;
         ShadeProc asAShadeProc(void** ctx) override;
 
         uint32_t getFlags() const override { return fFlags; }
