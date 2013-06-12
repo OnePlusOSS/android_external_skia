@@ -52,6 +52,12 @@ SkShader::~SkShader() {
     dec_shader_counter();
 }
 
+void SkShader::Context::beginRect(int x, int y, int width) {
+}
+
+void SkShader::Context::endRect() {
+}
+
 void SkShader::flatten(SkWriteBuffer& buffer) const {
     this->INHERITED::flatten(buffer);
     bool hasLocalM = !fLocalMatrix.isIdentity();

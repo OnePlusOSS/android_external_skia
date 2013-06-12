@@ -39,6 +39,15 @@ SkBitmapProcShader::SkBitmapProcShader(const SkBitmap& src, TileMode tmx, TileMo
     fTileModeY = (uint8_t)tmy;
 }
 
+
+void SkBitmapProcShader::BitmapProcShaderContext::beginRect(int x, int y, int width) {
+    fState->beginRect(x, y, width);
+}
+
+void SkBitmapProcShader::BitmapProcShaderContext::endRect() {
+    fState->endRect();
+}
+
 SkShader::BitmapType SkBitmapProcShader::asABitmap(SkBitmap* texture,
                                                    SkMatrix* texM,
                                                    TileMode xy[]) const {

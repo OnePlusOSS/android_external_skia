@@ -597,13 +597,19 @@ LOCAL_SHARED_LIBRARIES := \
 	libicuuc \
 	libicui18n \
 	libexpat \
-	libft2
+	libft2 \
+	libcutils
 
 LOCAL_STATIC_LIBRARIES := \
 	libgif \
 	libwebp-decode \
 	libwebp-encode \
 	libsfntly
+
+ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+	LOCAL_WHOLE_STATIC_LIBRARIES += libqc-skia
+endif
+
 
 LOCAL_C_INCLUDES := \
 	external/jpeg \
