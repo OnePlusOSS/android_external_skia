@@ -849,44 +849,81 @@ void SkDraw::drawRect(const SkRect& prePaintRect, const SkPaint& paint,
         return;
     }
 
-    SkDeviceLooper looper(*fBitmap, *fRC, ir, paint.isAntiAlias());
-    while (looper.next()) {
-        SkRect localDevRect;
-        looper.mapRect(&localDevRect, devRect);
-        SkMatrix localMatrix;
-        looper.mapMatrix(&localMatrix, *matrix);
+    //Based on enum Delta defined in SkDeviceLooper class
+    int delta = (paint.isAntiAlias() ? 4096 : 16384);
+    if( __builtin_expect((ir.right() < delta && ir.bottom() < delta), 1) ){
+         //Refer to SkDeviceLooper::SkDeviceLooper constructor.
+         //On success, fState=kSimple_State so no change in rect bounds and use of SkDeviceLooper class
+         //Same is true for fState=kDone_State. This conidtional check is not implemented now.
+         SkAutoBlitterChoose blitterStorage(*fBitmap, *matrix, paint);
+         const SkRasterClip& clip = *fRC;
+         SkBlitter*          blitter = blitterStorage.get();
 
-        SkAutoBlitterChoose blitterStorage(looper.getBitmap(), localMatrix, paint);
-        const SkRasterClip& clip = looper.getRC();
-        SkBlitter*          blitter = blitterStorage.get();
+         switch (rtype) {
+           case kFill_RectType:
+               if (paint.isAntiAlias()) {
+                   SkScan::AntiFillRect(devRect, clip, blitter);
+               } else {
+                   SkScan::FillRect(devRect, clip, blitter);
+               }
+               break;
+           case kStroke_RectType:
+               if (paint.isAntiAlias()) {
+                   SkScan::AntiFrameRect(devRect, strokeSize, clip, blitter);
+               } else {
+                   SkScan::FrameRect(devRect, strokeSize, clip, blitter);
+               }
+               break;
+           case kHair_RectType:
+               if (paint.isAntiAlias()) {
+                   SkScan::AntiHairRect(devRect, clip, blitter);
+               } else {
+                   SkScan::HairRect(devRect, clip, blitter);
+               }
+               break;
+           default:
+               SkDEBUGFAIL("bad rtype");
+         }
+    }else{
+        SkDeviceLooper looper(*fBitmap, *fRC, ir, paint.isAntiAlias());
+        while (looper.next()) {
+            SkRect localDevRect;
+            looper.mapRect(&localDevRect, devRect);
+            SkMatrix localMatrix;
+            looper.mapMatrix(&localMatrix, *matrix);
 
-        // we want to "fill" if we are kFill or kStrokeAndFill, since in the latter
-        // case we are also hairline (if we've gotten to here), which devolves to
-        // effectively just kFill
-        switch (rtype) {
-            case kFill_RectType:
-                if (paint.isAntiAlias()) {
-                    SkScan::AntiFillRect(localDevRect, clip, blitter);
-                } else {
-                    SkScan::FillRect(localDevRect, clip, blitter);
-                }
-                break;
-            case kStroke_RectType:
-                if (paint.isAntiAlias()) {
-                    SkScan::AntiFrameRect(localDevRect, strokeSize, clip, blitter);
-                } else {
-                    SkScan::FrameRect(localDevRect, strokeSize, clip, blitter);
-                }
-                break;
-            case kHair_RectType:
-                if (paint.isAntiAlias()) {
-                    SkScan::AntiHairRect(localDevRect, clip, blitter);
-                } else {
-                    SkScan::HairRect(localDevRect, clip, blitter);
-                }
-                break;
-            default:
-                SkDEBUGFAIL("bad rtype");
+            SkAutoBlitterChoose blitterStorage(looper.getBitmap(), localMatrix, paint);
+            const SkRasterClip& clip = looper.getRC();
+            SkBlitter*          blitter = blitterStorage.get();
+
+            // we want to "fill" if we are kFill or kStrokeAndFill, since in the latter
+            // case we are also hairline (if we've gotten to here), which devolves to
+            // effectively just kFill
+            switch (rtype) {
+                case kFill_RectType:
+                    if (paint.isAntiAlias()) {
+                        SkScan::AntiFillRect(localDevRect, clip, blitter);
+                    } else {
+                        SkScan::FillRect(localDevRect, clip, blitter);
+                    }
+                    break;
+                case kStroke_RectType:
+                    if (paint.isAntiAlias()) {
+                        SkScan::AntiFrameRect(localDevRect, strokeSize, clip, blitter);
+                    } else {
+                        SkScan::FrameRect(localDevRect, strokeSize, clip, blitter);
+                    }
+                    break;
+                case kHair_RectType:
+                    if (paint.isAntiAlias()) {
+                        SkScan::AntiHairRect(localDevRect, clip, blitter);
+                    } else {
+                        SkScan::HairRect(localDevRect, clip, blitter);
+                    }
+                    break;
+                default:
+                    SkDEBUGFAIL("bad rtype");
+            }
         }
     }
 }
