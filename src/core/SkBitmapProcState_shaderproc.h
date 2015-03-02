@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2011 Google Inc.
  *
@@ -7,6 +6,13 @@
  */
 
 #include "SkMathPriv.h"
+
+#if S32_OPAQUE_D32_FILTER_DX_NEON
+void S32_Opaque_D32_filter_DX_shaderproc_neon(const unsigned int* image0, const unsigned int* image1,
+                                        SkFixed fx, unsigned int maxX, unsigned int subY,
+                                         unsigned int* colors,
+                                         SkFixed dx, int count);
+#endif
 
 #define SCALE_FILTER_NAME       MAKENAME(_filter_DX_shaderproc)
 
@@ -55,6 +61,110 @@ void SCALE_FILTER_NAME(const SkBitmapProcState& s, int x, int y,
     PREAMBLE(s);
 #endif
 
+#if S32_OPAQUE_D32_FILTER_DX_NEON
+    int post_count;
+    SkFixed post_fx;
+    DSTTYPE* SK_RESTRICT post_colors;
+    int num;
+    post_count = count;
+    post_fx = fx;
+    post_colors = colors;
+
+
+    if (dx>=0)
+    {
+        int end = ((int)maxX-1)<<16;
+        num = dx?((end-fx)/dx):0;
+        if (num < 0) num = 0;
+
+        if (num<count)
+        {
+             count = num;
+             post_count = post_count - count;
+             post_fx = fx + count*dx;
+             post_colors = post_colors + count;
+        }
+        else
+            post_count = 0;
+
+        while (fx<0 && count) {
+            unsigned subX = TILEX_LOW_BITS(fx, maxX);
+            unsigned x0 = TILEX_PROCF(fx, maxX);
+            unsigned x1 = TILEX_PROCF((fx + oneX), maxX);
+
+            FILTER_PROC(subX, subY,
+                SRC_TO_FILTER(row0[x0]),
+                SRC_TO_FILTER(row0[x1]),
+                SRC_TO_FILTER(row1[x0]),
+                SRC_TO_FILTER(row1[x1]),
+                colors);
+            colors += 1;
+
+            fx += dx;
+            count--;
+        }
+    }
+    else
+    {
+        int end = 0;
+        int maxXFix = ((int)maxX-1)<<16;
+        num = (end-fx)/dx;
+        if (num < 0) num = 0;
+
+
+        if (num<count)
+        {
+            count = num;
+            post_count = post_count - count;
+            post_fx = fx + count*dx;
+            post_colors = post_colors + count;
+        }
+        else
+            post_count = 0;
+
+        while (fx>=maxXFix && count) {
+            unsigned subX = TILEX_LOW_BITS(fx, maxX);
+            unsigned x0 = TILEX_PROCF(fx, maxX);
+            unsigned x1 = TILEX_PROCF((fx + oneX), maxX);
+
+            FILTER_PROC(subX, subY,
+                SRC_TO_FILTER(row0[x0]),
+                SRC_TO_FILTER(row0[x1]),
+                SRC_TO_FILTER(row1[x0]),
+                SRC_TO_FILTER(row1[x1]),
+                colors);
+            colors += 1;
+
+            fx += dx;
+            count--;
+        }
+
+    }
+
+    S32_Opaque_D32_filter_DX_shaderproc_neon(row0, row1, fx, maxX, subY, colors, dx, count);
+
+    fx = post_fx;
+    colors = post_colors;
+    while (post_count) {
+        unsigned subX = TILEX_LOW_BITS(fx, maxX);
+        unsigned x0 = TILEX_PROCF(fx, maxX);
+        unsigned x1 = TILEX_PROCF((fx + oneX), maxX);
+
+        FILTER_PROC(subX, subY,
+            SRC_TO_FILTER(row0[x0]),
+            SRC_TO_FILTER(row0[x1]),
+            SRC_TO_FILTER(row1[x0]),
+            SRC_TO_FILTER(row1[x1]),
+            colors);
+       colors += 1;
+
+       fx += dx;
+       post_count--;
+    }
+
+
+#else //S32_OPAQUE_D32_FILTER_DX_NEON
+
     do {
         unsigned subX = TILEX_LOW_BITS(fx, maxX);
         unsigned x0 = TILEX_PROCF(fx, maxX);
@@ -70,6 +180,8 @@ void SCALE_FILTER_NAME(const SkBitmapProcState& s, int x, int y,
 
         fx += dx;
     } while (--count != 0);
+
+#endif //S32_OPAQUE_D32_FILTER_DX_NEON
 
 #ifdef POSTAMBLE
     POSTAMBLE(s);

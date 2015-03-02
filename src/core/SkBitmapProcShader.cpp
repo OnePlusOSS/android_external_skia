@@ -11,10 +11,17 @@
 #include "SkPixelRef.h"
 #include "SkErrorInternals.h"
 #include "SkBitmapProcShader.h"
-
+#include "SkUtilsArm.h"
 #if SK_SUPPORT_GPU
 #include "effects/GrSimpleTextureEffect.h"
 #include "effects/GrBicubicEffect.h"
+#endif
+
+#include "SkBitmapProcState_utils.h"
+#if !SK_ARM_NEON_IS_NONE
+#if !defined(__LP64__)
+extern void  Clamp_S32_Opaque_D32_filter_DX_shaderproc_neon(const SkBitmapProcState&, int, int, uint32_t*, int);
+#endif
 #endif
 
 bool SkBitmapProcShader::CanDo(const SkBitmap& bm, TileMode tx, TileMode ty) {
@@ -186,12 +193,45 @@ SkBitmapProcShader::BitmapProcShaderContext::~BitmapProcShaderContext() {
     #define TEST_BUFFER_EXTRA   0
 #endif
 
+bool checkDecal(const SkBitmapProcState& s, int x, int y, int count) {
+    const unsigned maxX = s.fBitmap->width() - 1;
+    const SkFixed one = s.fFilterOneX;
+    const SkFractionalInt dx = s.fInvSxFractionalInt;
+    SkFractionalInt fx;
+
+    {
+        SkPoint pt;
+        s.fInvProc(s.fInvMatrix, SkIntToScalar(x) + SK_ScalarHalf,
+                                 SkIntToScalar(y) + SK_ScalarHalf, &pt);
+        // now initialize fx
+        fx = SkScalarToFractionalInt(pt.fX) - (SkFixedToFractionalInt(one) >> 1);
+    }
+
+    // test if we don't need to apply the tile proc
+    if (can_truncate_to_fixed_for_decal(fx, dx, count, maxX)) {
+        return true;
+    }
+    return false;
+}
+
 void SkBitmapProcShader::BitmapProcShaderContext::shadeSpan(int x, int y, SkPMColor dstC[],
                                                             int count) {
     const SkBitmapProcState& state = *fState;
     if (state.getShaderProc32()) {
-        state.getShaderProc32()(state, x, y, dstC, count);
-        return;
+#if !SK_ARM_NEON_IS_NONE
+#if !defined(__LP64__)
+        if (state.getShaderProc32() == SK_ARM_NEON_WRAP(Clamp_S32_Opaque_D32_filter_DX_shaderproc)) {
+            if (checkDecal(state, x, y, count)) {
+                state.getShaderProc32()(state, x, y, dstC, count);
+                return;
+            }
+        } else
+#endif
+#endif
+        {
+            state.getShaderProc32()(state, x, y, dstC, count);
+            return;
+        }
     }
 
     uint32_t buffer[BUF_MAX + TEST_BUFFER_EXTRA];
