@@ -608,6 +608,9 @@ LOCAL_STATIC_LIBRARIES := \
 
 ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
 	LOCAL_WHOLE_STATIC_LIBRARIES += libqc-skia
+	LOCAL_SHARED_LIBRARIES += \
+		libqc-opt
+
 endif
 
 

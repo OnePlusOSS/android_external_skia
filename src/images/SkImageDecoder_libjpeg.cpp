@@ -241,11 +241,10 @@ protected:
     bool onBuildTileIndex(SkStreamRewindable *stream, int *width, int *height) override;
     bool onDecodeSubset(SkBitmap* bitmap, const SkIRect& rect) override;
 #endif
-    Result onDecode(SkStream* stream, SkBitmap* bm, Mode) override;
+    Result onDecode(SkStream* stream, SkBitmap* bm, Mode) override __attribute__((weak));
     bool onDecodeYUV8Planes(SkStream* stream, SkISize componentSizes[3],
                             void* planes[3], size_t rowBytes[3],
                             SkYUVColorSpace* colorSpace) override;
-
 private:
 #ifdef SK_BUILD_FOR_ANDROID
     SkJPEGImageIndex* fImageIndex;
@@ -1359,7 +1358,7 @@ static WriteScanline ChooseWriter(const SkBitmap& bm) {
 
 class SkJPEGImageEncoder : public SkImageEncoder {
 protected:
-    virtual bool onEncode(SkWStream* stream, const SkBitmap& bm, int quality) {
+    virtual bool onEncode(SkWStream* stream, const SkBitmap& bm, int quality) __attribute__((weak)) {
 #ifdef TIME_ENCODE
         SkAutoTime atm("JPEG Encode");
 #endif
