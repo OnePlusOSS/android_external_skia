@@ -8,6 +8,12 @@
 #ifndef SkBlitRow_DEFINED
 #define SkBlitRow_DEFINED
 
+#ifdef QTI_STRONG
+#define QTI_WEAK
+#else
+#define QTI_WEAK __attribute__((weak))
+#endif
+
 #include "SkBitmap.h"
 #include "SkColor.h"
 
@@ -68,7 +74,7 @@ public:
         into a row of D32 pixels. src and dst may be the same memory, but
         if they are not, they may not overlap.
      */
-    static void Color32(SkPMColor dst[], const SkPMColor src[], int count, SkPMColor color);
+    static void Color32(SkPMColor dst[], const SkPMColor src[], int count, SkPMColor color) QTI_WEAK;
 
     /** These static functions are called by the Factory and Factory32
         functions, and should return either NULL, or a
