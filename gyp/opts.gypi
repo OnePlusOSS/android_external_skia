@@ -20,7 +20,6 @@
             '<(skia_src_path)/opts/SkBlitMask_opts_arm_neon.cpp',
             '<(skia_src_path)/opts/SkBlitRow_opts_arm_neon.cpp',
             '<(skia_src_path)/opts/SkOpts_neon.cpp',
-            '<(skia_src_path)/opts/ext/S32_Opaque_D32_filter_DX_shaderproc_neon.cpp',
         ],
         'arm64_sources': [
             '<(skia_src_path)/opts/SkBitmapProcState_arm_neon.cpp',

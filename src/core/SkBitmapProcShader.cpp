@@ -13,7 +13,6 @@
 #include "SkPixelRef.h"
 #include "SkReadBuffer.h"
 #include "SkWriteBuffer.h"
-#include "SkUtilsArm.h"
 
 #if SK_SUPPORT_GPU
 #include "SkGrPriv.h"
@@ -21,38 +20,10 @@
 #include "effects/GrSimpleTextureEffect.h"
 #endif
 
-#include "SkBitmapProcState_utils.h"
-#if !SK_ARM_NEON_IS_NONE
-#if !defined(__LP64__)
-extern void  Clamp_S32_Opaque_D32_filter_DX_shaderproc_neon(const void*, int, int, uint32_t*, int);
-#endif
-#endif
-
 size_t SkBitmapProcShader::ContextSize() {
     // The SkBitmapProcState is stored outside of the context object, with the context holding
     // a pointer to it.
     return sizeof(BitmapProcShaderContext) + sizeof(SkBitmapProcState);
-}
-
-bool checkDecal(const SkBitmapProcState& s, int x, int y, int count) {
-    const unsigned maxX = s.fPixmap.width() - 1;
-    const SkFixed one = s.fFilterOneX;
-    const SkFractionalInt dx = s.fInvSxFractionalInt;
-    SkFractionalInt fx;
-
-    {
-        SkPoint pt;
-        s.fInvProc(s.fInvMatrix, SkIntToScalar(x) + SK_ScalarHalf,
-                                 SkIntToScalar(y) + SK_ScalarHalf, &pt);
-        // now initialize fx
-        fx = SkScalarToFractionalInt(pt.fX) - (SkFixedToFractionalInt(one) >> 1);
-    }
-
-    // test if we don't need to apply the tile proc
-    if (can_truncate_to_fixed_for_decal(fx, dx, count, maxX)) {
-        return true;
-    }
-    return true;
 }
 
 SkBitmapProcShader::SkBitmapProcShader(const SkBitmap& src, TileMode tmx, TileMode tmy,
