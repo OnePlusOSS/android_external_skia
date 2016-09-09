@@ -755,8 +755,7 @@ LOCAL_SRC_FILES_arm += \
 	src/opts/SkBitmapProcState_matrixProcs_neon.cpp \
 	src/opts/SkBlitMask_opts_arm_neon.cpp \
 	src/opts/SkBlitRow_opts_arm_neon.cpp \
-	src/opts/SkOpts_neon.cpp \
-	src/opts/ext/S32_Opaque_D32_filter_DX_shaderproc_neon.cpp
+	src/opts/SkOpts_neon.cpp
 
 LOCAL_CFLAGS_arm += \
 	-DSK_ARM_HAS_NEON
