@@ -606,7 +606,7 @@ LOCAL_STATIC_LIBRARIES := \
 	libwebp-encode \
 	libsfntly
 
-ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+ifeq ($(TARGET_HAVE_QC_PERF),true)
 	LOCAL_WHOLE_STATIC_LIBRARIES += libqc-skia
 	LOCAL_SHARED_LIBRARIES += \
 		libqc-opt
