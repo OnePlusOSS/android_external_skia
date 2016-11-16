@@ -80,6 +80,7 @@ SkJpegCodec::SkJpegCodec(const SkImageInfo& srcInfo, SkStream* stream,
     : INHERITED(srcInfo, stream)
     , fDecoderMgr(decoderMgr)
     , fReadyState(decoderMgr->dinfo()->global_state)
+    , fSrcRow(nullptr)
     , fSwizzlerSubset(SkIRect::MakeEmpty())
 {}
 
@@ -155,6 +156,11 @@ bool SkJpegCodec::onRewind() {
     }
     SkASSERT(nullptr != decoderMgr);
     fDecoderMgr.reset(decoderMgr);
+
+    fSwizzler.reset(nullptr);
+    fSrcRow = nullptr;
+    fStorage.free();
+
     return true;
 }
 
@@ -424,7 +430,7 @@ SkCodec::Result SkJpegCodec::onStartScanlineDecode(const SkImageInfo& dstInfo,
 #else
     (fDecoderMgr->dinfo())->dct_method = JDCT_ISLOW;
 #endif
-// Now, given valid output dimensions, we can start the decompress
+    // Now, given valid output dimensions, we can start the decompress
     if (!jpeg_start_decompress(fDecoderMgr->dinfo())) {
         SkCodecPrintf("start decompress failed\n");
         return kInvalidInput;
