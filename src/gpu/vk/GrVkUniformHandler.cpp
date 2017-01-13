@@ -45,6 +45,8 @@ uint32_t grsltype_to_alignment_mask(GrSLType type) {
         case kBufferSampler_GrSLType:
         case kTexture2D_GrSLType:
         case kSampler_GrSLType:
+        case kImageStorage2D_GrSLType:
+        case kIImageStorage2D_GrSLType:
             break;
     }
     SkFAIL("Unexpected type");
@@ -86,6 +88,8 @@ static inline uint32_t grsltype_to_vk_size(GrSLType type) {
         case kBufferSampler_GrSLType:
         case kTexture2D_GrSLType:
         case kSampler_GrSLType:
+        case kImageStorage2D_GrSLType:
+        case kIImageStorage2D_GrSLType:
             break;
     }
     SkFAIL("Unexpected type");
@@ -158,7 +162,7 @@ GrGLSLUniformHandler::UniformHandle GrVkUniformHandler::internalAddUniformArray(
     uni.fVariable.setTypeModifier(GrShaderVar::kNone_TypeModifier);
 
     uint32_t* currentOffset = kVertex_GrShaderFlag == visibility ? &fCurrentVertexUBOOffset
-                                                                   : &fCurrentFragmentUBOOffset;
+                                                                 : &fCurrentFragmentUBOOffset;
     get_ubo_aligned_offset(&uni.fUBOffset, currentOffset, type, arrayCount);
 
     if (outName) {
@@ -204,7 +208,7 @@ void GrVkUniformHandler::appendUniformDecls(GrShaderFlags visibility, SkString* 
         const UniformInfo& sampler = fSamplers[i];
         SkASSERT(sampler.fVariable.getType() == kTexture2DSampler_GrSLType);
         if (visibility == sampler.fVisibility) {
-            sampler.fVariable.appendDecl(fProgramBuilder->glslCaps(), out);
+            sampler.fVariable.appendDecl(fProgramBuilder->shaderCaps(), out);
             out->append(";\n");
         }
     }
@@ -214,7 +218,7 @@ void GrVkUniformHandler::appendUniformDecls(GrShaderFlags visibility, SkString* 
         const UniformInfo& localUniform = fUniforms[i];
         if (visibility == localUniform.fVisibility) {
             if (GrSLTypeIsFloatType(localUniform.fVariable.getType())) {
-                localUniform.fVariable.appendDecl(fProgramBuilder->glslCaps(), &uniformsString);
+                localUniform.fVariable.appendDecl(fProgramBuilder->shaderCaps(), &uniformsString);
                 uniformsString.append(";\n");
             }
         }

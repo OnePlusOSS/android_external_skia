@@ -173,13 +173,13 @@ class Canvas2CanvasClipVisitor : public SkCanvas::ClipVisitor {
 public:
     Canvas2CanvasClipVisitor(SkCanvas* target) : fTarget(target) {}
 
-    void clipRect(const SkRect& r, SkCanvas::ClipOp op, bool aa) override {
+    void clipRect(const SkRect& r, SkClipOp op, bool aa) override {
         fTarget->clipRect(r, op, aa);
     }
-    void clipRRect(const SkRRect& r, SkCanvas::ClipOp op, bool aa) override {
+    void clipRRect(const SkRRect& r, SkClipOp op, bool aa) override {
         fTarget->clipRRect(r, op, aa);
     }
-    void clipPath(const SkPath& p, SkCanvas::ClipOp op, bool aa) override {
+    void clipPath(const SkPath& p, SkClipOp op, bool aa) override {
         fTarget->clipPath(p, op, aa);
     }
 
@@ -299,7 +299,7 @@ SIMPLE_TEST_STEP(Concat, concat(d.fMatrix));
 SIMPLE_TEST_STEP(SetMatrix, setMatrix(d.fMatrix));
 SIMPLE_TEST_STEP(ClipRect, clipRect(d.fRect));
 SIMPLE_TEST_STEP(ClipPath, clipPath(d.fPath));
-SIMPLE_TEST_STEP(ClipRegion, clipRegion(d.fRegion, SkCanvas::kReplace_Op));
+SIMPLE_TEST_STEP(ClipRegion, clipRegion(d.fRegion, kReplace_SkClipOp));
 SIMPLE_TEST_STEP(Clear, clear(d.fColor));
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -694,7 +694,7 @@ DEF_TEST(PaintFilterCanvas_ConsistentState, reporter) {
     filterCanvas.scale(0.75f, 0.5f);
     REPORTER_ASSERT(reporter, canvas.getTotalMatrix() == filterCanvas.getTotalMatrix());
     REPORTER_ASSERT(reporter, canvas.getClipBounds(&clip1) == filterCanvas.getClipBounds(&clip2));
-    REPORTER_ASSERT(reporter, clip1 == clip2);
+    REPORTER_ASSERT(reporter, clip2.contains(clip1));
 
 #ifdef SK_EXPERIMENTAL_SHADOWING
     SkShadowTestCanvas* tCanvas = new SkShadowTestCanvas(100,100, reporter);

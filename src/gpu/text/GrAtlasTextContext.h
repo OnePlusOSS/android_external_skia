@@ -14,10 +14,10 @@
 #include "SkTextBlobRunIterator.h"
 
 #ifdef GR_TEST_UTILS
-#include "GrBatchTest.h"
+#include "GrDrawOpTest.h"
 #endif
 
-class GrDrawBatch;
+class GrDrawOp;
 class GrRenderTargetContext;
 class GrPipelineBuilder;
 class GrTextBlobCache;
@@ -54,7 +54,7 @@ private:
     // Determines if we need to use fake gamma (and contrast boost):
     inline static uint32_t ComputeScalerContextFlags(GrRenderTargetContext*);
     static void RegenerateTextBlob(GrAtlasTextBlob* bmp,
-                                   GrBatchFontCache*,
+                                   GrAtlasGlyphCache*,
                                    const GrShaderCaps&,
                                    const SkPaint& skPaint, GrColor,
                                    uint32_t scalerContextFlags,
@@ -65,7 +65,7 @@ private:
     inline static bool HasLCD(const SkTextBlob*);
 
     static inline GrAtlasTextBlob* CreateDrawTextBlob(GrTextBlobCache*,
-                                                      GrBatchFontCache*, const GrShaderCaps&,
+                                                      GrAtlasGlyphCache*, const GrShaderCaps&,
                                                       const GrPaint&,
                                                       const SkPaint&,
                                                       uint32_t scalerContextFlags,
@@ -73,7 +73,7 @@ private:
                                                       const SkSurfaceProps&,
                                                       const char text[], size_t byteLength,
                                                       SkScalar x, SkScalar y);
-    static inline GrAtlasTextBlob* CreateDrawPosTextBlob(GrTextBlobCache*, GrBatchFontCache*,
+    static inline GrAtlasTextBlob* CreateDrawPosTextBlob(GrTextBlobCache*, GrAtlasGlyphCache*,
                                                          const GrShaderCaps&,
                                                          const GrPaint&,
                                                          const SkPaint&,
@@ -89,9 +89,9 @@ private:
     sk_sp<const GrDistanceFieldAdjustTable> fDistanceAdjustTable;
 
 #ifdef GR_TEST_UTILS
-    static const uint32_t kTextBlobBatchScalerContextFlags =
-        SkPaint::kFakeGammaAndBoostContrast_ScalerContextFlags;
-    DRAW_BATCH_TEST_FRIEND(TextBlobBatch);
+    static const uint32_t kTextBlobOpScalerContextFlags =
+            SkPaint::kFakeGammaAndBoostContrast_ScalerContextFlags;
+    DRAW_OP_TEST_FRIEND(TextBlobOp);
 #endif
 };
 

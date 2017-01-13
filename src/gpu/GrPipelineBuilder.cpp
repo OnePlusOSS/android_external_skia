@@ -12,18 +12,13 @@
 #include "GrPipeline.h"
 #include "GrProcOptInfo.h"
 #include "GrXferProcessor.h"
-#include "batches/GrBatch.h"
 #include "effects/GrPorterDuffXferProcessor.h"
+#include "ops/GrOp.h"
 
-GrPipelineBuilder::GrPipelineBuilder()
-    : fFlags(0x0)
-    , fUserStencilSettings(&GrUserStencilSettings::kUnused)
-    , fDrawFace(GrDrawFace::kBoth) {
-    SkDEBUGCODE(fBlockEffectRemovalCnt = 0;)
-}
-
-GrPipelineBuilder::GrPipelineBuilder(const GrPaint& paint, bool useHWAA)
-    : GrPipelineBuilder() {
+GrPipelineBuilder::GrPipelineBuilder(const GrPaint& paint, GrAAType aaType)
+        : fFlags(0x0)
+        , fUserStencilSettings(&GrUserStencilSettings::kUnused)
+        , fDrawFace(GrDrawFace::kBoth) {
     SkDEBUGCODE(fBlockEffectRemovalCnt = 0;)
 
     for (int i = 0; i < paint.numColorFragmentProcessors(); ++i) {
@@ -36,7 +31,7 @@ GrPipelineBuilder::GrPipelineBuilder(const GrPaint& paint, bool useHWAA)
 
     fXPFactory.reset(SkSafeRef(paint.getXPFactory()));
 
-    this->setState(GrPipelineBuilder::kHWAntialias_Flag, useHWAA);
+    this->setState(GrPipelineBuilder::kHWAntialias_Flag, GrAATypeIsHW(aaType));
     this->setState(GrPipelineBuilder::kDisableOutputConversionToSRGB_Flag,
                    paint.getDisableOutputConversionToSRGB());
     this->setState(GrPipelineBuilder::kAllowSRGBInputs_Flag,
@@ -48,11 +43,11 @@ GrPipelineBuilder::GrPipelineBuilder(const GrPaint& paint, bool useHWAA)
 //////////////////////////////////////////////////////////////////////////////s
 
 bool GrPipelineBuilder::willXPNeedDstTexture(const GrCaps& caps,
-                                             const GrPipelineOptimizations& optimizations) const {
+                                             const GrPipelineAnalysis& analysis) const {
     if (this->getXPFactory()) {
-        return this->getXPFactory()->willNeedDstTexture(caps, optimizations);
+        return this->getXPFactory()->willNeedDstTexture(caps, analysis);
     }
-    return GrPorterDuffXPFactory::SrcOverWillNeedDstTexture(caps, optimizations);
+    return GrPorterDuffXPFactory::SrcOverWillNeedDstTexture(caps, analysis);
 }
 
 void GrPipelineBuilder::AutoRestoreFragmentProcessorState::set(

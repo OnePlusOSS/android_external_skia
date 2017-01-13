@@ -182,6 +182,7 @@ LOCAL_SRC_FILES := \
 	../tests/ImageGeneratorTest.cpp \
 	../tests/ImageIsOpaqueTest.cpp \
 	../tests/ImageNewShaderTest.cpp \
+	../tests/ImageStorageTest.cpp \
 	../tests/ImageTest.cpp \
 	../tests/IndexedPngOverflowTest.cpp \
 	../tests/InfRectTest.cpp \
@@ -190,6 +191,7 @@ LOCAL_SRC_FILES := \
 	../tests/InvalidIndexedPngTest.cpp \
 	../tests/IsClosedSingleContourTest.cpp \
 	../tests/LListTest.cpp \
+	../tests/LRUCacheTest.cpp \
 	../tests/LayerDrawLooperTest.cpp \
 	../tests/LayerRasterizerTest.cpp \
 	../tests/MD5Test.cpp \
@@ -335,6 +337,7 @@ LOCAL_SRC_FILES := \
 	../gm/all_bitmap_configs.cpp \
 	../gm/alphagradients.cpp \
 	../gm/animatedGif.cpp \
+	../gm/animatedimageblurs.cpp \
 	../gm/anisotropic.cpp \
 	../gm/annotated_text.cpp \
 	../gm/arcofzorro.cpp \
@@ -391,6 +394,7 @@ LOCAL_SRC_FILES := \
 	../gm/complexclip.cpp \
 	../gm/complexclip2.cpp \
 	../gm/complexclip3.cpp \
+	../gm/complexclip4.cpp \
 	../gm/complexclip_blur_tiled.cpp \
 	../gm/composeshader.cpp \
 	../gm/concavepaths.cpp \
@@ -436,6 +440,7 @@ LOCAL_SRC_FILES := \
 	../gm/filltypes.cpp \
 	../gm/filltypespersp.cpp \
 	../gm/filterbitmap.cpp \
+	../gm/filterbug.cpp \
 	../gm/filterfastbounds.cpp \
 	../gm/filterindiabox.cpp \
 	../gm/fontcache.cpp \
@@ -490,7 +495,6 @@ LOCAL_SRC_FILES := \
 	../gm/imagetoyuvplanes.cpp \
 	../gm/internal_links.cpp \
 	../gm/inversepaths.cpp \
-	../gm/labpcsdemo.cpp \
 	../gm/largeglyphblur.cpp \
 	../gm/lattice.cpp \
 	../gm/lcdblendmodes.cpp \
@@ -628,6 +632,7 @@ LOCAL_SRC_FILES := \
 	../experimental/svg/model/SkSVGAttribute.cpp \
 	../experimental/svg/model/SkSVGAttributeParser.cpp \
 	../experimental/svg/model/SkSVGCircle.cpp \
+	../experimental/svg/model/SkSVGClipPath.cpp \
 	../experimental/svg/model/SkSVGContainer.cpp \
 	../experimental/svg/model/SkSVGDOM.cpp \
 	../experimental/svg/model/SkSVGEllipse.cpp \
@@ -688,7 +693,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libexpat
 
 LOCAL_STATIC_LIBRARIES := \
-	libskia_static \
+	libskia \
 	libhwui_static \
 	libjsoncpp
 
@@ -743,7 +748,6 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../tools/android
 
 LOCAL_CFLAGS += \
-	-DSK_XML \
 	-DSK_CRASH_HANDLER
 
 LOCAL_MODULE_TAGS := \
@@ -753,6 +757,8 @@ LOCAL_MODULE := \
 	skia_dm
 
 
+ifneq ($(TARGET_BUILD_PDK),true)
+
 # Store skia's resources in the directory structure that the Android testing
 # infrastructure expects.  This requires that Skia maintain a symlinked
 # subdirectory in the DATA folder that points to the top level skia resources...
@@ -761,3 +767,5 @@ LOCAL_PICKUP_FILES := $(LOCAL_PATH)/../DATA
 include $(LOCAL_PATH)/../skia_static_deps.mk
 include frameworks/base/libs/hwui/hwui_static_deps.mk
 include $(BUILD_NATIVE_TEST)
+
+endif

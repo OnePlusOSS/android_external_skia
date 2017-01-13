@@ -5,6 +5,7 @@
  * found in the LICENSE file.
  */
 
+#include "SkBitmapController.h"
 #include "SkBitmapProcShader.h"
 #include "SkBitmapProvider.h"
 #include "SkColorShader.h"
@@ -53,11 +54,8 @@ size_t SkImageShader::onContextSize(const ContextRec& rec) const {
 }
 
 SkShader::Context* SkImageShader::onCreateContext(const ContextRec& rec, void* storage) const {
-    // TODO: This is wrong. We should be plumbing destination color space to context creation,
-    // and use that to determine the decoding mode of the image.
-    SkDestinationSurfaceColorMode decodeColorMode = SkMipMap::DeduceColorMode(rec);
     return SkBitmapProcLegacyShader::MakeContext(*this, fTileModeX, fTileModeY,
-                                                 SkBitmapProvider(fImage.get(), decodeColorMode),
+                                                 SkBitmapProvider(fImage.get(), rec.fDstColorSpace),
                                                  rec, storage);
 }
 
@@ -217,7 +215,7 @@ sk_sp<GrFragmentProcessor> SkImageShader::asFragmentProcessor(const AsFPArgs& ar
                                     &doBicubic);
     GrSamplerParams params(tm, textureFilterMode);
     sk_sp<SkColorSpace> texColorSpace;
-    sk_sp<GrTexture> texture(as_IB(fImage)->asTextureRef(args.fContext, params, args.fColorMode,
+    sk_sp<GrTexture> texture(as_IB(fImage)->asTextureRef(args.fContext, params, args.fDstColorSpace,
                                                          &texColorSpace));
     if (!texture) {
         return nullptr;
@@ -273,37 +271,33 @@ SK_DEFINE_FLATTENABLE_REGISTRAR_GROUP_END
 
 
 bool SkImageShader::onAppendStages(SkRasterPipeline* p, SkColorSpace* dst, SkFallbackAlloc* scratch,
-                                   const SkMatrix& ctm, SkFilterQuality quality) const {
-    SkPixmap pm;
-    if (!fImage->peekPixels(&pm)) {
-        return false;
-    }
-    auto info = pm.info();
-
-
+                                   const SkMatrix& ctm, const SkPaint& paint) const {
     auto matrix = SkMatrix::Concat(ctm, this->getLocalMatrix());
     if (!matrix.invert(&matrix)) {
         return false;
     }
+    auto quality = paint.getFilterQuality();
 
-    // TODO: all formats
-    switch (info.colorType()) {
-        case kAlpha_8_SkColorType:
-        case kIndex_8_SkColorType:
-            return false;
-        default: break;
+    SkBitmapProvider provider(fImage.get(), dst);
+    SkDefaultBitmapController controller(SkDefaultBitmapController::CanShadeHQ::kYes);
+    std::unique_ptr<SkBitmapController::State> state {
+        controller.requestBitmap(provider, matrix, quality)
+    };
+    if (!state) {
+        return false;
     }
 
+    const SkPixmap& pm = state->pixmap();
+    matrix  = state->invMatrix();
+    quality = state->quality();
+    auto info = pm.info();
+
     // When the matrix is just an integer translate, bilerp == nearest neighbor.
-    if (matrix.getType() <= SkMatrix::kTranslate_Mask &&
+    if (quality == kLow_SkFilterQuality &&
+        matrix.getType() <= SkMatrix::kTranslate_Mask &&
         matrix.getTranslateX() == (int)matrix.getTranslateX() &&
         matrix.getTranslateY() == (int)matrix.getTranslateY()) {
         quality = kNone_SkFilterQuality;
-    }
-
-    // TODO: front-patch with SkDefaultBitmapControllerState, then assert we're kNone or kLow.
-    if (quality > kLow_SkFilterQuality) {
-        return false;
     }
 
     // See skia:4649 and the GM image_scale_aligned.
@@ -319,11 +313,13 @@ bool SkImageShader::onAppendStages(SkRasterPipeline* p, SkColorSpace* dst, SkFal
     }
 
     auto ctx = scratch->make<SkImageShaderContext>();
-
-    ctx->pixels   = pm.addr();
-    ctx->stride   = pm.rowBytesAsPixels();
-    ctx->width    = pm.width();
-    ctx->height   = pm.height();
+    ctx->state   = std::move(state);  // Extend lifetime to match the pipeline's.
+    ctx->pixels  = pm.addr();
+    ctx->ctable  = pm.ctable();
+    ctx->color4f = SkColor4f_from_SkColor(paint.getColor(), dst);
+    ctx->stride  = pm.rowBytesAsPixels();
+    ctx->width   = (float)pm.width();
+    ctx->height  = (float)pm.height();
     if (matrix.asAffine(ctx->matrix)) {
         p->append(SkRasterPipeline::matrix_2x3, ctx->matrix);
     } else {
@@ -331,7 +327,7 @@ bool SkImageShader::onAppendStages(SkRasterPipeline* p, SkColorSpace* dst, SkFal
         p->append(SkRasterPipeline::matrix_perspective, ctx->matrix);
     }
 
-    auto append_tiling_and_accum = [&] {
+    auto append_tiling_and_gather = [&] {
         switch (fTileModeX) {
             case kClamp_TileMode:  p->append(SkRasterPipeline::clamp_x,  &ctx->width); break;
             case kMirror_TileMode: p->append(SkRasterPipeline::mirror_x, &ctx->width); break;
@@ -342,63 +338,84 @@ bool SkImageShader::onAppendStages(SkRasterPipeline* p, SkColorSpace* dst, SkFal
             case kMirror_TileMode: p->append(SkRasterPipeline::mirror_y, &ctx->height); break;
             case kRepeat_TileMode: p->append(SkRasterPipeline::repeat_y, &ctx->height); break;
         }
-
-        bool srgb = info.gammaCloseToSRGB() && dst != nullptr;
-
         switch (info.colorType()) {
-            case kGray_8_SkColorType:
-                p->append(srgb ? SkRasterPipeline::accum_g8_srgb
-                               : SkRasterPipeline::accum_g8, ctx);
-                break;
-
-            case kARGB_4444_SkColorType:
-                p->append(srgb ? SkRasterPipeline::accum_4444_srgb
-                               : SkRasterPipeline::accum_4444, ctx);
-                break;
-            case kRGB_565_SkColorType:
-                p->append(srgb ? SkRasterPipeline::accum_565_srgb
-                               : SkRasterPipeline::accum_565, ctx);
-                break;
-
+            case kAlpha_8_SkColorType:   p->append(SkRasterPipeline::gather_a8,   ctx); break;
+            case kIndex_8_SkColorType:   p->append(SkRasterPipeline::gather_i8,   ctx); break;
+            case kGray_8_SkColorType:    p->append(SkRasterPipeline::gather_g8,   ctx); break;
+            case kRGB_565_SkColorType:   p->append(SkRasterPipeline::gather_565,  ctx); break;
+            case kARGB_4444_SkColorType: p->append(SkRasterPipeline::gather_4444, ctx); break;
             case kRGBA_8888_SkColorType:
-            case kBGRA_8888_SkColorType:
-                p->append(srgb ? SkRasterPipeline::accum_8888_srgb
-                               : SkRasterPipeline::accum_8888, ctx);
-                break;
-
-            case kRGBA_F16_SkColorType:
-                p->append(SkRasterPipeline::accum_f16, ctx);
-                break;
-
-            default:
-                SkASSERT(false);
-                break;
+            case kBGRA_8888_SkColorType: p->append(SkRasterPipeline::gather_8888, ctx); break;
+            case kRGBA_F16_SkColorType:  p->append(SkRasterPipeline::gather_f16,  ctx); break;
+            default: SkASSERT(false);
+        }
+        if (info.gammaCloseToSRGB() && dst != nullptr) {
+            p->append_from_srgb(info.alphaType());
         }
     };
 
+    auto sample = [&](SkRasterPipeline::StockStage setup_x,
+                      SkRasterPipeline::StockStage setup_y) {
+        p->append(setup_x, ctx);
+        p->append(setup_y, ctx);
+        append_tiling_and_gather();
+        p->append(SkRasterPipeline::accumulate, ctx);
+    };
+
     if (quality == kNone_SkFilterQuality) {
-        append_tiling_and_accum();
+        append_tiling_and_gather();
+    } else if (quality == kLow_SkFilterQuality) {
+        p->append(SkRasterPipeline::save_xy, ctx);
 
+        sample(SkRasterPipeline::bilinear_nx, SkRasterPipeline::bilinear_ny);
+        sample(SkRasterPipeline::bilinear_px, SkRasterPipeline::bilinear_ny);
+        sample(SkRasterPipeline::bilinear_nx, SkRasterPipeline::bilinear_py);
+        sample(SkRasterPipeline::bilinear_px, SkRasterPipeline::bilinear_py);
+
+        p->append(SkRasterPipeline::move_dst_src);
     } else {
-        p->append(SkRasterPipeline::top_left, ctx);
-        append_tiling_and_accum();
+        p->append(SkRasterPipeline::save_xy, ctx);
 
-        p->append(SkRasterPipeline::top_right, ctx);
-        append_tiling_and_accum();
+        sample(SkRasterPipeline::bicubic_n3x, SkRasterPipeline::bicubic_n3y);
+        sample(SkRasterPipeline::bicubic_n1x, SkRasterPipeline::bicubic_n3y);
+        sample(SkRasterPipeline::bicubic_p1x, SkRasterPipeline::bicubic_n3y);
+        sample(SkRasterPipeline::bicubic_p3x, SkRasterPipeline::bicubic_n3y);
 
-        p->append(SkRasterPipeline::bottom_left, ctx);
-        append_tiling_and_accum();
+        sample(SkRasterPipeline::bicubic_n3x, SkRasterPipeline::bicubic_n1y);
+        sample(SkRasterPipeline::bicubic_n1x, SkRasterPipeline::bicubic_n1y);
+        sample(SkRasterPipeline::bicubic_p1x, SkRasterPipeline::bicubic_n1y);
+        sample(SkRasterPipeline::bicubic_p3x, SkRasterPipeline::bicubic_n1y);
 
-        p->append(SkRasterPipeline::bottom_right, ctx);
-        append_tiling_and_accum();
+        sample(SkRasterPipeline::bicubic_n3x, SkRasterPipeline::bicubic_p1y);
+        sample(SkRasterPipeline::bicubic_n1x, SkRasterPipeline::bicubic_p1y);
+        sample(SkRasterPipeline::bicubic_p1x, SkRasterPipeline::bicubic_p1y);
+        sample(SkRasterPipeline::bicubic_p3x, SkRasterPipeline::bicubic_p1y);
+
+        sample(SkRasterPipeline::bicubic_n3x, SkRasterPipeline::bicubic_p3y);
+        sample(SkRasterPipeline::bicubic_n1x, SkRasterPipeline::bicubic_p3y);
+        sample(SkRasterPipeline::bicubic_p1x, SkRasterPipeline::bicubic_p3y);
+        sample(SkRasterPipeline::bicubic_p3x, SkRasterPipeline::bicubic_p3y);
+
+        p->append(SkRasterPipeline::move_dst_src);
     }
 
-    p->append(SkRasterPipeline::dst);
-    if (info.colorType() == kBGRA_8888_SkColorType) {
+    auto effective_color_type = [](SkColorType ct) {
+        return ct == kIndex_8_SkColorType ? kN32_SkColorType : ct;
+    };
+
+    if (effective_color_type(info.colorType()) == kBGRA_8888_SkColorType) {
         p->append(SkRasterPipeline::swap_rb);
     }
-    if (info.alphaType() == kUnpremul_SkAlphaType) {
+    if (info.colorType() == kAlpha_8_SkColorType) {
+        p->append(SkRasterPipeline::set_rgb, &ctx->color4f);
+    }
+    if (info.colorType() == kAlpha_8_SkColorType || info.alphaType() == kUnpremul_SkAlphaType) {
         p->append(SkRasterPipeline::premul);
+    }
+    if (quality > kLow_SkFilterQuality) {
+        // Bicubic filtering naturally produces out of range values on both sides.
+        p->append(SkRasterPipeline::clamp_0);
+        p->append(SkRasterPipeline::clamp_a);
     }
     return append_gamut_transform(p, scratch, info.colorSpace(), dst);
 }

@@ -11,7 +11,7 @@
 #include "GrContext.h"
 #include "GrTest.h"
 #include "Test.h"
-#include "batches/GrTessellatingPathRenderer.h"
+#include "ops/GrTessellatingPathRenderer.h"
 
 /*
  * These tests pass by not crashing, hanging or asserting in Debug.
@@ -267,7 +267,7 @@ static void test_path(GrRenderTargetContext* renderTargetContext, GrResourceProv
     args.fViewMatrix = &SkMatrix::I();
     GrShape shape(path, style);
     args.fShape = &shape;
-    args.fAntiAlias = false;
+    args.fAAType = GrAAType::kNone;
     tess.drawPath(args);
 }
 

@@ -174,6 +174,8 @@ void GrVkPipelineState::abandonGPUResources() {
 
 static void append_texture_bindings(const GrProcessor& processor,
                                     SkTArray<const GrProcessor::TextureSampler*>* textureBindings) {
+    // We don't support image storages in VK.
+    SkASSERT(!processor.numImageStorages());
     if (int numTextureSamplers = processor.numTextureSamplers()) {
         const GrProcessor::TextureSampler** bindings =
                 textureBindings->push_back_n(numTextureSamplers);
@@ -499,7 +501,7 @@ bool GrVkPipelineState::Desc::Build(Desc* desc,
                                     const GrPipeline& pipeline,
                                     const GrStencilSettings& stencil,
                                     GrPrimitiveType primitiveType,
-                                    const GrGLSLCaps& caps) {
+                                    const GrShaderCaps& caps) {
     if (!INHERITED::Build(desc, primProc, primitiveType == kPoints_GrPrimitiveType, pipeline,
                           caps)) {
         return false;

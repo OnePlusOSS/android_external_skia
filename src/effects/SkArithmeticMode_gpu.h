@@ -55,7 +55,7 @@ public:
 private:
     GrGLSLFragmentProcessor* onCreateGLSLInstance() const override;
 
-    void onGetGLSLProcessorKey(const GrGLSLCaps& caps, GrProcessorKeyBuilder* b) const override;
+    void onGetGLSLProcessorKey(const GrShaderCaps& caps, GrProcessorKeyBuilder* b) const override;
 
     bool onIsEqual(const GrFragmentProcessor&) const override;
 
@@ -88,11 +88,11 @@ private:
     GrArithmeticXPFactory(float k1, float k2, float k3, float k4, bool enforcePMColor);
 
     GrXferProcessor* onCreateXferProcessor(const GrCaps& caps,
-                                           const GrPipelineOptimizations& optimizations,
+                                           const GrPipelineAnalysis&,
                                            bool hasMixedSamples,
                                            const DstTexture*) const override;
 
-    bool onWillReadDstColor(const GrCaps&, const GrPipelineOptimizations&) const override {
+    bool onWillReadDstColor(const GrCaps&, const GrPipelineAnalysis&) const override {
         return true;
     }
 

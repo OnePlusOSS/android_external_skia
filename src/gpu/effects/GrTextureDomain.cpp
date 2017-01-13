@@ -7,9 +7,10 @@
 
 #include "GrTextureDomain.h"
 #include "GrInvariantOutput.h"
+#include "GrShaderCaps.h"
 #include "GrSimpleTextureEffect.h"
 #include "SkFloatingPoint.h"
-#include "glsl/GrGLSLCaps.h"
+#include "glsl/GrGLSLColorSpaceXformHelper.h"
 #include "glsl/GrGLSLFragmentProcessor.h"
 #include "glsl/GrGLSLFragmentShaderBuilder.h"
 #include "glsl/GrGLSLProgramDataManager.h"
@@ -45,12 +46,13 @@ GrTextureDomain::GrTextureDomain(const SkRect& domain, Mode mode, int index)
 
 void GrTextureDomain::GLDomain::sampleTexture(GrGLSLShaderBuilder* builder,
                                               GrGLSLUniformHandler* uniformHandler,
-                                              const GrGLSLCaps* glslCaps,
+                                              const GrShaderCaps* shaderCaps,
                                               const GrTextureDomain& textureDomain,
                                               const char* outColor,
                                               const SkString& inCoords,
                                               GrGLSLFragmentProcessor::SamplerHandle sampler,
-                                              const char* inModulateColor) {
+                                              const char* inModulateColor,
+                                              GrGLSLColorSpaceXformHelper* colorXformHelper) {
     SkASSERT((Mode)-1 == fMode || textureDomain.mode() == fMode);
     SkDEBUGCODE(fMode = textureDomain.mode();)
 
@@ -69,8 +71,8 @@ void GrTextureDomain::GLDomain::sampleTexture(GrGLSLShaderBuilder* builder,
     switch (textureDomain.mode()) {
         case kIgnore_Mode: {
             builder->codeAppendf("%s = ", outColor);
-            builder->appendTextureLookupAndModulate(inModulateColor, sampler,
-                                                      inCoords.c_str());
+            builder->appendTextureLookupAndModulate(inModulateColor, sampler, inCoords.c_str(),
+                                                    kVec2f_GrSLType, colorXformHelper);
             builder->codeAppend(";");
             break;
         }
@@ -80,8 +82,8 @@ void GrTextureDomain::GLDomain::sampleTexture(GrGLSLShaderBuilder* builder,
                                   inCoords.c_str(), fDomainName.c_str(), fDomainName.c_str());
 
             builder->codeAppendf("%s = ", outColor);
-            builder->appendTextureLookupAndModulate(inModulateColor, sampler,
-                                                      clampedCoords.c_str());
+            builder->appendTextureLookupAndModulate(inModulateColor, sampler, clampedCoords.c_str(),
+                                                    kVec2f_GrSLType, colorXformHelper);
             builder->codeAppend(";");
             break;
         }
@@ -90,7 +92,7 @@ void GrTextureDomain::GLDomain::sampleTexture(GrGLSLShaderBuilder* builder,
             GrGLSLShaderBuilder::ShaderBlock block(builder);
 
             const char* domain = fDomainName.c_str();
-            if (!glslCaps->canUseAnyFunctionInShader()) {
+            if (!shaderCaps->canUseAnyFunctionInShader()) {
                 // On the NexusS and GalaxyNexus, the other path (with the 'any'
                 // call) causes the compilation error "Calls to any function that
                 // may require a gradient calculation inside a conditional block
@@ -99,8 +101,8 @@ void GrTextureDomain::GLDomain::sampleTexture(GrGLSLShaderBuilder* builder,
                 // result=white;" code fails to compile.
                 builder->codeAppend("vec4 outside = vec4(0.0, 0.0, 0.0, 0.0);");
                 builder->codeAppend("vec4 inside = ");
-                builder->appendTextureLookupAndModulate(inModulateColor, sampler,
-                                                          inCoords.c_str());
+                builder->appendTextureLookupAndModulate(inModulateColor, sampler, inCoords.c_str(),
+                                                        kVec2f_GrSLType, colorXformHelper);
                 builder->codeAppend(";");
 
                 builder->codeAppendf("highp float x = (%s).x;", inCoords.c_str());
@@ -120,8 +122,8 @@ void GrTextureDomain::GLDomain::sampleTexture(GrGLSLShaderBuilder* builder,
                                        domain);
                 builder->codeAppendf("%s = any(outside) ? vec4(0.0, 0.0, 0.0, 0.0) : ",
                                        outColor);
-                builder->appendTextureLookupAndModulate(inModulateColor, sampler,
-                                                          inCoords.c_str());
+                builder->appendTextureLookupAndModulate(inModulateColor, sampler, inCoords.c_str(),
+                                                        kVec2f_GrSLType, colorXformHelper);
                 builder->codeAppend(";");
             }
             break;
@@ -133,8 +135,8 @@ void GrTextureDomain::GLDomain::sampleTexture(GrGLSLShaderBuilder* builder,
                                  fDomainName.c_str(), fDomainName.c_str());
 
             builder->codeAppendf("%s = ", outColor);
-            builder->appendTextureLookupAndModulate(inModulateColor, sampler,
-                                                      clampedCoords.c_str());
+            builder->appendTextureLookupAndModulate(inModulateColor, sampler, clampedCoords.c_str(),
+                                                    kVec2f_GrSLType, colorXformHelper);
             builder->codeAppend(";");
             break;
         }
@@ -199,9 +201,10 @@ GrTextureDomainEffect::GrTextureDomainEffect(GrTexture* texture,
     this->initClassID<GrTextureDomainEffect>();
 }
 
-void GrTextureDomainEffect::onGetGLSLProcessorKey(const GrGLSLCaps& caps,
+void GrTextureDomainEffect::onGetGLSLProcessorKey(const GrShaderCaps& caps,
                                                   GrProcessorKeyBuilder* b) const {
     b->add32(GrTextureDomain::GLDomain::DomainKey(fTextureDomain));
+    b->add32(GrColorSpaceXform::XformKey(this->colorSpaceXform()));
 }
 
 GrGLSLFragmentProcessor* GrTextureDomainEffect::onCreateGLSLInstance() const  {
@@ -213,14 +216,19 @@ GrGLSLFragmentProcessor* GrTextureDomainEffect::onCreateGLSLInstance() const  {
 
             GrGLSLFPFragmentBuilder* fragBuilder = args.fFragBuilder;
             SkString coords2D = fragBuilder->ensureCoords2D(args.fTransformedCoords[0]);
+
+            GrGLSLColorSpaceXformHelper colorSpaceHelper(args.fUniformHandler,
+                                                         tde.colorSpaceXform(),
+                                                         &fColorSpaceXformUni);
             fGLDomain.sampleTexture(fragBuilder,
                                     args.fUniformHandler,
-                                    args.fGLSLCaps,
+                                    args.fShaderCaps,
                                     domain,
                                     args.fOutputColor,
                                     coords2D,
                                     args.fTexSamplers[0],
-                                    args.fInputColor);
+                                    args.fInputColor,
+                                    &colorSpaceHelper);
         }
 
     protected:
@@ -228,11 +236,14 @@ GrGLSLFragmentProcessor* GrTextureDomainEffect::onCreateGLSLInstance() const  {
             const GrTextureDomainEffect& tde = fp.cast<GrTextureDomainEffect>();
             const GrTextureDomain& domain = tde.fTextureDomain;
             fGLDomain.setData(pdman, domain, tde.textureSampler(0).texture()->origin());
+            if (SkToBool(tde.colorSpaceXform())) {
+                pdman.setSkMatrix44(fColorSpaceXformUni, tde.colorSpaceXform()->srcToDst());
+            }
         }
 
     private:
         GrTextureDomain::GLDomain         fGLDomain;
-
+        UniformHandle                     fColorSpaceXformUni;
     };
 
     return new GLSLProcessor;
@@ -318,7 +329,7 @@ GrGLSLFragmentProcessor* GrDeviceSpaceTextureDecalFragmentProcessor::onCreateGLS
                                            scaleAndTranslateName, scaleAndTranslateName);
             fGLDomain.sampleTexture(args.fFragBuilder,
                                     args.fUniformHandler,
-                                    args.fGLSLCaps,
+                                    args.fShaderCaps,
                                     dstdfp.fTextureDomain,
                                     args.fOutputColor,
                                     SkString("coords"),

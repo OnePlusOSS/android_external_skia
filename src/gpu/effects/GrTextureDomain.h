@@ -13,6 +13,7 @@
 #include "glsl/GrGLSLProgramDataManager.h"
 
 class GrGLProgramBuilder;
+class GrGLSLColorSpaceXformHelper;
 class GrGLSLShaderBuilder;
 class GrInvariantOutput;
 class GrGLSLUniformHandler;
@@ -115,12 +116,13 @@ public:
          */
         void sampleTexture(GrGLSLShaderBuilder* builder,
                            GrGLSLUniformHandler* uniformHandler,
-                           const GrGLSLCaps* glslCaps,
+                           const GrShaderCaps* shaderCaps,
                            const GrTextureDomain& textureDomain,
                            const char* outColor,
                            const SkString& inCoords,
                            GrGLSLFragmentProcessor::SamplerHandle sampler,
-                           const char* inModulateColor = nullptr);
+                           const char* inModulateColor = nullptr,
+                           GrGLSLColorSpaceXformHelper* colorXformHelper = nullptr);
 
         /**
          * Call this from GrGLSLFragmentProcessor::setData() to upload uniforms necessary for the
@@ -195,7 +197,7 @@ private:
 
     GrGLSLFragmentProcessor* onCreateGLSLInstance() const override;
 
-    void onGetGLSLProcessorKey(const GrGLSLCaps&, GrProcessorKeyBuilder*) const override;
+    void onGetGLSLProcessorKey(const GrShaderCaps&, GrProcessorKeyBuilder*) const override;
 
     bool onIsEqual(const GrFragmentProcessor&) const override;
 
@@ -233,7 +235,7 @@ private:
     GrGLSLFragmentProcessor* onCreateGLSLInstance() const override;
 
     // Since we always use decal mode, there is no need for key data.
-    void onGetGLSLProcessorKey(const GrGLSLCaps&, GrProcessorKeyBuilder*) const override {}
+    void onGetGLSLProcessorKey(const GrShaderCaps&, GrProcessorKeyBuilder*) const override {}
 
     bool onIsEqual(const GrFragmentProcessor& fp) const override;
     void onComputeInvariantOutput(GrInvariantOutput* inout) const override;

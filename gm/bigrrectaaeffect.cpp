@@ -10,9 +10,9 @@
 #include "GrContext.h"
 #include "GrRenderTargetContextPriv.h"
 #include "SkRRect.h"
-#include "batches/GrDrawBatch.h"
-#include "batches/GrRectBatchFactory.h"
 #include "effects/GrRRectEffect.h"
+#include "ops/GrDrawOp.h"
+#include "ops/GrRectOpFactory.h"
 
 namespace skiagm {
 
@@ -87,10 +87,10 @@ protected:
                     SkRect bounds = testBounds;
                     bounds.offset(SkIntToScalar(x), SkIntToScalar(y));
 
-                    sk_sp<GrDrawBatch> batch(
-                            GrRectBatchFactory::CreateNonAAFill(0xff000000, SkMatrix::I(), bounds,
-                                                                nullptr, nullptr));
-                    renderTargetContext->priv().testingOnly_drawBatch(grPaint, batch.get());
+                    sk_sp<GrDrawOp> op(GrRectOpFactory::MakeNonAAFill(0xff000000, SkMatrix::I(),
+                                                                      bounds, nullptr, nullptr));
+                    renderTargetContext->priv().testingOnly_addDrawOp(grPaint, GrAAType::kNone,
+                                                                      std::move(op));
                 }
             canvas->restore();
             x = x + fTestOffsetX;

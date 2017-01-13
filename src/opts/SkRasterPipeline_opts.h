@@ -14,11 +14,11 @@
 #include "SkColorSpaceXformPriv.h"
 #include "SkHalf.h"
 #include "SkImageShaderContext.h"
+#include "SkMSAN.h"
 #include "SkPM4f.h"
 #include "SkPM4fPriv.h"
 #include "SkRasterPipeline.h"
 #include "SkSRGB.h"
-#include "SkUtils.h"
 #include <utility>
 
 namespace {
@@ -30,19 +30,19 @@ namespace {
 #endif
 
     using SkNf = SkNx<N, float>;
-    using SkNi = SkNx<N, int>;
+    using SkNi = SkNx<N, int32_t>;
+    using SkNu = SkNx<N, uint32_t>;
     using SkNh = SkNx<N, uint16_t>;
     using SkNb = SkNx<N, uint8_t>;
 
-    struct BodyStage;
-    struct TailStage;
+    struct Stage;
+    using Fn = void(SK_VECTORCALL *)(Stage*, size_t x_tail, SkNf,SkNf,SkNf,SkNf,
+                                                            SkNf,SkNf,SkNf,SkNf);
+    struct Stage { Fn next; void* ctx; };
 
-    using Body = void(SK_VECTORCALL *)(BodyStage*, size_t,         SkNf,SkNf,SkNf,SkNf,
-                                                                   SkNf,SkNf,SkNf,SkNf);
-    using Tail = void(SK_VECTORCALL *)(TailStage*, size_t, size_t, SkNf,SkNf,SkNf,SkNf,
-                                                                   SkNf,SkNf,SkNf,SkNf);
-    struct BodyStage { Body next; void* ctx; };
-    struct TailStage { Tail next; void* ctx; };
+    // x_tail encodes two values x and tail as x*N+tail, where 0 <= tail < N.
+    // x is the induction variable we're walking along, incrementing by N each step.
+    // tail == 0 means work with a full N pixels; otherwise use only the low tail pixels.
 
 }  // namespace
 
@@ -50,40 +50,26 @@ namespace {
 
 // Stages are logically a pipeline, and physically are contiguous in an array.
 // To get to the next stage, we just increment our pointer to the next array element.
-SI void SK_VECTORCALL next(BodyStage* st, size_t x,
-                           SkNf  r, SkNf  g, SkNf  b, SkNf  a,
-                           SkNf dr, SkNf dg, SkNf db, SkNf da) {
-    st->next(st+1, x, r,g,b,a, dr,dg,db,da);
-}
-SI void SK_VECTORCALL next(TailStage* st, size_t x, size_t tail,
-                           SkNf  r, SkNf  g, SkNf  b, SkNf  a,
-                           SkNf dr, SkNf dg, SkNf db, SkNf da) {
-    st->next(st+1, x,tail, r,g,b,a, dr,dg,db,da);
+SI void SK_VECTORCALL next(Stage* st, size_t x_tail, SkNf  r, SkNf  g, SkNf  b, SkNf  a,
+                                                     SkNf dr, SkNf dg, SkNf db, SkNf da) {
+    st->next(st+1, x_tail, r,g,b,a, dr,dg,db,da);
 }
 
+// Stages defined below always call next.
+// This is always the last stage, a backstop that actually returns to the caller when done.
+SI void SK_VECTORCALL just_return(Stage*, size_t, SkNf, SkNf, SkNf, SkNf,
+                                                  SkNf, SkNf, SkNf, SkNf) {}
 
-#define STAGE(name, kCallNext)                                                           \
-    template <bool kIsTail>                                                              \
+#define STAGE(name)                                                                      \
     static SK_ALWAYS_INLINE void name##_kernel(void* ctx, size_t x, size_t tail,         \
                                                SkNf&  r, SkNf&  g, SkNf&  b, SkNf&  a,   \
                                                SkNf& dr, SkNf& dg, SkNf& db, SkNf& da);  \
-    SI void SK_VECTORCALL name(BodyStage* st, size_t x,                                  \
+    SI void SK_VECTORCALL name(Stage* st, size_t x_tail,                                 \
                                SkNf  r, SkNf  g, SkNf  b, SkNf  a,                       \
                                SkNf dr, SkNf dg, SkNf db, SkNf da) {                     \
-        name##_kernel<false>(st->ctx, x,0, r,g,b,a, dr,dg,db,da);                        \
-        if (kCallNext) {                                                                 \
-            next(st, x, r,g,b,a, dr,dg,db,da);                                           \
-        }                                                                                \
+        name##_kernel(st->ctx, x_tail/N, x_tail%N, r,g,b,a, dr,dg,db,da);                \
+        next(st, x_tail, r,g,b,a, dr,dg,db,da);                                          \
     }                                                                                    \
-    SI void SK_VECTORCALL name(TailStage* st, size_t x, size_t tail,                     \
-                               SkNf  r, SkNf  g, SkNf  b, SkNf  a,                       \
-                               SkNf dr, SkNf dg, SkNf db, SkNf da) {                     \
-        name##_kernel<true>(st->ctx, x,tail, r,g,b,a, dr,dg,db,da);                      \
-        if (kCallNext) {                                                                 \
-            next(st, x,tail, r,g,b,a, dr,dg,db,da);                                      \
-        }                                                                                \
-    }                                                                                    \
-    template <bool kIsTail>                                                              \
     static SK_ALWAYS_INLINE void name##_kernel(void* ctx, size_t x, size_t tail,         \
                                                SkNf&  r, SkNf&  g, SkNf&  b, SkNf&  a,   \
                                                SkNf& dr, SkNf& dg, SkNf& db, SkNf& da)
@@ -93,23 +79,14 @@ SI void SK_VECTORCALL next(TailStage* st, size_t x, size_t tail,
 #define RGBA_XFERMODE(name)                                                     \
     static SK_ALWAYS_INLINE SkNf name##_kernel(const SkNf& s, const SkNf& sa,   \
                                                const SkNf& d, const SkNf& da);  \
-    SI void SK_VECTORCALL name(BodyStage* st, size_t x,                         \
+    SI void SK_VECTORCALL name(Stage* st, size_t x_tail,                        \
                                SkNf  r, SkNf  g, SkNf  b, SkNf  a,              \
                                SkNf dr, SkNf dg, SkNf db, SkNf da) {            \
         r = name##_kernel(r,a,dr,da);                                           \
         g = name##_kernel(g,a,dg,da);                                           \
         b = name##_kernel(b,a,db,da);                                           \
         a = name##_kernel(a,a,da,da);                                           \
-        next(st, x, r,g,b,a, dr,dg,db,da);                                      \
-    }                                                                           \
-    SI void SK_VECTORCALL name(TailStage* st, size_t x, size_t tail,            \
-                               SkNf  r, SkNf  g, SkNf  b, SkNf  a,              \
-                               SkNf dr, SkNf dg, SkNf db, SkNf da) {            \
-        r = name##_kernel(r,a,dr,da);                                           \
-        g = name##_kernel(g,a,dg,da);                                           \
-        b = name##_kernel(b,a,db,da);                                           \
-        a = name##_kernel(a,a,da,da);                                           \
-        next(st, x,tail, r,g,b,a, dr,dg,db,da);                                 \
+        next(st, x_tail, r,g,b,a, dr,dg,db,da);                                 \
     }                                                                           \
     static SK_ALWAYS_INLINE SkNf name##_kernel(const SkNf& s, const SkNf& sa,   \
                                                const SkNf& d, const SkNf& da)
@@ -118,38 +95,21 @@ SI void SK_VECTORCALL next(TailStage* st, size_t x, size_t tail,
 #define RGB_XFERMODE(name)                                                      \
     static SK_ALWAYS_INLINE SkNf name##_kernel(const SkNf& s, const SkNf& sa,   \
                                                const SkNf& d, const SkNf& da);  \
-    SI void SK_VECTORCALL name(BodyStage* st, size_t x,                         \
+    SI void SK_VECTORCALL name(Stage* st, size_t x_tail,                         \
                                SkNf  r, SkNf  g, SkNf  b, SkNf  a,              \
                                SkNf dr, SkNf dg, SkNf db, SkNf da) {            \
         r = name##_kernel(r,a,dr,da);                                           \
         g = name##_kernel(g,a,dg,da);                                           \
         b = name##_kernel(b,a,db,da);                                           \
         a = a + (da * (1.0f-a));                                                \
-        next(st, x, r,g,b,a, dr,dg,db,da);                                      \
-    }                                                                           \
-    SI void SK_VECTORCALL name(TailStage* st, size_t x, size_t tail,            \
-                               SkNf  r, SkNf  g, SkNf  b, SkNf  a,              \
-                               SkNf dr, SkNf dg, SkNf db, SkNf da) {            \
-        r = name##_kernel(r,a,dr,da);                                           \
-        g = name##_kernel(g,a,dg,da);                                           \
-        b = name##_kernel(b,a,db,da);                                           \
-        a = a + (da * (1.0f-a));                                                \
-        next(st, x,tail, r,g,b,a, dr,dg,db,da);                                 \
+        next(st, x_tail, r,g,b,a, dr,dg,db,da);                                 \
     }                                                                           \
     static SK_ALWAYS_INLINE SkNf name##_kernel(const SkNf& s, const SkNf& sa,   \
                                                const SkNf& d, const SkNf& da)
 
-SI SkNf inv(const SkNf& x) { return 1.0f - x; }
-
-SI SkNf lerp(const SkNf& from, const SkNf& to, const SkNf& cov) {
-    return SkNx_fma(to-from, cov, from);
-}
-
-template <bool kIsTail, typename T>
+template <typename T>
 SI SkNx<N,T> load(size_t tail, const T* src) {
-    SkASSERT(kIsTail == (tail > 0));
-    // TODO: maskload for 32- and 64-bit T
-    if (kIsTail) {
+    if (tail) {
         T buf[8] = {0};
         switch (tail & (N-1)) {
             case 7: buf[6] = src[6];
@@ -164,12 +124,30 @@ SI SkNx<N,T> load(size_t tail, const T* src) {
     }
     return SkNx<N,T>::Load(src);
 }
-
-template <bool kIsTail, typename T>
+template <typename T>
+SI SkNx<N,T> gather(size_t tail, const T* src, const SkNi& offset) {
+    if (tail) {
+        T buf[8] = {0};
+        switch (tail & (N-1)) {
+            case 7: buf[6] = src[offset[6]];
+            case 6: buf[5] = src[offset[5]];
+            case 5: buf[4] = src[offset[4]];
+            case 4: buf[3] = src[offset[3]];
+            case 3: buf[2] = src[offset[2]];
+            case 2: buf[1] = src[offset[1]];
+        }
+        buf[0] = src[offset[0]];
+        return SkNx<N,T>::Load(buf);
+    }
+    T buf[8];
+    for (size_t i = 0; i < N; i++) {
+        buf[i] = src[offset[i]];
+    }
+    return SkNx<N,T>::Load(buf);
+}
+template <typename T>
 SI void store(size_t tail, const SkNx<N,T>& v, T* dst) {
-    SkASSERT(kIsTail == (tail > 0));
-    // TODO: maskstore for 32- and 64-bit T
-    if (kIsTail) {
+    if (tail) {
         switch (tail & (N-1)) {
             case 7: dst[6] = v[6];
             case 6: dst[5] = v[5];
@@ -184,6 +162,93 @@ SI void store(size_t tail, const SkNx<N,T>& v, T* dst) {
     v.store(dst);
 }
 
+#if !defined(SKNX_NO_SIMD) && SK_CPU_SSE_LEVEL >= SK_CPU_SSE_LEVEL_AVX2
+    SI __m256i mask(size_t tail) {
+        static const int masks[][8] = {
+            {~0,~0,~0,~0, ~0,~0,~0,~0 },  // remember, tail == 0 ~~> load all N
+            {~0, 0, 0, 0,  0, 0, 0, 0 },
+            {~0,~0, 0, 0,  0, 0, 0, 0 },
+            {~0,~0,~0, 0,  0, 0, 0, 0 },
+            {~0,~0,~0,~0,  0, 0, 0, 0 },
+            {~0,~0,~0,~0, ~0, 0, 0, 0 },
+            {~0,~0,~0,~0, ~0,~0, 0, 0 },
+            {~0,~0,~0,~0, ~0,~0,~0, 0 },
+        };
+        return SkNi::Load(masks + tail).fVec;
+    }
+
+    SI SkNi load(size_t tail, const  int32_t* src) {
+        return tail ? _mm256_maskload_epi32((const int*)src, mask(tail))
+                    : SkNi::Load(src);
+    }
+    SI SkNu load(size_t tail, const uint32_t* src) {
+        return tail ? _mm256_maskload_epi32((const int*)src, mask(tail))
+                    : SkNu::Load(src);
+    }
+    SI SkNf load(size_t tail, const float* src) {
+        return tail ? _mm256_maskload_ps((const float*)src, mask(tail))
+                    : SkNf::Load(src);
+    }
+    SI SkNi gather(size_t tail, const  int32_t* src, const SkNi& offset) {
+        auto m = mask(tail);
+        return _mm256_mask_i32gather_epi32(SkNi(0).fVec, (const int*)src, offset.fVec, m, 4);
+    }
+    SI SkNu gather(size_t tail, const uint32_t* src, const SkNi& offset) {
+        auto m = mask(tail);
+        return _mm256_mask_i32gather_epi32(SkNi(0).fVec, (const int*)src, offset.fVec, m, 4);
+    }
+    SI SkNf gather(size_t tail, const float* src, const SkNi& offset) {
+        auto m = _mm256_castsi256_ps(mask(tail));
+        return _mm256_mask_i32gather_ps(SkNf(0).fVec, (const float*)src, offset.fVec, m, 4);
+    }
+
+    static const char* bug = "I don't think MSAN understands maskstore.";
+
+    SI void store(size_t tail, const SkNi& v,  int32_t* dst) {
+        if (tail) {
+            _mm256_maskstore_epi32((int*)dst, mask(tail), v.fVec);
+            return sk_msan_mark_initialized(dst, dst+tail, bug);
+        }
+        v.store(dst);
+    }
+    SI void store(size_t tail, const SkNu& v, uint32_t* dst) {
+        if (tail) {
+            _mm256_maskstore_epi32((int*)dst, mask(tail), v.fVec);
+            return sk_msan_mark_initialized(dst, dst+tail, bug);
+        }
+        v.store(dst);
+    }
+    SI void store(size_t tail, const SkNf& v, float* dst) {
+        if (tail) {
+            _mm256_maskstore_ps((float*)dst, mask(tail), v.fVec);
+            return sk_msan_mark_initialized(dst, dst+tail, bug);
+        }
+        v.store(dst);
+    }
+#endif
+
+SI SkNf SkNf_fma(const SkNf& f, const SkNf& m, const SkNf& a) { return SkNx_fma(f,m,a); }
+
+SI SkNi SkNf_round(const SkNf& x, const SkNf& scale) {
+    // Every time I try, _mm_cvtps_epi32 benches as slower than using FMA and _mm_cvttps_epi32.  :/
+    return SkNx_cast<int>(SkNf_fma(x,scale, 0.5f));
+}
+
+SI SkNf SkNf_from_byte(const SkNi& x) {
+    // Same trick as in store_8888: 0x470000BB == 32768.0f + BB/256.0f for all bytes BB.
+    auto v = 0x47000000 | x;
+    // Read this as (pun_float(v) - 32768.0f) * (256/255.0f), redistributed to be an FMA.
+    return SkNf_fma(SkNf::Load(&v), 256/255.0f, -32768*256/255.0f);
+}
+SI SkNf SkNf_from_byte(const SkNu& x) { return SkNf_from_byte(SkNi::Load(&x)); }
+SI SkNf SkNf_from_byte(const SkNb& x) { return SkNf_from_byte(SkNx_cast<int>(x)); }
+
+SI void from_8888(const SkNu& _8888, SkNf* r, SkNf* g, SkNf* b, SkNf* a) {
+    *r = SkNf_from_byte((_8888      ) & 0xff);
+    *g = SkNf_from_byte((_8888 >>  8) & 0xff);
+    *b = SkNf_from_byte((_8888 >> 16) & 0xff);
+    *a = SkNf_from_byte((_8888 >> 24)       );
+}
 SI void from_4444(const SkNh& _4444, SkNf* r, SkNf* g, SkNf* b, SkNf* a) {
     auto _32_bit = SkNx_cast<int>(_4444);
 
@@ -192,7 +257,6 @@ SI void from_4444(const SkNh& _4444, SkNf* r, SkNf* g, SkNf* b, SkNf* a) {
     *b = SkNx_cast<float>(_32_bit & (0xF << SK_B4444_SHIFT)) * (1.0f / (0xF << SK_B4444_SHIFT));
     *a = SkNx_cast<float>(_32_bit & (0xF << SK_A4444_SHIFT)) * (1.0f / (0xF << SK_A4444_SHIFT));
 }
-
 SI void from_565(const SkNh& _565, SkNf* r, SkNf* g, SkNf* b) {
     auto _32_bit = SkNx_cast<int>(_565);
 
@@ -200,20 +264,20 @@ SI void from_565(const SkNh& _565, SkNf* r, SkNf* g, SkNf* b) {
     *g = SkNx_cast<float>(_32_bit & SK_G16_MASK_IN_PLACE) * (1.0f / SK_G16_MASK_IN_PLACE);
     *b = SkNx_cast<float>(_32_bit & SK_B16_MASK_IN_PLACE) * (1.0f / SK_B16_MASK_IN_PLACE);
 }
+SI void from_f16(const void* px, SkNf* r, SkNf* g, SkNf* b, SkNf* a) {
+    SkNh rh, gh, bh, ah;
+    SkNh::Load4(px, &rh, &gh, &bh, &ah);
 
-SI SkNh to_565(const SkNf& r, const SkNf& g, const SkNf& b) {
-    return SkNx_cast<uint16_t>( SkNx_cast<int>(r * SK_R16_MASK + 0.5f) << SK_R16_SHIFT
-                              | SkNx_cast<int>(g * SK_G16_MASK + 0.5f) << SK_G16_SHIFT
-                              | SkNx_cast<int>(b * SK_B16_MASK + 0.5f) << SK_B16_SHIFT);
+    *r = SkHalfToFloat_finite_ftz(rh);
+    *g = SkHalfToFloat_finite_ftz(gh);
+    *b = SkHalfToFloat_finite_ftz(bh);
+    *a = SkHalfToFloat_finite_ftz(ah);
 }
 
-STAGE(just_return, false) { }
-
-STAGE(trace, true) {
+STAGE(trace) {
     SkDebugf("%s\n", (const char*)ctx);
 }
-
-STAGE(registers, true) {
+STAGE(registers) {
     auto print = [](const char* name, const SkNf& v) {
         SkDebugf("%s:", name);
         for (int i = 0; i < N; i++) {
@@ -231,55 +295,115 @@ STAGE(registers, true) {
     print("da", da);
 }
 
-STAGE(clamp_0, true) {
+STAGE(clamp_0) {
     a = SkNf::Max(a, 0.0f);
     r = SkNf::Max(r, 0.0f);
     g = SkNf::Max(g, 0.0f);
     b = SkNf::Max(b, 0.0f);
 }
-
-STAGE(clamp_a, true) {
-    a = SkNf::Min(a, 1.0f);
-    r = SkNf::Min(r, a);
-    g = SkNf::Min(g, a);
-    b = SkNf::Min(b, a);
-}
-
-STAGE(clamp_1, true) {
+STAGE(clamp_1) {
     a = SkNf::Min(a, 1.0f);
     r = SkNf::Min(r, 1.0f);
     g = SkNf::Min(g, 1.0f);
     b = SkNf::Min(b, 1.0f);
 }
-
-STAGE(unpremul, true) {
-    r *= a.invert();
-    g *= a.invert();
-    b *= a.invert();
+STAGE(clamp_a) {
+    a = SkNf::Min(a, 1.0f);
+    r = SkNf::Min(r, a);
+    g = SkNf::Min(g, a);
+    b = SkNf::Min(b, a);
+}
+STAGE(clamp_a_d) {
+    da = SkNf::Min(da, 1.0f);
+    dr = SkNf::Min(dr, da);
+    dg = SkNf::Min(dg, da);
+    db = SkNf::Min(db, da);
 }
 
-STAGE(premul, true) {
+STAGE(unpremul) {
+    auto scale = (a == 0.0f).thenElse(0.0f, 1.0f/a);
+    r *= scale;
+    g *= scale;
+    b *= scale;
+}
+STAGE(premul) {
     r *= a;
     g *= a;
     b *= a;
 }
 
-STAGE(move_src_dst, true) {
+STAGE(set_rgb) {
+    auto rgb = (const float*)ctx;
+    r = rgb[0];
+    g = rgb[1];
+    b = rgb[2];
+}
+
+STAGE(move_src_dst) {
     dr = r;
     dg = g;
     db = b;
     da = a;
 }
+STAGE(move_dst_src) {
+    r = dr;
+    g = dg;
+    b = db;
+    a = da;
+}
 
-STAGE(swap_src_dst, true) {
-    SkTSwap(r, dr);
-    SkTSwap(g, dg);
-    SkTSwap(b, db);
-    SkTSwap(a, da);
+STAGE(swap_rb)   { SkTSwap( r,  b); }
+STAGE(swap_rb_d) { SkTSwap(dr, db); }
+
+STAGE(from_srgb) {
+    r = sk_linear_from_srgb_math(r);
+    g = sk_linear_from_srgb_math(g);
+    b = sk_linear_from_srgb_math(b);
+}
+STAGE(from_srgb_d) {
+    dr = sk_linear_from_srgb_math(dr);
+    dg = sk_linear_from_srgb_math(dg);
+    db = sk_linear_from_srgb_math(db);
+}
+STAGE(to_srgb) {
+    r = sk_linear_to_srgb_needs_round(r);
+    g = sk_linear_to_srgb_needs_round(g);
+    b = sk_linear_to_srgb_needs_round(b);
+}
+
+STAGE(from_2dot2) {
+    auto from_2dot2 = [](const SkNf& x) {
+        // x^(141/64) = x^(2.20312) is a great approximation of the true value, x^(2.2).
+        // (note: x^(35/16) = x^(2.1875) is an okay one as well and would be quicker)
+        auto x16 = x.rsqrt().rsqrt().rsqrt().rsqrt();   // x^(1/16) = x^(4/64);
+        auto x64 = x16.rsqrt().rsqrt();                 // x^(1/64)
+
+        // x^(141/64) = x^(128/64) * x^(12/64) * x^(1/64)
+        return SkNf::Max((x*x) * (x16*x16*x16) * (x64), 0.0f);
+    };
+    
+    r = from_2dot2(r);
+    g = from_2dot2(g);
+    b = from_2dot2(b);
+}
+STAGE(to_2dot2) {
+    auto to_2dot2 = [](const SkNf& x) {
+        // x^(29/64) is a very good approximation of the true value, x^(1/2.2).
+        auto x2  = x.rsqrt(),                            // x^(-1/2)
+             x32 = x2.rsqrt().rsqrt().rsqrt().rsqrt(),   // x^(-1/32)
+             x64 = x32.rsqrt();                          // x^(+1/64)
+
+        // 29 = 32 - 2 - 1
+        return SkNf::Max(x2.invert() * x32 * x64.invert(), 0.0f); // Watch out for NaN.
+    };
+
+    r = to_2dot2(r);
+    g = to_2dot2(g);
+    b = to_2dot2(b);
 }
 
 // The default shader produces a constant color (from the SkPaint).
-STAGE(constant_color, true) {
+STAGE(constant_color) {
     auto color = (const SkPM4f*)ctx;
     r = color->r();
     g = color->g();
@@ -287,8 +411,8 @@ STAGE(constant_color, true) {
     a = color->a();
 }
 
-// s' = sc for a constant c.
-STAGE(scale_constant_float, true) {
+// s' = sc for a scalar c.
+STAGE(scale_1_float) {
     SkNf c = *(const float*)ctx;
 
     r *= c;
@@ -296,9 +420,23 @@ STAGE(scale_constant_float, true) {
     b *= c;
     a *= c;
 }
+// s' = sc for 8-bit c.
+STAGE(scale_u8) {
+    auto ptr = *(const uint8_t**)ctx + x;
 
-// s' = d(1-c) + sc, for a constant c.
-STAGE(lerp_constant_float, true) {
+    SkNf c = SkNf_from_byte(load(tail, ptr));
+    r = r*c;
+    g = g*c;
+    b = b*c;
+    a = a*c;
+}
+
+SI SkNf lerp(const SkNf& from, const SkNf& to, const SkNf& cov) {
+    return SkNf_fma(to-from, cov, from);
+}
+
+// s' = d(1-c) + sc, for a scalar c.
+STAGE(lerp_1_float) {
     SkNf c = *(const float*)ctx;
 
     r = lerp(dr, r, c);
@@ -307,22 +445,11 @@ STAGE(lerp_constant_float, true) {
     a = lerp(da, a, c);
 }
 
-// s' = sc for 8-bit c.
-STAGE(scale_u8, true) {
-    auto ptr = *(const uint8_t**)ctx + x;
-
-    SkNf c = SkNx_cast<float>(load<kIsTail>(tail, ptr)) * (1/255.0f);
-    r = r*c;
-    g = g*c;
-    b = b*c;
-    a = a*c;
-}
-
 // s' = d(1-c) + sc for 8-bit c.
-STAGE(lerp_u8, true) {
+STAGE(lerp_u8) {
     auto ptr = *(const uint8_t**)ctx + x;
 
-    SkNf c = SkNx_cast<float>(load<kIsTail>(tail, ptr)) * (1/255.0f);
+    SkNf c = SkNf_from_byte(load(tail, ptr));
     r = lerp(dr, r, c);
     g = lerp(dg, g, c);
     b = lerp(db, b, c);
@@ -330,10 +457,10 @@ STAGE(lerp_u8, true) {
 }
 
 // s' = d(1-c) + sc for 565 c.
-STAGE(lerp_565, true) {
+STAGE(lerp_565) {
     auto ptr = *(const uint16_t**)ctx + x;
     SkNf cr, cg, cb;
-    from_565(load<kIsTail>(tail, ptr), &cr, &cg, &cb);
+    from_565(load(tail, ptr), &cr, &cg, &cb);
 
     r = lerp(dr, r, cr);
     g = lerp(dg, g, cg);
@@ -341,173 +468,127 @@ STAGE(lerp_565, true) {
     a = 1.0f;
 }
 
-STAGE(load_d_565, true) {
+STAGE(load_565) {
     auto ptr = *(const uint16_t**)ctx + x;
-    from_565(load<kIsTail>(tail, ptr), &dr,&dg,&db);
-    da = 1.0f;
-}
-
-STAGE(load_s_565, true) {
-    auto ptr = *(const uint16_t**)ctx + x;
-    from_565(load<kIsTail>(tail, ptr), &r,&g,&b);
+    from_565(load(tail, ptr), &r,&g,&b);
     a = 1.0f;
 }
-
-STAGE(store_565, false) {
+STAGE(load_565_d) {
+    auto ptr = *(const uint16_t**)ctx + x;
+    from_565(load(tail, ptr), &dr,&dg,&db);
+    da = 1.0f;
+}
+STAGE(store_565) {
     auto ptr = *(uint16_t**)ctx + x;
-    store<kIsTail>(tail, to_565(r,g,b), ptr);
+    store(tail, SkNx_cast<uint16_t>( SkNf_round(r, SK_R16_MASK) << SK_R16_SHIFT
+                                   | SkNf_round(g, SK_G16_MASK) << SK_G16_SHIFT
+                                   | SkNf_round(b, SK_B16_MASK) << SK_B16_SHIFT), ptr);
 }
 
-STAGE(load_d_f16, true) {
+
+STAGE(load_f16) {
     auto ptr = *(const uint64_t**)ctx + x;
 
-    SkNh rh, gh, bh, ah;
-    if (kIsTail) {
-        uint64_t buf[8] = {0};
-        switch (tail & (N-1)) {
-            case 7: buf[6] = ptr[6];
-            case 6: buf[5] = ptr[5];
-            case 5: buf[4] = ptr[4];
-            case 4: buf[3] = ptr[3];
-            case 3: buf[2] = ptr[2];
-            case 2: buf[1] = ptr[1];
-        }
-        buf[0] = ptr[0];
-        SkNh::Load4(buf, &rh, &gh, &bh, &ah);
-    } else {
-        SkNh::Load4(ptr, &rh, &gh, &bh, &ah);
+    const void* src = ptr;
+    SkNx<N, uint64_t> px;
+    if (tail) {
+        px = load(tail, ptr);
+        src = &px;
     }
-
-    dr = SkHalfToFloat_finite_ftz(rh);
-    dg = SkHalfToFloat_finite_ftz(gh);
-    db = SkHalfToFloat_finite_ftz(bh);
-    da = SkHalfToFloat_finite_ftz(ah);
+    from_f16(src, &r, &g, &b, &a);
 }
-
-STAGE(load_s_f16, true) {
+STAGE(load_f16_d) {
     auto ptr = *(const uint64_t**)ctx + x;
 
-    SkNh rh, gh, bh, ah;
-    if (kIsTail) {
-        uint64_t buf[8] = {0};
-        switch (tail & (N-1)) {
-            case 7: buf[6] = ptr[6];
-            case 6: buf[5] = ptr[5];
-            case 5: buf[4] = ptr[4];
-            case 4: buf[3] = ptr[3];
-            case 3: buf[2] = ptr[2];
-            case 2: buf[1] = ptr[1];
-        }
-        buf[0] = ptr[0];
-        SkNh::Load4(buf, &rh, &gh, &bh, &ah);
-    } else {
-        SkNh::Load4(ptr, &rh, &gh, &bh, &ah);
+    const void* src = ptr;
+    SkNx<N, uint64_t> px;
+    if (tail) {
+        px = load(tail, ptr);
+        src = &px;
     }
-
-    r = SkHalfToFloat_finite_ftz(rh);
-    g = SkHalfToFloat_finite_ftz(gh);
-    b = SkHalfToFloat_finite_ftz(bh);
-    a = SkHalfToFloat_finite_ftz(ah);
+    from_f16(src, &dr, &dg, &db, &da);
 }
-
-STAGE(store_f16, false) {
+STAGE(store_f16) {
     auto ptr = *(uint64_t**)ctx + x;
 
-    uint64_t buf[8];
-    SkNh::Store4(kIsTail ? buf : ptr, SkFloatToHalf_finite_ftz(r),
-                                      SkFloatToHalf_finite_ftz(g),
-                                      SkFloatToHalf_finite_ftz(b),
-                                      SkFloatToHalf_finite_ftz(a));
-    if (kIsTail) {
-        switch (tail & (N-1)) {
-            case 7: ptr[6] = buf[6];
-            case 6: ptr[5] = buf[5];
-            case 5: ptr[4] = buf[4];
-            case 4: ptr[3] = buf[3];
-            case 3: ptr[2] = buf[2];
-            case 2: ptr[1] = buf[1];
-        }
-        ptr[0] = buf[0];
+    SkNx<N, uint64_t> px;
+    SkNh::Store4(tail ? (void*)&px : (void*)ptr, SkFloatToHalf_finite_ftz(r),
+                                                 SkFloatToHalf_finite_ftz(g),
+                                                 SkFloatToHalf_finite_ftz(b),
+                                                 SkFloatToHalf_finite_ftz(a));
+    if (tail) {
+        store(tail, px, ptr);
     }
 }
 
-STAGE(store_f32, false) {
+STAGE(store_f32) {
     auto ptr = *(SkPM4f**)ctx + x;
 
-    SkPM4f buf[8];
-    SkNf::Store4(kIsTail ? buf : ptr, r,g,b,a);
-    if (kIsTail) {
-        switch (tail & (N-1)) {
-            case 7: ptr[6] = buf[6];
-            case 6: ptr[5] = buf[5];
-            case 5: ptr[4] = buf[4];
-            case 4: ptr[3] = buf[3];
-            case 3: ptr[2] = buf[2];
-            case 2: ptr[1] = buf[1];
-        }
-        ptr[0] = buf[0];
+    SkNx<N, SkPM4f> px;
+    SkNf::Store4(tail ? (void*)&px : (void*)ptr, r,g,b,a);
+    if (tail) {
+        store(tail, px, ptr);
     }
 }
 
 
-// Load 8-bit SkPMColor-order sRGB.
-STAGE(load_d_srgb, true) {
+STAGE(load_8888) {
     auto ptr = *(const uint32_t**)ctx + x;
-
-    auto px = load<kIsTail>(tail, ptr);
-    auto to_int = [](const SkNx<N, uint32_t>& v) { return SkNi::Load(&v); };
-    dr =    sk_linear_from_srgb_math(to_int((px >> SK_R32_SHIFT) & 0xff));
-    dg =    sk_linear_from_srgb_math(to_int((px >> SK_G32_SHIFT) & 0xff));
-    db =    sk_linear_from_srgb_math(to_int((px >> SK_B32_SHIFT) & 0xff));
-    da = (1/255.0f)*SkNx_cast<float>(to_int( px >> SK_A32_SHIFT        ));
+    from_8888(load(tail, ptr), &r, &g, &b, &a);
 }
-
-STAGE(load_s_srgb, true) {
+STAGE(load_8888_d) {
     auto ptr = *(const uint32_t**)ctx + x;
-
-    auto px = load<kIsTail>(tail, ptr);
-    auto to_int = [](const SkNx<N, uint32_t>& v) { return SkNi::Load(&v); };
-    r =    sk_linear_from_srgb_math(to_int((px >> SK_R32_SHIFT) & 0xff));
-    g =    sk_linear_from_srgb_math(to_int((px >> SK_G32_SHIFT) & 0xff));
-    b =    sk_linear_from_srgb_math(to_int((px >> SK_B32_SHIFT) & 0xff));
-    a = (1/255.0f)*SkNx_cast<float>(to_int( px >> SK_A32_SHIFT        ));
+    from_8888(load(tail, ptr), &dr, &dg, &db, &da);
 }
+STAGE(store_8888) {
+    auto byte = [](const SkNf& x, int ix) {
+        // Here's a neat trick: 0x47000000 == 32768.0f, and 0x470000ff == 32768.0f + (255/256.0f).
+        auto v = SkNf_fma(255/256.0f, x, 32768.0f);
+        switch (ix) {
+            case 0: return SkNi::Load(&v) & 0xff;  // R
+            case 3: return SkNi::Load(&v) << 24;   // A
+        }
+        return (SkNi::Load(&v) & 0xff) << (8*ix);  // B or G
+    };
 
-STAGE(store_srgb, false) {
     auto ptr = *(uint32_t**)ctx + x;
-    store<kIsTail>(tail, (              sk_linear_to_srgb(r) << SK_R32_SHIFT
-                         |              sk_linear_to_srgb(g) << SK_G32_SHIFT
-                         |              sk_linear_to_srgb(b) << SK_B32_SHIFT
-                         | SkNx_cast<int>(0.5f + 255.0f * a) << SK_A32_SHIFT), (int*)ptr);
+    store(tail, byte(r,0)|byte(g,1)|byte(b,2)|byte(a,3), (int*)ptr);
 }
 
-STAGE(load_s_8888, true) {
-    auto ptr = *(const uint32_t**)ctx + x;
+STAGE(load_tables) {
+    auto loadCtx = (const LoadTablesContext*)ctx;
+    auto ptr = loadCtx->fSrc + x;
 
-    auto px = load<kIsTail>(tail, ptr);
-    auto to_int = [](const SkNx<N, uint32_t>& v) { return SkNi::Load(&v); };
-    r = (1/255.0f)*SkNx_cast<float>(to_int((px >> 0) & 0xff));
-    g = (1/255.0f)*SkNx_cast<float>(to_int((px >> 8) & 0xff));
-    b = (1/255.0f)*SkNx_cast<float>(to_int((px >> 16) & 0xff));
-    a = (1/255.0f)*SkNx_cast<float>(to_int(px >> 24));
+    SkNu rgba = load(tail, ptr);
+    auto to_int = [](const SkNu& v) { return SkNi::Load(&v); };
+    r = gather(tail, loadCtx->fR, to_int((rgba >>  0) & 0xff));
+    g = gather(tail, loadCtx->fG, to_int((rgba >>  8) & 0xff));
+    b = gather(tail, loadCtx->fB, to_int((rgba >> 16) & 0xff));
+    a = SkNf_from_byte(rgba >> 24);
 }
 
-STAGE(store_8888, false) {
-    auto ptr = *(uint32_t**)ctx + x;
-    store<kIsTail>(tail, ( SkNx_cast<int>(255.0f * r + 0.5f) << 0
-                         | SkNx_cast<int>(255.0f * g + 0.5f) << 8
-                         | SkNx_cast<int>(255.0f * b + 0.5f) << 16
-                         | SkNx_cast<int>(255.0f * a + 0.5f) << 24 ), (int*)ptr);
+STAGE(store_tables) {
+    auto storeCtx = (const StoreTablesContext*)ctx;
+    auto ptr = storeCtx->fDst + x;
+
+    float scale = storeCtx->fCount - 1;
+    SkNi ri = SkNf_round(scale, r);
+    SkNi gi = SkNf_round(scale, g);
+    SkNi bi = SkNf_round(scale, b);
+
+    store(tail, ( SkNx_cast<int>(gather(tail, storeCtx->fR, ri)) << 0
+                | SkNx_cast<int>(gather(tail, storeCtx->fG, gi)) << 8
+                | SkNx_cast<int>(gather(tail, storeCtx->fB, bi)) << 16
+                | SkNf_round(255.0f, a)                          << 24), (int*)ptr);
 }
+
+SI SkNf inv(const SkNf& x) { return 1.0f - x; }
 
 RGBA_XFERMODE(clear)    { return 0.0f; }
-//RGBA_XFERMODE(src)      { return s; }   // This would be a no-op stage, so we just omit it.
-RGBA_XFERMODE(dst)      { return d; }
-
 RGBA_XFERMODE(srcatop)  { return s*da + d*inv(sa); }
 RGBA_XFERMODE(srcin)    { return s * da; }
 RGBA_XFERMODE(srcout)   { return s * inv(da); }
-RGBA_XFERMODE(srcover)  { return SkNx_fma(d, inv(sa), s); }
+RGBA_XFERMODE(srcover)  { return SkNf_fma(d, inv(sa), s); }
 RGBA_XFERMODE(dstatop)  { return srcatop_kernel(d,da,s,sa); }
 RGBA_XFERMODE(dstin)    { return srcin_kernel  (d,da,s,sa); }
 RGBA_XFERMODE(dstout)   { return srcout_kernel (d,da,s,sa); }
@@ -554,117 +635,105 @@ RGB_XFERMODE(softlight) {
     return s*inv(da) + d*inv(sa) + (s2 <= sa).thenElse(darkSrc, liteSrc);  // 1 or (2 or 3)?
 }
 
-STAGE(luminance_to_alpha, true) {
+STAGE(luminance_to_alpha) {
     a = SK_LUM_COEFF_R*r + SK_LUM_COEFF_G*g + SK_LUM_COEFF_B*b;
     r = g = b = 0;
 }
 
-STAGE(matrix_2x3, true) {
+STAGE(matrix_2x3) {
     auto m = (const float*)ctx;
 
-    auto fma = [](const SkNf& f, const SkNf& m, const SkNf& a) { return SkNx_fma(f,m,a); };
-    auto R = fma(r,m[0], fma(g,m[2], m[4])),
-         G = fma(r,m[1], fma(g,m[3], m[5]));
+    auto R = SkNf_fma(r,m[0], SkNf_fma(g,m[2], m[4])),
+         G = SkNf_fma(r,m[1], SkNf_fma(g,m[3], m[5]));
     r = R;
     g = G;
 }
-
-STAGE(matrix_3x4, true) {
+STAGE(matrix_3x4) {
     auto m = (const float*)ctx;
 
-    auto fma = [](const SkNf& f, const SkNf& m, const SkNf& a) { return SkNx_fma(f,m,a); };
-    auto R = fma(r,m[0], fma(g,m[3], fma(b,m[6], m[ 9]))),
-         G = fma(r,m[1], fma(g,m[4], fma(b,m[7], m[10]))),
-         B = fma(r,m[2], fma(g,m[5], fma(b,m[8], m[11])));
+    auto R = SkNf_fma(r,m[0], SkNf_fma(g,m[3], SkNf_fma(b,m[6], m[ 9]))),
+         G = SkNf_fma(r,m[1], SkNf_fma(g,m[4], SkNf_fma(b,m[7], m[10]))),
+         B = SkNf_fma(r,m[2], SkNf_fma(g,m[5], SkNf_fma(b,m[8], m[11])));
     r = R;
     g = G;
     b = B;
 }
-
-STAGE(matrix_4x5, true) {
+STAGE(matrix_4x5) {
     auto m = (const float*)ctx;
 
-    auto fma = [](const SkNf& f, const SkNf& m, const SkNf& a) { return SkNx_fma(f,m,a); };
-    auto R = fma(r,m[0], fma(g,m[4], fma(b,m[ 8], fma(a,m[12], m[16])))),
-         G = fma(r,m[1], fma(g,m[5], fma(b,m[ 9], fma(a,m[13], m[17])))),
-         B = fma(r,m[2], fma(g,m[6], fma(b,m[10], fma(a,m[14], m[18])))),
-         A = fma(r,m[3], fma(g,m[7], fma(b,m[11], fma(a,m[15], m[19]))));
+    auto R = SkNf_fma(r,m[0], SkNf_fma(g,m[4], SkNf_fma(b,m[ 8], SkNf_fma(a,m[12], m[16])))),
+         G = SkNf_fma(r,m[1], SkNf_fma(g,m[5], SkNf_fma(b,m[ 9], SkNf_fma(a,m[13], m[17])))),
+         B = SkNf_fma(r,m[2], SkNf_fma(g,m[6], SkNf_fma(b,m[10], SkNf_fma(a,m[14], m[18])))),
+         A = SkNf_fma(r,m[3], SkNf_fma(g,m[7], SkNf_fma(b,m[11], SkNf_fma(a,m[15], m[19]))));
     r = R;
     g = G;
     b = B;
     a = A;
 }
-
-STAGE(matrix_perspective, true) {
+STAGE(matrix_perspective) {
     // N.B. unlike the matrix_NxM stages, this takes a row-major matrix.
     auto m = (const float*)ctx;
 
-    auto fma = [](const SkNf& f, const SkNf& m, const SkNf& a) { return SkNx_fma(f,m,a); };
-    auto R = fma(r,m[0], fma(g,m[1], m[2])),
-         G = fma(r,m[3], fma(g,m[4], m[5])),
-         Z = fma(r,m[6], fma(g,m[7], m[8]));
+    auto R = SkNf_fma(r,m[0], SkNf_fma(g,m[1], m[2])),
+         G = SkNf_fma(r,m[3], SkNf_fma(g,m[4], m[5])),
+         Z = SkNf_fma(r,m[6], SkNf_fma(g,m[7], m[8]));
     r = R * Z.invert();
     g = G * Z.invert();
 }
-
 
 SI SkNf parametric(const SkNf& v, const SkColorSpaceTransferFn& p) {
     float result[N];   // Unconstrained powf() doesn't vectorize well...
     for (int i = 0; i < N; i++) {
         float s = v[i];
-        result[i] = (s <= p.fD) ? p.fE * s + p.fF
-                                : powf(s * p.fA + p.fB, p.fG) + p.fC;
+        result[i] = (s <= p.fD) ? p.fC * s + p.fF
+                                : powf(s * p.fA + p.fB, p.fG) + p.fE;
     }
-    return SkNf::Load(result);
+    // Clamp the output to [0, 1].
+    // Max(NaN, 0) = 0, but Max(0, NaN) = NaN, so we want this exact order to ensure NaN => 0
+    return SkNf::Min(SkNf::Max(SkNf::Load(result), 0.0f), 1.0f);
 }
-
-STAGE(parametric_r, true) {
-    r = parametric(r, *(const SkColorSpaceTransferFn*)ctx);
-}
-STAGE(parametric_g, true) {
-    g = parametric(g, *(const SkColorSpaceTransferFn*)ctx);
-}
-STAGE(parametric_b, true) {
-    b = parametric(b, *(const SkColorSpaceTransferFn*)ctx);
-}
+STAGE(parametric_r) { r = parametric(r, *(const SkColorSpaceTransferFn*)ctx); }
+STAGE(parametric_g) { g = parametric(g, *(const SkColorSpaceTransferFn*)ctx); }
+STAGE(parametric_b) { b = parametric(b, *(const SkColorSpaceTransferFn*)ctx); }
+STAGE(parametric_a) { a = parametric(a, *(const SkColorSpaceTransferFn*)ctx); }
 
 SI SkNf table(const SkNf& v, const SkTableTransferFn& table) {
     float result[N];
     for (int i = 0; i < N; i++) {
         result[i] = interp_lut(v[i], table.fData, table.fSize);
     }
+    // no need to clamp - tables are by-design [0,1] -> [0,1]
     return SkNf::Load(result);
 }
+STAGE(table_r) { r = table(r, *(const SkTableTransferFn*)ctx); }
+STAGE(table_g) { g = table(g, *(const SkTableTransferFn*)ctx); }
+STAGE(table_b) { b = table(b, *(const SkTableTransferFn*)ctx); }
+STAGE(table_a) { a = table(a, *(const SkTableTransferFn*)ctx); }
 
-STAGE(table_r, true) {
-    r = table(r, *(const SkTableTransferFn*)ctx);
-}
-STAGE(table_g, true) {
-    g = table(g, *(const SkTableTransferFn*)ctx);
-}
-STAGE(table_b, true) {
-    b = table(b, *(const SkTableTransferFn*)ctx);
-}
-
-STAGE(color_lookup_table, true) {
+STAGE(color_lookup_table) {
     const SkColorLookUpTable* colorLUT = (const SkColorLookUpTable*)ctx;
-    float rgb[3];
+    SkASSERT(3 == colorLUT->inputChannels() || 4 == colorLUT->inputChannels());
+    SkASSERT(3 == colorLUT->outputChannels());
     float result[3][N];
     for (int i = 0; i < N; ++i) {
-        rgb[0] = r[i];
-        rgb[1] = g[i];
-        rgb[2] = b[i];
-        colorLUT->interp3D(rgb, rgb);
-        result[0][i] = rgb[0];
-        result[1][i] = rgb[1];
-        result[2][i] = rgb[2];
+        const float in[4] = { r[i], g[i], b[i], a[i] };
+        float out[3];
+        colorLUT->interp(out, in);
+        for (int j = 0; j < colorLUT->outputChannels(); ++j) {
+            result[j][i] = out[j];
+        }
     }
     r = SkNf::Load(result[0]);
     g = SkNf::Load(result[1]);
     b = SkNf::Load(result[2]);
+    if (4 == colorLUT->inputChannels()) {
+        // we must set the pixel to opaque, as the alpha channel was used
+        // as input before this.
+        a = 1.f;
+    }
 }
 
-STAGE(lab_to_xyz, true) {
+STAGE(lab_to_xyz) {
     const auto lab_l = r * 100.0f;
     const auto lab_a = g * 255.0f - 128.0f;
     const auto lab_b = b * 255.0f - 128.0f;
@@ -689,10 +758,6 @@ STAGE(lab_to_xyz, true) {
     b = Z;
 }
 
-STAGE(swap_rb, true) {
-    SkTSwap(r, b);
-}
-
 SI SkNf assert_in_tile(const SkNf& v, float limit) {
     for (int i = 0; i < N; i++) {
         SkASSERT(0 <= v[i] && v[i] < limit);
@@ -704,7 +769,6 @@ SI SkNf clamp(const SkNf& v, float limit) {
     SkNf result = SkNf::Max(0, SkNf::Min(v, limit - 0.5f));
     return assert_in_tile(result, limit);
 }
-
 SI SkNf repeat(const SkNf& v, float limit) {
     SkNf result = v - (v/limit).floor()*limit;
     // For small negative v, (v/limit).floor()*limit can dominate v in the subtraction,
@@ -712,67 +776,122 @@ SI SkNf repeat(const SkNf& v, float limit) {
     result = SkNf::Min(result, nextafterf(limit, 0));
     return assert_in_tile(result, limit);
 }
-
 SI SkNf mirror(const SkNf& v, float l/*imit*/) {
     SkNf result = ((v - l) - ((v - l) / (2*l)).floor()*(2*l) - l).abs();
     // Same deal as repeat.
     result = SkNf::Min(result, nextafterf(l, 0));
     return assert_in_tile(result, l);
 }
+STAGE( clamp_x) { r = clamp (r, *(const float*)ctx); }
+STAGE(repeat_x) { r = repeat(r, *(const float*)ctx); }
+STAGE(mirror_x) { r = mirror(r, *(const float*)ctx); }
+STAGE( clamp_y) { g = clamp (g, *(const float*)ctx); }
+STAGE(repeat_y) { g = repeat(g, *(const float*)ctx); }
+STAGE(mirror_y) { g = mirror(g, *(const float*)ctx); }
 
-STAGE(clamp_x,  true) { r = clamp (r, *(const int*)ctx); }
-STAGE(clamp_y,  true) { g = clamp (g, *(const int*)ctx); }
-STAGE(repeat_x, true) { r = repeat(r, *(const int*)ctx); }
-STAGE(repeat_y, true) { g = repeat(g, *(const int*)ctx); }
-STAGE(mirror_x, true) { r = mirror(r, *(const int*)ctx); }
-STAGE(mirror_y, true) { g = mirror(g, *(const int*)ctx); }
-
-STAGE(top_left, true) {
+STAGE(save_xy) {
     auto sc = (SkImageShaderContext*)ctx;
 
     r.store(sc->x);
     g.store(sc->y);
 
-    r -= 0.5f;
-    g -= 0.5f;
+    // Whether bilinear or bicubic, all sample points have the same fractional offset (fx,fy).
+    // They're either the 4 corners of a logical 1x1 pixel or the 16 corners of a 3x3 grid
+    // surrounding (x,y), all (0.5,0.5) off-center.
+    auto fract = [](const SkNf& v) { return v - v.floor(); };
+    fract(r + 0.5f).store(sc->fx);
+    fract(g + 0.5f).store(sc->fy);
+}
 
-    auto fx = r - r.floor(),
-         fy = g - g.floor();
-    b = (1.0f - fx) * (1.0f - fy);
-};
-
-STAGE(top_right, true) {
+STAGE(accumulate) {
     auto sc = (const SkImageShaderContext*)ctx;
 
-    r = SkNf::Load(sc->x) + 0.5f;
-    g = SkNf::Load(sc->y) - 0.5f;
+    // Bilinear and bicubic filtering are both separable, so we'll end up with independent
+    // scale contributions in x and y that we multiply together to get each pixel's scale factor.
+    auto scale = SkNf::Load(sc->scalex) * SkNf::Load(sc->scaley);
+    dr = SkNf_fma(scale, r, dr);
+    dg = SkNf_fma(scale, g, dg);
+    db = SkNf_fma(scale, b, db);
+    da = SkNf_fma(scale, a, da);
+}
 
-    auto fx = r - r.floor(),
-         fy = g - g.floor();
-    b = fx * (1.0f - fy);
-};
+// In bilinear interpolation, the 4 pixels at +/- 0.5 offsets from the sample pixel center
+// are combined in direct proportion to their area overlapping that logical query pixel.
+// At positive offsets, the x-axis contribution to that rectangular area is fx; (1-fx)
+// at negative x offsets.  The y-axis is treated symmetrically.
+template <int Scale>
+SI void bilinear_x(void* ctx, SkNf* x) {
+    auto sc = (SkImageShaderContext*)ctx;
 
-STAGE(bottom_left, true) {
-    auto sc = (const SkImageShaderContext*)ctx;
+    *x = SkNf::Load(sc->x) + Scale*0.5f;
+    auto fx = SkNf::Load(sc->fx);
+    (Scale > 0 ? fx : (1.0f - fx)).store(sc->scalex);
+}
+template <int Scale>
+SI void bilinear_y(void* ctx, SkNf* y) {
+    auto sc = (SkImageShaderContext*)ctx;
 
-    r = SkNf::Load(sc->x) - 0.5f;
-    g = SkNf::Load(sc->y) + 0.5f;
+    *y = SkNf::Load(sc->y) + Scale*0.5f;
+    auto fy = SkNf::Load(sc->fy);
+    (Scale > 0 ? fy : (1.0f - fy)).store(sc->scaley);
+}
+STAGE(bilinear_nx) { bilinear_x<-1>(ctx, &r); }
+STAGE(bilinear_px) { bilinear_x<+1>(ctx, &r); }
+STAGE(bilinear_ny) { bilinear_y<-1>(ctx, &g); }
+STAGE(bilinear_py) { bilinear_y<+1>(ctx, &g); }
 
-    auto fx = r - r.floor(),
-         fy = g - g.floor();
-    b = (1.0f - fx) * fy;
-};
 
-STAGE(bottom_right, true) {
-    auto sc = (const SkImageShaderContext*)ctx;
+// In bilinear interpolation, the 16 pixels at +/- 0.5 and +/- 1.5 offsets from the sample
+// pixel center are combined with a non-uniform cubic filter, with high filter values near
+// the center and lower values farther away.
+//
+// We break this filter function into two parts, one for near +/- 0.5 offsets,
+// and one for far +/- 1.5 offsets.
+//
+// See GrBicubicEffect for details about this particular Mitchell-Netravali filter.
+SI SkNf bicubic_near(const SkNf& t) {
+    // 1/18 + 9/18t + 27/18t^2 - 21/18t^3 == t ( t ( -21/18t + 27/18) + 9/18) + 1/18
+    return SkNf_fma(t, SkNf_fma(t, SkNf_fma(-21/18.0f, t, 27/18.0f), 9/18.0f), 1/18.0f);
+}
+SI SkNf bicubic_far(const SkNf& t) {
+    // 0/18 + 0/18*t - 6/18t^2 + 7/18t^3 == t^2 (7/18t - 6/18)
+    return (t*t)*SkNf_fma(7/18.0f, t, -6/18.0f);
+}
 
-    r = SkNf::Load(sc->x) + 0.5f;
-    g = SkNf::Load(sc->y) + 0.5f;
+template <int Scale>
+SI void bicubic_x(void* ctx, SkNf* x) {
+    auto sc = (SkImageShaderContext*)ctx;
 
-    auto fx = r - r.floor(),
-         fy = g - g.floor();
-    b = fx * fy;
-};
+    *x = SkNf::Load(sc->x) + Scale*0.5f;
+    auto fx = SkNf::Load(sc->fx);
+    if (Scale == -3) { return bicubic_far (1.0f - fx).store(sc->scalex); }
+    if (Scale == -1) { return bicubic_near(1.0f - fx).store(sc->scalex); }
+    if (Scale == +1) { return bicubic_near(       fx).store(sc->scalex); }
+    if (Scale == +3) { return bicubic_far (       fx).store(sc->scalex); }
+    SkDEBUGFAIL("unreachable");
+}
+template <int Scale>
+SI void bicubic_y(void* ctx, SkNf* y) {
+    auto sc = (SkImageShaderContext*)ctx;
+
+    *y = SkNf::Load(sc->y) + Scale*0.5f;
+    auto fy = SkNf::Load(sc->fy);
+    if (Scale == -3) { return bicubic_far (1.0f - fy).store(sc->scaley); }
+    if (Scale == -1) { return bicubic_near(1.0f - fy).store(sc->scaley); }
+    if (Scale == +1) { return bicubic_near(       fy).store(sc->scaley); }
+    if (Scale == +3) { return bicubic_far (       fy).store(sc->scaley); }
+    SkDEBUGFAIL("unreachable");
+}
+STAGE(bicubic_n3x) { bicubic_x<-3>(ctx, &r); }
+STAGE(bicubic_n1x) { bicubic_x<-1>(ctx, &r); }
+STAGE(bicubic_p1x) { bicubic_x<+1>(ctx, &r); }
+STAGE(bicubic_p3x) { bicubic_x<+3>(ctx, &r); }
+
+STAGE(bicubic_n3y) { bicubic_y<-3>(ctx, &g); }
+STAGE(bicubic_n1y) { bicubic_y<-1>(ctx, &g); }
+STAGE(bicubic_p1y) { bicubic_y<+1>(ctx, &g); }
+STAGE(bicubic_p3y) { bicubic_y<+3>(ctx, &g); }
+
 
 template <typename T>
 SI SkNi offset_and_ptr(T** ptr, const void* ctx, const SkNf& x, const SkNf& y) {
@@ -786,214 +905,56 @@ SI SkNi offset_and_ptr(T** ptr, const void* ctx, const SkNf& x, const SkNf& y) {
     return offset;
 }
 
-STAGE(accum_a8, true) {}  // TODO
-
-STAGE(accum_i8,      true) {}  // TODO
-STAGE(accum_i8_srgb, true) {}  // TODO
-
-STAGE(accum_g8, true) {
+STAGE(gather_a8) {
     const uint8_t* p;
     SkNi offset = offset_and_ptr(&p, ctx, r, g);
 
-    uint8_t px[N];
-    for (size_t i = 0; i < N; i++) {
-        if (kIsTail && i >= tail) {
-            px[i] = 0;
-            continue;
-        }
-        px[i] = p[offset[i]];
-    }
-
-    SkNf gray = SkNx_cast<float>(SkNb::Load(px)) * (1/255.0f);
-
-    SkNf scale = b;
-    dr += scale * gray;
-    dg += scale * gray;
-    db += scale * gray;
-    da += scale;
+    r = g = b = 0.0f;
+    a = SkNf_from_byte(gather(tail, p, offset));
 }
-STAGE(accum_g8_srgb, true) {
+STAGE(gather_i8) {
+    auto sc = (const SkImageShaderContext*)ctx;
+    const uint8_t* p;
+    SkNi offset = offset_and_ptr(&p, sc, r, g);
+
+    SkNi ix = SkNx_cast<int>(gather(tail, p, offset));
+    from_8888(gather(tail, sc->ctable->readColors(), ix), &r, &g, &b, &a);
+}
+STAGE(gather_g8) {
     const uint8_t* p;
     SkNi offset = offset_and_ptr(&p, ctx, r, g);
 
-    uint8_t px[N];
-    for (size_t i = 0; i < N; i++) {
-        if (kIsTail && i >= tail) {
-            px[i] = 0;
-            continue;
-        }
-        px[i] = p[offset[i]];
-    }
-
-    SkNf gray = sk_linear_from_srgb_math(SkNx_cast<int>(SkNb::Load(px)));
-
-    SkNf scale = b;
-    dr += scale * gray;
-    dg += scale * gray;
-    db += scale * gray;
-    da += scale;
+    r = g = b = SkNf_from_byte(gather(tail, p, offset));
+    a = 1.0f;
 }
-
-STAGE(accum_565, true) {
+STAGE(gather_565) {
     const uint16_t* p;
     SkNi offset = offset_and_ptr(&p, ctx, r, g);
 
-    uint16_t px[N];
-    for (size_t i = 0; i < N; i++) {
-        if (kIsTail && i >= tail) {
-            px[i] = 0;
-            continue;
-        }
-        px[i] = p[offset[i]];
-    }
-    SkNf R,G,B;
-    from_565(SkNh::Load(px), &R, &G, &B);
-
-    SkNf scale = b;
-    dr += scale * R;
-    dg += scale * G;
-    db += scale * B;
-    da += scale;
+    from_565(gather(tail, p, offset), &r, &g, &b);
+    a = 1.0f;
 }
-STAGE(accum_565_srgb, true) {
+STAGE(gather_4444) {
     const uint16_t* p;
     SkNi offset = offset_and_ptr(&p, ctx, r, g);
 
-    uint16_t px[N];
-    for (size_t i = 0; i < N; i++) {
-        if (kIsTail && i >= tail) {
-            px[i] = 0;
-            continue;
-        }
-        px[i] = p[offset[i]];
-    }
-    SkNf R,G,B;
-    from_565(SkNh::Load(px), &R, &G, &B);
-
-    SkNf scale = b;
-    dr += scale * sk_linear_from_srgb_math(R);
-    dg += scale * sk_linear_from_srgb_math(G);
-    db += scale * sk_linear_from_srgb_math(B);
-    da += scale;
+    from_4444(gather(tail, p, offset), &r, &g, &b, &a);
 }
-
-STAGE(accum_4444, true) {
-    const uint16_t* p;
-    SkNi offset = offset_and_ptr(&p, ctx, r, g);
-
-    uint16_t px[N];
-    for (size_t i = 0; i < N; i++) {
-        if (kIsTail && i >= tail) {
-            px[i] = 0;
-            continue;
-        }
-        px[i] = p[offset[i]];
-    }
-
-    SkNf R,G,B,A;
-    from_4444(SkNh::Load(px), &R, &G, &B, &A);
-
-    SkNf scale = b;
-    dr += scale * R;
-    dg += scale * G;
-    db += scale * B;
-    da += scale * A;
-}
-STAGE(accum_4444_srgb, true) {
-    const uint16_t* p;
-    SkNi offset = offset_and_ptr(&p, ctx, r, g);
-
-    uint16_t px[N];
-    for (size_t i = 0; i < N; i++) {
-        if (kIsTail && i >= tail) {
-            px[i] = 0;
-            continue;
-        }
-        px[i] = p[offset[i]];
-    }
-
-    SkNf R,G,B,A;
-    from_4444(SkNh::Load(px), &R, &G, &B, &A);
-
-    SkNf scale = b;
-    dr += scale * sk_linear_from_srgb_math(R);
-    dg += scale * sk_linear_from_srgb_math(G);
-    db += scale * sk_linear_from_srgb_math(B);
-    da += scale * A;
-}
-
-STAGE(accum_8888, true) {
+STAGE(gather_8888) {
     const uint32_t* p;
     SkNi offset = offset_and_ptr(&p, ctx, r, g);
 
-    uint8_t R[N], G[N], B[N], A[N];
-    for (size_t i = 0; i < N; i++) {
-        if (kIsTail && i >= tail) {
-            R[i] = G[i] = B[i] = A[i] = 0;
-            continue;
-        }
-        uint32_t rgba = p[offset[i]];
-        R[i] = rgba >>  0;
-        G[i] = rgba >>  8;
-        B[i] = rgba >> 16;
-        A[i] = rgba >> 24;
-    }
-
-    SkNf scale = b;
-    dr += scale * SkNx_cast<float>(SkNb::Load(R)) * (1/255.0f);
-    dg += scale * SkNx_cast<float>(SkNb::Load(G)) * (1/255.0f);
-    db += scale * SkNx_cast<float>(SkNb::Load(B)) * (1/255.0f);
-    da += scale * SkNx_cast<float>(SkNb::Load(A)) * (1/255.0f);
+    from_8888(gather(tail, p, offset), &r, &g, &b, &a);
 }
-STAGE(accum_8888_srgb, true) {
-    const uint32_t* p;
-    SkNi offset = offset_and_ptr(&p, ctx, r, g);
-
-    uint8_t R[N], G[N], B[N], A[N];
-    for (size_t i = 0; i < N; i++) {
-        if (kIsTail && i >= tail) {
-            R[i] = G[i] = B[i] = A[i] = 0;
-            continue;
-        }
-        uint32_t rgba = p[offset[i]];
-        R[i] = rgba >>  0;
-        G[i] = rgba >>  8;
-        B[i] = rgba >> 16;
-        A[i] = rgba >> 24;
-    }
-
-    SkNf scale = b;
-    dr += scale * sk_linear_from_srgb_math(SkNx_cast<int>(SkNb::Load(R)));
-    dg += scale * sk_linear_from_srgb_math(SkNx_cast<int>(SkNb::Load(G)));
-    db += scale * sk_linear_from_srgb_math(SkNx_cast<int>(SkNb::Load(B)));
-    da += scale * SkNx_cast<float>(SkNb::Load(A)) * (1/255.0f);
-}
-
-STAGE(accum_f16, true) {
+STAGE(gather_f16) {
     const uint64_t* p;
     SkNi offset = offset_and_ptr(&p, ctx, r, g);
 
-    uint16_t R[N], G[N], B[N], A[N];
-    for (size_t i = 0; i < N; i++) {
-        if (kIsTail && i >= tail) {
-            R[i] = G[i] = B[i] = A[i] = 0;
-            continue;
-        }
-        uint64_t rgba = p[offset[i]];
-        R[i] = rgba >>  0;
-        G[i] = rgba >> 16;
-        B[i] = rgba >> 32;
-        A[i] = rgba >> 48;
-    }
-    SkNf scale = b;
-    dr += scale * SkHalfToFloat_finite_ftz(SkNh::Load(R));
-    dg += scale * SkHalfToFloat_finite_ftz(SkNh::Load(G));
-    db += scale * SkHalfToFloat_finite_ftz(SkNh::Load(B));
-    da += scale * SkHalfToFloat_finite_ftz(SkNh::Load(A));
+    auto px = gather(tail, p, offset);
+    from_f16(&px, &r, &g, &b, &a);
 }
 
 
-template <typename Fn>
 SI Fn enum_to_Fn(SkRasterPipeline::StockStage st) {
     switch (st) {
     #define M(stage) case SkRasterPipeline::stage: return stage;
@@ -1004,90 +965,54 @@ SI Fn enum_to_Fn(SkRasterPipeline::StockStage st) {
     return just_return;
 }
 
-namespace SK_OPTS_NS {
+namespace {
+    struct Compiled {
+        Compiled(const SkRasterPipeline::Stage* stages, int nstages) : fStages(nstages) {
+            if (nstages == 0) {
+                return;
+            }
+            fStart = enum_to_Fn(stages[0].stage);
+            for (int i = 0; i < nstages-1; i++) {
+                fStages[i].next = enum_to_Fn(stages[i+1].stage);
+                fStages[i].ctx  = stages[i].ctx;
+            }
+            fStages[nstages-1].next = just_return;
+            fStages[nstages-1].ctx  = stages[nstages-1].ctx;
+        }
 
-    struct Memset16 {
-        uint16_t** dst;
-        uint16_t val;
-        void operator()(size_t x, size_t, size_t n) { sk_memset16(*dst + x, val, n); }
-    };
+        void operator()(size_t x, size_t y, size_t n) {
+            float dx[] = { 0,1,2,3,4,5,6,7 };
+            SkNf X = SkNf(x) + SkNf::Load(dx) + 0.5f,
+                 Y = SkNf(y) + 0.5f,
+                _0 = SkNf(0),
+                _1 = SkNf(1);
 
-    struct Memset32 {
-        uint32_t** dst;
-        uint32_t val;
-        void operator()(size_t x, size_t, size_t n) { sk_memset32(*dst + x, val, n); }
-    };
-
-    struct Memset64 {
-        uint64_t** dst;
-        uint64_t val;
-        void operator()(size_t x, size_t, size_t n) { sk_memset64(*dst + x, val, n); }
-    };
-
-    SI std::function<void(size_t, size_t, size_t)>
-    compile_pipeline(const SkRasterPipeline::Stage* stages, int nstages) {
-        if (nstages == 2 && stages[0].stage == SkRasterPipeline::constant_color) {
-            SkPM4f src = *(const SkPM4f*)stages[0].ctx;
-            void* dst = stages[1].ctx;
-            switch (stages[1].stage) {
-                case SkRasterPipeline::store_565:
-                    return Memset16{(uint16_t**)dst, SkPackRGB16(src.r() * SK_R16_MASK + 0.5f,
-                                                                 src.g() * SK_G16_MASK + 0.5f,
-                                                                 src.b() * SK_B16_MASK + 0.5f)};
-                case SkRasterPipeline::store_srgb:
-                    return Memset32{(uint32_t**)dst, Sk4f_toS32(src.to4f_pmorder())};
-
-                case SkRasterPipeline::store_f16:
-                    return Memset64{(uint64_t**)dst, src.toF16()};
-
-                default: break;
+            while (n >= N) {
+                fStart(fStages.data(), x*N, X,Y,_1,_0, _0,_0,_0,_0);
+                X += (float)N;
+                x += N;
+                n -= N;
+            }
+            if (n) {
+                fStart(fStages.data(), x*N+n, X,Y,_1,_0, _0,_0,_0,_0);
             }
         }
 
-        struct Compiled {
-            Compiled(const SkRasterPipeline::Stage* stages, int nstages) {
-                if (nstages == 0) {
-                    return;
-                }
+        Fn fStart = just_return;
+        std::vector<Stage> fStages;
+    };
+}
 
-                fBodyStart = enum_to_Fn<Body>(stages[0].stage);
-                fTailStart = enum_to_Fn<Tail>(stages[0].stage);
-                for (int i = 0; i < nstages-1; i++) {
-                    fBody[i].next = enum_to_Fn<Body>(stages[i+1].stage);
-                    fTail[i].next = enum_to_Fn<Tail>(stages[i+1].stage);
-                    fBody[i].ctx = fTail[i].ctx = stages[i].ctx;
-                }
-                fBody[nstages-1].next = just_return;
-                fTail[nstages-1].next = just_return;
-                fBody[nstages-1].ctx = fTail[nstages-1].ctx = stages[nstages-1].ctx;
-            }
+namespace SK_OPTS_NS {
 
-            void operator()(size_t x, size_t y, size_t n) {
-                float dx[] = { 0,1,2,3,4,5,6,7 };
-                SkNf X = SkNf(x) + SkNf::Load(dx) + 0.5f,
-                     Y = SkNf(y) + 0.5f,
-                    _0 = SkNf(0),
-                    _1 = SkNf(1);
+    SI std::function<void(size_t, size_t, size_t)>
+    compile_pipeline(const SkRasterPipeline::Stage* stages, int nstages) {
+        return Compiled{stages,nstages};
+    }
 
-                while (n >= N) {
-                    fBodyStart(fBody, x, X,Y,_1,_0, _0,_0,_0,_0);
-                    X += (float)N;
-                    x += N;
-                    n -= N;
-                }
-                if (n) {
-                    fTailStart(fTail, x,n, X,Y,_1,_0, _0,_0,_0,_0);
-                }
-            }
-
-            Body fBodyStart = just_return;
-            Tail fTailStart = just_return;
-
-            BodyStage fBody[SkRasterPipeline::kMaxStages];
-            TailStage fTail[SkRasterPipeline::kMaxStages];
-
-        } fn { stages, nstages };
-        return fn;
+    SI void run_pipeline(size_t x, size_t y, size_t n,
+                         const SkRasterPipeline::Stage* stages, int nstages) {
+        Compiled{stages,nstages}(x,y,n);
     }
 
 }  // namespace SK_OPTS_NS

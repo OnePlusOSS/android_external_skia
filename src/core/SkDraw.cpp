@@ -33,7 +33,6 @@
 #include "SkTLazy.h"
 #include "SkUtils.h"
 #include "SkVertState.h"
-#include "SkXfermode.h"
 
 #include "SkBitmapProcShader.h"
 #include "SkDrawProcs.h"
@@ -1957,7 +1956,8 @@ void SkDraw::drawVertices(SkCanvas::VertexMode vmode, int count,
                 SkMatrix tempM;
                 if (texture_to_matrix(state, vertices, textures, &tempM)) {
                     SkShader::ContextRec rec(p, *fMatrix, &tempM,
-                                             SkBlitter::PreferredShaderDest(fDst.info()));
+                                             SkBlitter::PreferredShaderDest(fDst.info()),
+                                             fDst.colorSpace());
                     if (!blitter->resetShaderContext(rec)) {
                         continue;
                     }

@@ -116,16 +116,18 @@ public:
         };
 
         ContextRec(const SkPaint& paint, const SkMatrix& matrix, const SkMatrix* localM,
-                   DstType dstType)
+                   DstType dstType, SkColorSpace* dstColorSpace)
             : fPaint(&paint)
             , fMatrix(&matrix)
             , fLocalMatrix(localM)
-            , fPreferredDstType(dstType) {}
+            , fPreferredDstType(dstType)
+            , fDstColorSpace(dstColorSpace) {}
 
         const SkPaint*  fPaint;            // the current paint associated with the draw
         const SkMatrix* fMatrix;           // the current matrix in the canvas
         const SkMatrix* fLocalMatrix;      // optional local matrix
         const DstType   fPreferredDstType; // the "natural" client dest type
+        SkColorSpace*   fDstColorSpace;    // the color space of the dest surface (if any)
     };
 
     class Context : public ::SkNoncopyable {
@@ -340,21 +342,18 @@ public:
                  const SkMatrix* viewMatrix,
                  const SkMatrix* localMatrix,
                  SkFilterQuality filterQuality,
-                 SkColorSpace* dstColorSpace,
-                 SkDestinationSurfaceColorMode colorMode)
+                 SkColorSpace* dstColorSpace)
             : fContext(context)
             , fViewMatrix(viewMatrix)
             , fLocalMatrix(localMatrix)
             , fFilterQuality(filterQuality)
-            , fDstColorSpace(dstColorSpace)
-            , fColorMode(colorMode) {}
+            , fDstColorSpace(dstColorSpace) {}
 
         GrContext*                    fContext;
         const SkMatrix*               fViewMatrix;
         const SkMatrix*               fLocalMatrix;
         SkFilterQuality               fFilterQuality;
         SkColorSpace*                 fDstColorSpace;
-        SkDestinationSurfaceColorMode fColorMode;
     };
 
     /**
@@ -477,7 +476,7 @@ public:
     SK_DECLARE_FLATTENABLE_REGISTRAR_GROUP()
 
     bool appendStages(SkRasterPipeline*, SkColorSpace*, SkFallbackAlloc*,
-                      const SkMatrix& ctm, SkFilterQuality) const;
+                      const SkMatrix& ctm, const SkPaint&) const;
 
 protected:
     void flatten(SkWriteBuffer&) const override;
@@ -511,7 +510,7 @@ protected:
     }
 
     virtual bool onAppendStages(SkRasterPipeline*, SkColorSpace*, SkFallbackAlloc*,
-                                const SkMatrix&, SkFilterQuality) const {
+                                const SkMatrix&, const SkPaint&) const {
         return false;
     }
 

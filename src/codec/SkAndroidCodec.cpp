@@ -63,17 +63,27 @@ SkAndroidCodec* SkAndroidCodec::NewFromData(sk_sp<SkData> data, SkPngChunkReader
 
 SkColorType SkAndroidCodec::computeOutputColorType(SkColorType requestedColorType) {
     // The legacy GIF and WBMP decoders always decode to kIndex_8_SkColorType.
-    // We will maintain this behavior.
-    SkEncodedImageFormat format = (SkEncodedImageFormat)this->getEncodedFormat();
-    if (SkEncodedImageFormat::kGIF == format || SkEncodedImageFormat::kWBMP == format) {
-        return kIndex_8_SkColorType;
+    // We will maintain this behavior when we can.
+    const SkColorType suggestedColorType = this->getInfo().colorType();
+    switch ((SkEncodedImageFormat) this->getEncodedFormat()) {
+        case SkEncodedImageFormat::kGIF:
+            if (suggestedColorType == kIndex_8_SkColorType) {
+                return kIndex_8_SkColorType;
+            }
+            break;
+        case SkEncodedImageFormat::kWBMP:
+            return kIndex_8_SkColorType;
+        default:
+            break;
     }
 
-    SkColorType suggestedColorType = this->getInfo().colorType();
+    bool highPrecision = fCodec->getEncodedInfo().bitsPerComponent() > 8;
     switch (requestedColorType) {
         case kARGB_4444_SkColorType:
-        case kN32_SkColorType:
             return kN32_SkColorType;
+        case kN32_SkColorType:
+            // F16 is the Android default for high precision images.
+            return highPrecision ? kRGBA_F16_SkColorType : kN32_SkColorType;
         case kIndex_8_SkColorType:
             if (kIndex_8_SkColorType == suggestedColorType) {
                 return kIndex_8_SkColorType;
@@ -93,6 +103,8 @@ SkColorType SkAndroidCodec::computeOutputColorType(SkColorType requestedColorTyp
                 return kRGB_565_SkColorType;
             }
             break;
+        case kRGBA_F16_SkColorType:
+            return kRGBA_F16_SkColorType;
         default:
             break;
     }
@@ -103,8 +115,8 @@ SkColorType SkAndroidCodec::computeOutputColorType(SkColorType requestedColorTyp
         return kN32_SkColorType;
     }
 
-    // This may be kN32_SkColorType or kIndex_8_SkColorType.
-    return suggestedColorType;
+    // |suggestedColorType| may be kN32_SkColorType or kIndex_8_SkColorType.
+    return highPrecision ? kRGBA_F16_SkColorType : suggestedColorType;
 }
 
 SkAlphaType SkAndroidCodec::computeOutputAlphaType(bool requestedUnpremul) {
@@ -112,6 +124,20 @@ SkAlphaType SkAndroidCodec::computeOutputAlphaType(bool requestedUnpremul) {
         return kOpaque_SkAlphaType;
     }
     return requestedUnpremul ? kUnpremul_SkAlphaType : kPremul_SkAlphaType;
+}
+
+sk_sp<SkColorSpace> SkAndroidCodec::computeOutputColorSpace(SkColorType outputColorType) {
+    switch (outputColorType) {
+        case kRGBA_8888_SkColorType:
+        case kBGRA_8888_SkColorType:
+        case kIndex_8_SkColorType:
+            return SkColorSpace::MakeNamed(SkColorSpace::kSRGB_Named);
+        case kRGBA_F16_SkColorType:
+            return SkColorSpace::MakeNamed(SkColorSpace::kSRGBLinear_Named);
+        default:
+            // Color correction not supported for k565 and kGray.
+            return nullptr;
+    }
 }
 
 SkISize SkAndroidCodec::getSampledDimensions(int sampleSize) const {

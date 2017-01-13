@@ -209,11 +209,10 @@ bool SkBaseDevice::drawExternallyScaledImage(const SkDraw& draw,
         return false;
     }
 
-    SkDestinationSurfaceColorMode colorMode = this->imageInfo().colorSpace()
-        ? SkDestinationSurfaceColorMode::kGammaAndColorSpaceAware
-        : SkDestinationSurfaceColorMode::kLegacy;
     SkBitmap bm;
-    if (!as_IB(rec.fImage)->getROPixels(&bm, colorMode)) {
+    if (!bm.installPixels(rec.fPixmap.info(), const_cast<void*>(rec.fPixmap.addr()),
+                          rec.fPixmap.rowBytes(), rec.fPixmap.ctable(),
+                          rec.fReleaseProc, rec.fReleaseCtx)) {
         return false;
     }
 
@@ -235,11 +234,8 @@ void SkBaseDevice::drawImage(const SkDraw& draw, const SkImage* image, SkScalar 
         return;
     }
 
-    SkDestinationSurfaceColorMode colorMode = this->imageInfo().colorSpace()
-        ? SkDestinationSurfaceColorMode::kGammaAndColorSpaceAware
-        : SkDestinationSurfaceColorMode::kLegacy;
     SkBitmap bm;
-    if (as_IB(image)->getROPixels(&bm, colorMode)) {
+    if (as_IB(image)->getROPixels(&bm, this->imageInfo().colorSpace())) {
         this->drawBitmap(draw, bm, SkMatrix::MakeTrans(x, y), paint);
     }
 }
@@ -252,11 +248,8 @@ void SkBaseDevice::drawImageRect(const SkDraw& draw, const SkImage* image, const
         return;
     }
 
-    SkDestinationSurfaceColorMode colorMode = this->imageInfo().colorSpace()
-        ? SkDestinationSurfaceColorMode::kGammaAndColorSpaceAware
-        : SkDestinationSurfaceColorMode::kLegacy;
     SkBitmap bm;
-    if (as_IB(image)->getROPixels(&bm, colorMode)) {
+    if (as_IB(image)->getROPixels(&bm, this->imageInfo().colorSpace())) {
         this->drawBitmapRect(draw, bm, src, dst, paint, constraint);
     }
 }

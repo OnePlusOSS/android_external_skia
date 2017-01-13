@@ -16,7 +16,6 @@
 #include "SkString.h"
 #include "SkTLazy.h"
 #include "SkUtils.h"
-#include "SkXfermode.h"
 #include "SkXfermodeInterpretation.h"
 
 // define this for testing srgb blits
@@ -892,7 +891,8 @@ SkBlitter* SkBlitter::Choose(const SkPixmap& device,
     SkShader::Context* shaderContext = nullptr;
     if (shader) {
         const SkShader::ContextRec rec(*paint, matrix, nullptr,
-                                       PreferredShaderDest(device.info()));
+                                       PreferredShaderDest(device.info()),
+                                       device.colorSpace());
         size_t contextSize = shader->contextSize(rec);
         if (contextSize) {
             // Try to create the ShaderContext
@@ -979,7 +979,7 @@ public:
     SkZeroShaderContext(const SkShader& shader, const SkShader::ContextRec& rec)
         // Override rec with the identity matrix, so it is guaranteed to be invertible.
         : INHERITED(shader, SkShader::ContextRec(*rec.fPaint, SkMatrix::I(), nullptr,
-                                                 rec.fPreferredDstType)) {}
+                                                 rec.fPreferredDstType, rec.fDstColorSpace)) {}
 
     void shadeSpan(int x, int y, SkPMColor colors[], int count) override {
         sk_bzero(colors, count * sizeof(SkPMColor));

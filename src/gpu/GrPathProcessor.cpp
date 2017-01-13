@@ -7,8 +7,8 @@
 
 #include "GrPathProcessor.h"
 
+#include "GrShaderCaps.h"
 #include "gl/GrGLGpu.h"
-#include "glsl/GrGLSLCaps.h"
 #include "glsl/GrGLSLFragmentShaderBuilder.h"
 #include "glsl/GrGLSLUniformHandler.h"
 #include "glsl/GrGLSLVarying.h"
@@ -18,10 +18,10 @@ public:
     GrGLPathProcessor() : fColor(GrColor_ILLEGAL) {}
 
     static void GenKey(const GrPathProcessor& pathProc,
-                       const GrGLSLCaps&,
+                       const GrShaderCaps&,
                        GrProcessorKeyBuilder* b) {
-        b->add32(SkToInt(pathProc.overrides().readsColor()) |
-                 (SkToInt(pathProc.overrides().readsCoverage()) << 1) |
+        b->add32(SkToInt(pathProc.optimizations().readsColor()) |
+                 (SkToInt(pathProc.optimizations().readsCoverage()) << 1) |
                  (SkToInt(pathProc.viewMatrix().hasPerspective()) << 2));
     }
 
@@ -37,7 +37,7 @@ public:
         this->emitTransforms(args.fVaryingHandler, args.fFPCoordTransformHandler);
 
         // Setup uniform color
-        if (pathProc.overrides().readsColor()) {
+        if (pathProc.optimizations().readsColor()) {
             const char* stagedLocalVarName;
             fColorUniform = args.fUniformHandler->addUniform(kFragment_GrShaderFlag,
                                                              kVec4f_GrSLType,
@@ -48,7 +48,7 @@ public:
         }
 
         // setup constant solid coverage
-        if (pathProc.overrides().readsCoverage()) {
+        if (pathProc.optimizations().readsCoverage()) {
             fragBuilder->codeAppendf("%s = vec4(1);", args.fOutputCoverage);
         }
     }
@@ -79,7 +79,7 @@ public:
                  const GrPrimitiveProcessor& primProc,
                  FPCoordTransformIter&& transformIter) override {
         const GrPathProcessor& pathProc = primProc.cast<GrPathProcessor>();
-        if (pathProc.overrides().readsColor() && pathProc.color() != fColor) {
+        if (pathProc.optimizations().readsColor() && pathProc.color() != fColor) {
             float c[4];
             GrColorToRGBAFloat(pathProc.color(), c);
             pd.set4fv(fColorUniform, 1, c);
@@ -120,22 +120,22 @@ private:
 };
 
 GrPathProcessor::GrPathProcessor(GrColor color,
-                                 const GrXPOverridesForBatch& overrides,
+                                 const GrPipelineOptimizations& optimizations,
                                  const SkMatrix& viewMatrix,
                                  const SkMatrix& localMatrix)
-    : fColor(color)
-    , fViewMatrix(viewMatrix)
-    , fLocalMatrix(localMatrix)
-    , fOverrides(overrides) {
+        : fColor(color)
+        , fViewMatrix(viewMatrix)
+        , fLocalMatrix(localMatrix)
+        , fOptimizations(optimizations) {
     this->initClassID<GrPathProcessor>();
 }
 
-void GrPathProcessor::getGLSLProcessorKey(const GrGLSLCaps& caps,
+void GrPathProcessor::getGLSLProcessorKey(const GrShaderCaps& caps,
                                           GrProcessorKeyBuilder* b) const {
     GrGLPathProcessor::GenKey(*this, caps, b);
 }
 
-GrGLSLPrimitiveProcessor* GrPathProcessor::createGLSLInstance(const GrGLSLCaps& caps) const {
+GrGLSLPrimitiveProcessor* GrPathProcessor::createGLSLInstance(const GrShaderCaps& caps) const {
     SkASSERT(caps.pathRenderingSupport());
     return new GrGLPathProcessor();
 }

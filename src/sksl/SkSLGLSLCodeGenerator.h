@@ -4,7 +4,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
- 
+
 #ifndef SKSL_GLSLCODEGENERATOR
 #define SKSL_GLSLCODEGENERATOR
 
@@ -13,7 +13,6 @@
 #include <unordered_map>
 
 #include "SkStream.h"
-#include "glsl/GrGLSLCaps.h"
 #include "SkSLCodeGenerator.h"
 #include "ir/SkSLBinaryExpression.h"
 #include "ir/SkSLBoolLiteral.h"
@@ -72,11 +71,12 @@ public:
         kTopLevel_Precedence       = 18
     };
 
-    GLSLCodeGenerator(const Context* context, const GrGLSLCaps* caps)
-    : fContext(*context)
-    , fCaps(*caps) {}
+    GLSLCodeGenerator(const Context* context, const Program* program, ErrorReporter* errors,
+                      SkWStream* out)
+    : INHERITED(program, errors, out)
+    , fContext(*context) {}
 
-    void generateCode(const Program& program, SkWStream& out) override;
+    virtual bool generateCode() override;
 
 private:
     void write(const char* s);
@@ -104,15 +104,17 @@ private:
     void writeLayout(const Layout& layout);
 
     void writeModifiers(const Modifiers& modifiers, bool globalContext);
-    
+
     void writeGlobalVars(const VarDeclaration& vs);
 
     void writeVarDeclarations(const VarDeclarations& decl, bool global);
 
+    void writeFragCoord();
+
     void writeVariableReference(const VariableReference& ref);
 
     void writeExpression(const Expression& expr, Precedence parentPrecedence);
-    
+
     void writeIntrinsicCall(const FunctionCall& c);
 
     void writeMinAbsHack(Expression& absExpr, Expression& otherExpr);
@@ -156,21 +158,23 @@ private:
     void writeReturnStatement(const ReturnStatement& r);
 
     const Context& fContext;
-    const GrGLSLCaps& fCaps;
-    SkWStream* fOut = nullptr;
     SkDynamicMemoryWStream fHeader;
     SkString fFunctionHeader;
     Program::Kind fProgramKind;
     int fVarCount = 0;
     int fIndentation = 0;
     bool fAtLineStart = false;
-    // Keeps track of which struct types we have written. Given that we are unlikely to ever write 
-    // more than one or two structs per shader, a simple linear search will be faster than anything 
+    // Keeps track of which struct types we have written. Given that we are unlikely to ever write
+    // more than one or two structs per shader, a simple linear search will be faster than anything
     // fancier.
     std::vector<const Type*> fWrittenStructs;
     // true if we have run into usages of dFdx / dFdy
     bool fFoundDerivatives = false;
     bool fFoundImageDecl = false;
+    bool fSetupFragPositionGlobal = false;
+    bool fSetupFragPositionLocal = false;
+
+    typedef CodeGenerator INHERITED;
 };
 
 }

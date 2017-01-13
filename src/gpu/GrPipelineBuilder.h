@@ -22,22 +22,21 @@
 #include "effects/GrPorterDuffXferProcessor.h"
 #include "effects/GrSimpleTextureEffect.h"
 
-class GrDrawBatch;
+class GrDrawOp;
 class GrCaps;
 class GrPaint;
 class GrTexture;
 
 class GrPipelineBuilder : public SkNoncopyable {
 public:
-    GrPipelineBuilder();
-
+//    GrPipelineBuilder();
     /**
      * Initializes the GrPipelineBuilder based on a GrPaint and MSAA availability. Note
      * that GrPipelineBuilder encompasses more than GrPaint. Aspects of GrPipelineBuilder that have
      * no GrPaint equivalents are set to default values with the exception of vertex attribute state
      * which is unmodified by this function and clipping which will be enabled.
      */
-    GrPipelineBuilder(const GrPaint&, bool useHWAA = false);
+    GrPipelineBuilder(const GrPaint& paint, GrAAType aaType);
 
     virtual ~GrPipelineBuilder();
 
@@ -165,8 +164,7 @@ public:
     /**
      * Checks whether the xp will need destination in a texture to correctly blend.
      */
-    bool willXPNeedDstTexture(const GrCaps& caps,
-                              const GrPipelineOptimizations& optimizations) const;
+    bool willXPNeedDstTexture(const GrCaps& caps, const GrPipelineAnalysis&) const;
 
     /// @}
 
@@ -294,7 +292,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////
 
-    bool usePLSDstRead(const GrDrawBatch* batch) const;
+    bool usePLSDstRead(const GrDrawOp*) const;
 
 private:
     // Some of the auto restore objects assume that no effects are removed during their lifetime.

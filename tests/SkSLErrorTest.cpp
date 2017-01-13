@@ -14,21 +14,34 @@
 static void test_failure(skiatest::Reporter* r, const char* src, const char* error) {
     SkSL::Compiler compiler;
     SkDynamicMemoryWStream out;
-    bool result = compiler.toSPIRV(SkSL::Program::kFragment_Kind, SkString(src), out);
+    SkSL::Program::Settings settings;
+    sk_sp<GrShaderCaps> caps = SkSL::ShaderCapsFactory::Default();
+    settings.fCaps = caps.get();
+    std::unique_ptr<SkSL::Program> program = compiler.convertProgram(SkSL::Program::kFragment_Kind,
+                                                                     SkString(src), settings);
+    if (program) {
+        SkString ignored;
+        compiler.toSPIRV(*program, &ignored);
+    }
     SkString skError(error);
     if (compiler.errorText() != skError) {
         SkDebugf("SKSL ERROR:\n    source: %s\n    expected: %s    received: %s", src, error,
                  compiler.errorText().c_str());
     }
-    REPORTER_ASSERT(r, !result);
     REPORTER_ASSERT(r, compiler.errorText() == skError);
 }
 
 static void test_success(skiatest::Reporter* r, const char* src) {
     SkSL::Compiler compiler;
     SkDynamicMemoryWStream out;
-    bool result = compiler.toSPIRV(SkSL::Program::kFragment_Kind, SkString(src), out);
-    REPORTER_ASSERT(r, result);
+    SkSL::Program::Settings settings;
+    sk_sp<GrShaderCaps> caps = SkSL::ShaderCapsFactory::Default();
+    settings.fCaps = caps.get();
+    std::unique_ptr<SkSL::Program> program = compiler.convertProgram(SkSL::Program::kFragment_Kind,
+                                                                     SkString(src), settings);
+    REPORTER_ASSERT(r, program);
+    SkString ignored;
+    REPORTER_ASSERT(r, compiler.toSPIRV(*program, &ignored));
 }
 
 DEF_TEST(SkSLUndefinedSymbol, r) {
@@ -376,6 +389,15 @@ DEF_TEST(SkSLBadCap, r) {
     test_failure(r,
                  "bool b = sk_Caps.bugFreeDriver;",
                  "error: 1: unknown capability flag 'bugFreeDriver'\n1 error\n");
+}
+
+DEF_TEST(SkSLBadOffset, r) {
+    test_failure(r,
+                 "struct Bad { layout (offset = 5) int x; } bad; void main() { bad.x = 5; }",
+                 "error: 1: offset of field 'x' must be a multiple of 4\n1 error\n");
+    test_failure(r,
+                 "struct Bad { int x; layout (offset = 0) int y; } bad; void main() { bad.x = 5; }",
+                 "error: 1: offset of field 'y' must be at least 4\n1 error\n");
 }
 
 #endif

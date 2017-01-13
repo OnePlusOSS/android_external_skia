@@ -32,7 +32,6 @@
 #include "SkCommonFlags.h"
 #include "SkCommonFlagsConfig.h"
 #include "SkData.h"
-#include "SkForceLinking.h"
 #include "SkGraphics.h"
 #include "SkLeanWindows.h"
 #include "SkOSFile.h"
@@ -68,8 +67,6 @@
 #endif
 
     struct GrContextOptions;
-
-__SK_FORCE_IMAGE_DECODER_LINKING;
 
 static const int kAutoTuneLoops = 0;
 
@@ -1198,9 +1195,7 @@ int nanobench_main() {
         start_keepalive();
     }
 
-    if (FLAGS_analyticAA) {
-        gSkUseAnalyticAA = true;
-    }
+    gSkUseAnalyticAA = FLAGS_analyticAA;
 
     int runs = 0;
     BenchmarkStream benchStream;
@@ -1291,6 +1286,7 @@ int nanobench_main() {
             benchStream.fillCurrentOptions(log.get());
             target->fillOptions(log.get());
             log->metric("min_ms",    stats.min);
+            log->metrics("samples",    samples);
 #if SK_SUPPORT_GPU
             if (gpuStatsDump) {
                 // dump to json, only SKPBench currently returns valid keys / values

@@ -8,9 +8,9 @@
 #ifndef GrAtlasTextBlob_DEFINED
 #define GrAtlasTextBlob_DEFINED
 
-#include "GrBatchAtlas.h"
-#include "GrBatchFontCache.h"
+#include "GrAtlasGlyphCache.h"
 #include "GrColor.h"
+#include "GrDrawOpAtlas.h"
 #include "GrMemoryPool.h"
 #include "SkDescriptor.h"
 #include "SkMaskFilter.h"
@@ -161,7 +161,7 @@ public:
     void appendGlyph(int runIndex,
                      const SkRect& positions,
                      GrColor color,
-                     GrBatchTextStrike* strike,
+                     GrAtlasTextStrike* strike,
                      GrGlyph* glyph,
                      SkGlyphCache*, const SkGlyph& skGlyph,
                      SkScalar x, SkScalar y, SkScalar scale, bool treatAsBMP);
@@ -260,14 +260,14 @@ public:
     }
 
     /**
-     * Consecutive calls to regenInBatch often use the same SkGlyphCache. If the same instance of
-     * SkAutoGlyphCache is passed to multiple calls of regenInBatch then it can save the cost of
+     * Consecutive calls to regenInOp often use the same SkGlyphCache. If the same instance of
+     * SkAutoGlyphCache is passed to multiple calls of regenInOp then it can save the cost of
      * multiple detach/attach operations of SkGlyphCache.
      */
-    void regenInBatch(GrDrawBatch::Target* target, GrBatchFontCache* fontCache,
-                      GrBlobRegenHelper *helper, int run, int subRun, SkAutoGlyphCache*,
-                      size_t vertexStride, const SkMatrix& viewMatrix, SkScalar x, SkScalar y,
-                      GrColor color, void** vertices, size_t* byteCount, int* glyphCount);
+    void regenInOp(GrDrawOp::Target* target, GrAtlasGlyphCache* fontCache,
+                   GrBlobRegenHelper* helper, int run, int subRun, SkAutoGlyphCache*,
+                   size_t vertexStride, const SkMatrix& viewMatrix, SkScalar x, SkScalar y,
+                   GrColor color, void** vertices, size_t* byteCount, int* glyphCount);
 
     const Key& key() const { return fKey; }
 
@@ -279,11 +279,11 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Internal test methods
-    GrDrawBatch* test_createBatch(int glyphCount, int run, int subRun,
-                                  const SkMatrix& viewMatrix, SkScalar x, SkScalar y, GrColor color,
-                                  const SkPaint& skPaint, const SkSurfaceProps& props,
-                                  const GrDistanceFieldAdjustTable* distanceAdjustTable,
-                                  GrBatchFontCache* cache);
+    sk_sp<GrDrawOp> test_makeOp(int glyphCount, int run, int subRun, const SkMatrix& viewMatrix,
+                                SkScalar x, SkScalar y, GrColor color, const SkPaint& skPaint,
+                                const SkSurfaceProps& props,
+                                const GrDistanceFieldAdjustTable* distanceAdjustTable,
+                                GrAtlasGlyphCache* cache);
 
 private:
     GrAtlasTextBlob()
@@ -298,7 +298,7 @@ private:
                          int run, const SkMatrix& viewMatrix, SkScalar x, SkScalar y,
                          const SkPaint& skPaint, const SkSurfaceProps& props,
                          const GrDistanceFieldAdjustTable* distanceAdjustTable,
-                         GrBatchFontCache* cache);
+                         GrAtlasGlyphCache* cache);
 
     void flushBigGlyphs(GrContext* context, GrRenderTargetContext* rtc,
                         const GrClip& clip, const SkPaint& skPaint,
@@ -364,15 +364,15 @@ private:
         }
         struct SubRunInfo {
             SubRunInfo()
-                : fAtlasGeneration(GrBatchAtlas::kInvalidAtlasGeneration)
-                , fVertexStartIndex(0)
-                , fVertexEndIndex(0)
-                , fGlyphStartIndex(0)
-                , fGlyphEndIndex(0)
-                , fColor(GrColor_ILLEGAL)
-                , fMaskFormat(kA8_GrMaskFormat)
-                , fDrawAsDistanceFields(false)
-                , fUseLCDText(false) {
+                    : fAtlasGeneration(GrDrawOpAtlas::kInvalidAtlasGeneration)
+                    , fVertexStartIndex(0)
+                    , fVertexEndIndex(0)
+                    , fGlyphStartIndex(0)
+                    , fGlyphEndIndex(0)
+                    , fColor(GrColor_ILLEGAL)
+                    , fMaskFormat(kA8_GrMaskFormat)
+                    , fDrawAsDistanceFields(false)
+                    , fUseLCDText(false) {
                 fVertexBounds.setLargestInverted();
             }
             SubRunInfo(const SubRunInfo& that)
@@ -395,9 +395,9 @@ private:
 
             // TODO when this object is more internal, drop the privacy
             void resetBulkUseToken() { fBulkUseToken.reset(); }
-            GrBatchAtlas::BulkUseTokenUpdater* bulkUseToken() { return &fBulkUseToken; }
-            void setStrike(GrBatchTextStrike* strike) { fStrike.reset(SkRef(strike)); }
-            GrBatchTextStrike* strike() const { return fStrike.get(); }
+            GrDrawOpAtlas::BulkUseTokenUpdater* bulkUseToken() { return &fBulkUseToken; }
+            void setStrike(GrAtlasTextStrike* strike) { fStrike.reset(SkRef(strike)); }
+            GrAtlasTextStrike* strike() const { return fStrike.get(); }
 
             void setAtlasGeneration(uint64_t atlasGeneration) { fAtlasGeneration = atlasGeneration;}
             uint64_t atlasGeneration() const { return fAtlasGeneration; }
@@ -451,8 +451,8 @@ private:
             bool drawAsDistanceFields() const { return fDrawAsDistanceFields; }
 
         private:
-            GrBatchAtlas::BulkUseTokenUpdater fBulkUseToken;
-            sk_sp<GrBatchTextStrike> fStrike;
+            GrDrawOpAtlas::BulkUseTokenUpdater fBulkUseToken;
+            sk_sp<GrAtlasTextStrike> fStrike;
             SkMatrix fCurrentViewMatrix;
             SkRect fVertexBounds;
             uint64_t fAtlasGeneration;
@@ -496,23 +496,15 @@ private:
     };
 
     template <bool regenPos, bool regenCol, bool regenTexCoords, bool regenGlyphs>
-    void regenInBatch(GrDrawBatch::Target* target,
-                      GrBatchFontCache* fontCache,
-                      GrBlobRegenHelper* helper,
-                      Run* run, Run::SubRunInfo* info,
-                      SkAutoGlyphCache*, int glyphCount,
-                      size_t vertexStride,
-                      GrColor color, SkScalar transX,
-                      SkScalar transY) const;
+    void regenInOp(GrDrawOp::Target* target, GrAtlasGlyphCache* fontCache, GrBlobRegenHelper* helper,
+                   Run* run, Run::SubRunInfo* info, SkAutoGlyphCache*, int glyphCount,
+                   size_t vertexStride, GrColor color, SkScalar transX, SkScalar transY) const;
 
-    inline GrDrawBatch* createBatch(const Run::SubRunInfo& info,
-                                    int glyphCount, int run, int subRun,
-                                    const SkMatrix& viewMatrix, SkScalar x, SkScalar y,
-                                    GrColor color,
-                                    const SkPaint& skPaint, const SkSurfaceProps& props,
-                                    const GrDistanceFieldAdjustTable* distanceAdjustTable,
-                                    bool useGammaCorrectDistanceTable,
-                                    GrBatchFontCache* cache);
+    inline sk_sp<GrDrawOp> makeOp(const Run::SubRunInfo& info, int glyphCount, int run, int subRun,
+                                  const SkMatrix& viewMatrix, SkScalar x, SkScalar y, GrColor color,
+                                  const SkPaint& skPaint, const SkSurfaceProps& props,
+                                  const GrDistanceFieldAdjustTable* distanceAdjustTable,
+                                  bool useGammaCorrectDistanceTable, GrAtlasGlyphCache* cache);
 
     struct BigGlyph {
         BigGlyph(const SkPath& path, SkScalar vx, SkScalar vy, SkScalar scale, bool treatAsBMP)

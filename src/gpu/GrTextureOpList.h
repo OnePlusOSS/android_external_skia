@@ -13,8 +13,8 @@
 #include "SkTArray.h"
 
 class GrAuditTrail;
-class GrBatch;
 class GrGpu;
+class GrOp;
 class GrTextureProxy;
 struct SkIPoint;
 struct SkIRect;
@@ -35,10 +35,10 @@ public:
 
     /**
      * Together these two functions flush all queued up draws to GrCommandBuffer. The return value
-     * of drawBatches() indicates whether any commands were actually issued to the GPU.
+     * of drawOps() indicates whether any commands were actually issued to the GPU.
      */
-    void prepareBatches(GrBatchFlushState* flushState) override;
-    bool drawBatches(GrBatchFlushState* flushState) override;
+    void prepareOps(GrOpFlushState* flushState) override;
+    bool executeOps(GrOpFlushState* flushState) override;
 
     /**
      * Copies a pixel rectangle from one surface to another. This call may finalize
@@ -60,10 +60,10 @@ public:
     SkDEBUGCODE(void dump() const override;)
 
 private:
-    void recordBatch(GrBatch*);
+    void recordOp(sk_sp<GrOp>);
 
-    SkSTArray<2, sk_sp<GrBatch>, true> fRecordedBatches;
-    GrGpu*                             fGpu;
+    SkSTArray<2, sk_sp<GrOp>, true> fRecordedOps;
+    GrGpu*                          fGpu;
 
     typedef GrOpList INHERITED;
 };

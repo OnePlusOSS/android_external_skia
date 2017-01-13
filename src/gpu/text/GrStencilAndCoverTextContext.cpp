@@ -25,7 +25,7 @@
 #include "SkTextMapStateProc.h"
 #include "SkTextFormatParams.h"
 
-#include "batches/GrDrawPathBatch.h"
+#include "ops/GrDrawPathOp.h"
 
 template<typename Key, typename Val> static void delete_hash_map_entry(const Key&, Val* val) {
     SkASSERT(*val);
@@ -224,10 +224,8 @@ void GrStencilAndCoverTextContext::drawTextBlob(GrContext* context, GrRenderTarg
 
     TextBlob::Iter iter(blob);
     for (TextRun* run = iter.get(); run; run = iter.next()) {
-        // The run's "font" overrides the anti-aliasing of the passed in paint!
-        paint.setAntiAlias(run->isAntiAlias());
-        run->draw(context, rtc, paint, clip, viewMatrix, props,  x, y,
-                  clipBounds, fFallbackTextContext, skPaint);
+        run->draw(context, rtc, paint, clip, viewMatrix, props,  x, y, clipBounds,
+                  fFallbackTextContext, skPaint);
         run->releaseGlyphCache();
     }
 }
@@ -605,8 +603,9 @@ void GrStencilAndCoverTextContext::TextRun::draw(GrContext* ctx,
                                                  const SkIRect& clipBounds,
                                                  GrAtlasTextContext* fallbackTextContext,
                                                  const SkPaint& originalSkPaint) const {
+    GrAA runAA = this->isAntiAlias();
     SkASSERT(fInstanceData);
-    SkASSERT(renderTargetContext->isStencilBufferMultisampled() || !grPaint.isAntiAlias());
+    SkASSERT(renderTargetContext->isStencilBufferMultisampled() || GrAA::kNo == runAA);
 
     if (fInstanceData->count()) {
         static constexpr GrUserStencilSettings kCoverPass(
@@ -630,21 +629,28 @@ void GrStencilAndCoverTextContext::TextRun::draw(GrContext* ctx,
         // the entire dst. Realistically this is a moot point, because any context that supports
         // NV_path_rendering will also support NV_blend_equation_advanced.
         // For clipping we'll just skip any optimizations based on the bounds. This does, however,
-        // hurt batching.
+        // hurt GrOp combining.
         const SkRect bounds = SkRect::MakeIWH(renderTargetContext->width(),
                                               renderTargetContext->height());
 
-        sk_sp<GrDrawBatch> batch(
-            GrDrawPathRangeBatch::Create(viewMatrix, fTextRatio, fTextInverseRatio * x,
-                                         fTextInverseRatio * y, grPaint.getColor(),
-                                         GrPathRendering::kWinding_FillType, glyphs.get(),
-                                         fInstanceData.get(), bounds));
+        sk_sp<GrDrawOp> op = GrDrawPathRangeOp::Make(viewMatrix, fTextRatio, fTextInverseRatio * x,
+                                                     fTextInverseRatio * y, grPaint.getColor(),
+                                                     GrPathRendering::kWinding_FillType,
+                                                     glyphs.get(), fInstanceData.get(), bounds);
 
-        GrPipelineBuilder pipelineBuilder(grPaint);
-        pipelineBuilder.setState(GrPipelineBuilder::kHWAntialias_Flag, grPaint.isAntiAlias());
+        // The run's "font" overrides the anti-aliasing of the passed in SkPaint!
+        GrAAType aaType = GrAAType::kNone;
+        if (GrAA::kYes == runAA) {
+            if (renderTargetContext->isUnifiedMultisampled()) {
+                aaType = GrAAType::kMSAA;
+            } else if (renderTargetContext->isStencilBufferMultisampled()) {
+                aaType = GrAAType::kMixedSamples;
+            }
+        }
+        GrPipelineBuilder pipelineBuilder(grPaint, aaType);
         pipelineBuilder.setUserStencil(&kCoverPass);
 
-        renderTargetContext->drawBatch(pipelineBuilder, clip, batch.get());
+        renderTargetContext->addDrawOp(pipelineBuilder, clip, std::move(op));
     }
 
     if (fFallbackTextBlob) {

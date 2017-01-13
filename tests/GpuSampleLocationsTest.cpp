@@ -14,6 +14,7 @@
 
 #include "GrRenderTargetContext.h"
 #include "GrRenderTargetPriv.h"
+#include "GrTypesPriv.h"
 #include "GrPipelineBuilder.h"
 #include "gl/GrGLGpu.h"
 #include "gl/debug/DebugGLTestContext.h"
@@ -90,16 +91,15 @@ public:
 };
 
 static GrPipeline* construct_dummy_pipeline(GrRenderTargetContext* dc, void* storage) {
-    GrPipelineBuilder dummyBuilder;
+    GrPipelineBuilder dummyBuilder(GrPaint(), GrAAType::kNone);
     GrScissorState dummyScissor;
     GrWindowRectsState dummyWindows;
-    GrXPOverridesForBatch dummyOverrides;
+    GrPipelineOptimizations dummyOverrides;
 
     GrPipeline::CreateArgs args;
     args.fPipelineBuilder = &dummyBuilder;
     args.fRenderTargetContext = dc;
     args.fCaps = dc->caps();
-    args.fOpts = GrPipelineOptimizations();
     args.fScissor = &dummyScissor;
     args.fWindowRectsState = &dummyWindows;
     args.fHasStencilClip = false;

@@ -614,7 +614,7 @@ class GrGLPerlinNoise2 : public GrGLSLFragmentProcessor {
 public:
     void emitCode(EmitArgs&) override;
 
-    static inline void GenKey(const GrProcessor&, const GrGLSLCaps&, GrProcessorKeyBuilder* b);
+    static inline void GenKey(const GrProcessor&, const GrShaderCaps&, GrProcessorKeyBuilder* b);
 
 protected:
     void onSetData(const GrGLSLProgramDataManager&, const GrProcessor&) override;
@@ -657,7 +657,7 @@ private:
         return new GrGLPerlinNoise2;
     }
 
-    virtual void onGetGLSLProcessorKey(const GrGLSLCaps& caps,
+    virtual void onGetGLSLProcessorKey(const GrShaderCaps& caps,
                                        GrProcessorKeyBuilder* b) const override {
         GrGLPerlinNoise2::GenKey(*this, caps, b);
     }
@@ -983,7 +983,7 @@ void GrGLPerlinNoise2::emitCode(EmitArgs& args) {
                            args.fOutputColor, args.fOutputColor);
 }
 
-void GrGLPerlinNoise2::GenKey(const GrProcessor& processor, const GrGLSLCaps&,
+void GrGLPerlinNoise2::GenKey(const GrProcessor& processor, const GrShaderCaps&,
                               GrProcessorKeyBuilder* b) {
     const GrPerlinNoise2Effect& turbulence = processor.cast<GrPerlinNoise2Effect>();
 
@@ -1032,7 +1032,7 @@ class GrGLImprovedPerlinNoise : public GrGLSLFragmentProcessor {
 public:
     void emitCode(EmitArgs&) override;
 
-    static inline void GenKey(const GrProcessor&, const GrGLSLCaps&, GrProcessorKeyBuilder*);
+    static inline void GenKey(const GrProcessor&, const GrShaderCaps&, GrProcessorKeyBuilder*);
 
 protected:
     void onSetData(const GrGLSLProgramDataManager&, const GrProcessor&) override;
@@ -1073,7 +1073,7 @@ private:
         return new GrGLImprovedPerlinNoise;
     }
 
-    void onGetGLSLProcessorKey(const GrGLSLCaps& caps, GrProcessorKeyBuilder* b) const override {
+    void onGetGLSLProcessorKey(const GrShaderCaps& caps, GrProcessorKeyBuilder* b) const override {
         GrGLImprovedPerlinNoise::GenKey(*this, caps, b);
     }
 
@@ -1278,7 +1278,7 @@ void GrGLImprovedPerlinNoise::emitCode(EmitArgs& args) {
                            args.fOutputColor, args.fOutputColor);
 }
 
-void GrGLImprovedPerlinNoise::GenKey(const GrProcessor& processor, const GrGLSLCaps&,
+void GrGLImprovedPerlinNoise::GenKey(const GrProcessor& processor, const GrShaderCaps&,
                                      GrProcessorKeyBuilder* b) {
 }
 
@@ -1323,10 +1323,10 @@ sk_sp<GrFragmentProcessor> SkPerlinNoiseShader2::asFragmentProcessor(const AsFPA
                                       GrSamplerParams::FilterMode::kNone_FilterMode);
         sk_sp<GrTexture> permutationsTexture(
             GrRefCachedBitmapTexture(args.fContext, paintingData->getImprovedPermutationsBitmap(),
-                                     textureParams, args.fColorMode));
+                                     textureParams));
         sk_sp<GrTexture> gradientTexture(
             GrRefCachedBitmapTexture(args.fContext, paintingData->getGradientBitmap(),
-                                     textureParams, args.fColorMode));
+                                     textureParams));
         return GrImprovedPerlinNoiseEffect::Make(fNumOctaves, fSeed, paintingData,
                                                  permutationsTexture.get(),
                                                  gradientTexture.get(), m);
@@ -1350,10 +1350,10 @@ sk_sp<GrFragmentProcessor> SkPerlinNoiseShader2::asFragmentProcessor(const AsFPA
 
     sk_sp<GrTexture> permutationsTexture(
         GrRefCachedBitmapTexture(args.fContext, paintingData->getPermutationsBitmap(),
-                                 GrSamplerParams::ClampNoFilter(), args.fColorMode));
+                                 GrSamplerParams::ClampNoFilter()));
     sk_sp<GrTexture> noiseTexture(
         GrRefCachedBitmapTexture(args.fContext, paintingData->getNoiseBitmap(),
-                                 GrSamplerParams::ClampNoFilter(), args.fColorMode));
+                                 GrSamplerParams::ClampNoFilter()));
 
     if ((permutationsTexture) && (noiseTexture)) {
         sk_sp<GrFragmentProcessor> inner(

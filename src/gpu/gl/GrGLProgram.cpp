@@ -19,7 +19,6 @@
 #include "glsl/GrGLSLFragmentProcessor.h"
 #include "glsl/GrGLSLGeometryProcessor.h"
 #include "glsl/GrGLSLXferProcessor.h"
-#include "SkXfermode.h"
 
 #define GL_CALL(X) GR_GL_CALL(fGpu->glInterface(), X)
 #define GL_CALL_RET(R, X) GR_GL_CALL_RET(fGpu->glInterface(), R, X)
@@ -32,6 +31,7 @@ GrGLProgram::GrGLProgram(GrGLGpu* gpu,
                          GrGLuint programID,
                          const UniformInfoArray& uniforms,
                          const UniformInfoArray& samplers,
+                         const UniformInfoArray& imageStorages,
                          const VaryingInfoArray& pathProcVaryings,
                          GrGLSLPrimitiveProcessor* geometryProcessor,
                          GrGLSLXferProcessor* xferProcessor,
@@ -47,6 +47,7 @@ GrGLProgram::GrGLProgram(GrGLGpu* gpu,
     // Assign texture units to sampler uniforms one time up front.
     GL_CALL(UseProgram(fProgramID));
     fProgramDataManager.setSamplers(samplers);
+    fProgramDataManager.setImageStorages(imageStorages);
 }
 
 GrGLProgram::~GrGLProgram() {
@@ -161,6 +162,11 @@ void GrGLProgram::bindTextures(const GrProcessor& processor,
         const GrProcessor::BufferAccess& access = processor.bufferAccess(i);
         fGpu->bindTexelBuffer((*nextSamplerIdx)++, access.texelConfig(),
                               static_cast<GrGLBuffer*>(access.buffer()));
+    }
+    for (int i = 0; i < processor.numImageStorages(); ++i) {
+        const GrProcessor::ImageStorageAccess& access = processor.imageStorageAccess(i);
+        fGpu->bindImageStorage((*nextSamplerIdx)++, access.ioType(),
+                               static_cast<GrGLTexture *>(access.texture()));
     }
 }
 

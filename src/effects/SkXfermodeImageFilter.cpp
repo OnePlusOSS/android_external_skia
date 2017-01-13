@@ -14,7 +14,6 @@
 #include "SkSpecialImage.h"
 #include "SkSpecialSurface.h"
 #include "SkWriteBuffer.h"
-#include "SkXfermode.h"
 #if SK_SUPPORT_GPU
 #include "GrContext.h"
 #include "GrRenderTargetContext.h"
@@ -27,6 +26,7 @@
 #include "SkGr.h"
 #include "SkGrPriv.h"
 #endif
+#include "SkClipOpPriv.h"
 
 class SkXfermodeImageFilter_Base : public SkImageFilter {
 public:
@@ -196,7 +196,7 @@ void SkXfermodeImageFilter_Base::drawForeground(SkCanvas* canvas, SkSpecialImage
     }
 
     SkAutoCanvasRestore acr(canvas, true);
-    canvas->clipRect(SkRect::Make(fgBounds), SkCanvas::kDifference_Op);
+    canvas->clipRect(SkRect::Make(fgBounds), kDifference_SkClipOp);
     paint.setColor(0);
     canvas->drawPaint(paint);
 }
@@ -253,8 +253,10 @@ sk_sp<SkSpecialImage> SkXfermodeImageFilter_Base::filterImageGPU(
         backgroundMatrix.setIDiv(backgroundTex->width(), backgroundTex->height());
         backgroundMatrix.preTranslate(-SkIntToScalar(backgroundOffset.fX),
                                       -SkIntToScalar(backgroundOffset.fY));
+        sk_sp<GrColorSpaceXform> bgXform = GrColorSpaceXform::Make(background->getColorSpace(),
+                                                                   outputProperties.colorSpace());
         bgFP = GrTextureDomainEffect::Make(
-                            backgroundTex.get(), nullptr, backgroundMatrix,
+                            backgroundTex.get(), std::move(bgXform), backgroundMatrix,
                             GrTextureDomain::MakeTexelDomain(backgroundTex.get(),
                                                              background->subset()),
                             GrTextureDomain::kDecal_Mode,
@@ -269,12 +271,13 @@ sk_sp<SkSpecialImage> SkXfermodeImageFilter_Base::filterImageGPU(
         foregroundMatrix.setIDiv(foregroundTex->width(), foregroundTex->height());
         foregroundMatrix.preTranslate(-SkIntToScalar(foregroundOffset.fX),
                                       -SkIntToScalar(foregroundOffset.fY));
-
+        sk_sp<GrColorSpaceXform> fgXform = GrColorSpaceXform::Make(foreground->getColorSpace(),
+                                                                   outputProperties.colorSpace());
         sk_sp<GrFragmentProcessor> foregroundFP;
 
         foregroundFP = GrTextureDomainEffect::Make(
-                            foregroundTex.get(), nullptr, foregroundMatrix,
-                            GrTextureDomain::MakeTexelDomain(foregroundTex.get(), 
+                            foregroundTex.get(), std::move(fgXform), foregroundMatrix,
+                            GrTextureDomain::MakeTexelDomain(foregroundTex.get(),
                                                              foreground->subset()),
                             GrTextureDomain::kDecal_Mode,
                             GrSamplerParams::kNone_FilterMode);
@@ -304,7 +307,7 @@ sk_sp<SkSpecialImage> SkXfermodeImageFilter_Base::filterImageGPU(
 
     SkMatrix matrix;
     matrix.setTranslate(SkIntToScalar(-bounds.left()), SkIntToScalar(-bounds.top()));
-    renderTargetContext->drawRect(GrNoClip(), paint, matrix, SkRect::Make(bounds));
+    renderTargetContext->drawRect(GrNoClip(), paint, GrAA::kNo, matrix, SkRect::Make(bounds));
 
     return SkSpecialImage::MakeDeferredFromGpu(context,
                                                SkIRect::MakeWH(bounds.width(), bounds.height()),

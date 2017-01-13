@@ -11,7 +11,7 @@
 #include "GrCaps.h"
 #include "GrRenderTargetContext.h"
 #include "GrStyle.h"
-#include "GrTextureParamsAdjuster.h"
+#include "GrTextureAdjuster.h"
 #include "SkDraw.h"
 #include "SkGrPriv.h"
 #include "SkMaskFilter.h"
@@ -152,10 +152,10 @@ void SkGpuDevice::drawTextureProducerImpl(GrTextureProducer* producer,
                                           const SkMatrix& srcToDstMatrix,
                                           const GrClip& clip,
                                           const SkPaint& paint) {
-    // Specifying the texture coords as local coordinates is an attempt to enable more batching
-    // by not baking anything about the srcRect, dstRect, or viewMatrix, into the texture FP. In
-    // the future this should be an opaque optimization enabled by the combination of batch/GP and
-    // FP.
+    // Specifying the texture coords as local coordinates is an attempt to enable more GrDrawOp
+    // combining by not baking anything about the srcRect, dstRect, or viewMatrix, into the texture
+    // FP. In the future this should be an opaque optimization enabled by the combination of
+    // GrDrawOp/GP and FP.
     const SkMaskFilter* mf = paint.getMaskFilter();
     // The shader expects proper local coords, so we can't replace local coords with texture coords
     // if the shader will be used. If we have a mask filter we will change the underlying geometry
@@ -168,7 +168,7 @@ void SkGpuDevice::drawTextureProducerImpl(GrTextureProducer* producer,
                                         &doBicubic);
     const GrSamplerParams::FilterMode* filterMode = doBicubic ? nullptr : &fm;
 
-    GrTextureAdjuster::FilterConstraint constraintMode;
+    GrTextureProducer::FilterConstraint constraintMode;
     if (SkCanvas::kFast_SrcRectConstraint == constraint) {
         constraintMode = GrTextureAdjuster::kNo_FilterConstraint;
     } else {
@@ -203,7 +203,7 @@ void SkGpuDevice::drawTextureProducerImpl(GrTextureProducer* producer,
     }
     sk_sp<GrFragmentProcessor> fp(producer->createFragmentProcessor(
         *textureMatrix, clippedSrcRect, constraintMode, coordsAllInsideSrcRect, filterMode,
-        fRenderTargetContext->getColorSpace(), fRenderTargetContext->colorMode()));
+        fRenderTargetContext->getColorSpace()));
     if (!fp) {
         return;
     }
@@ -213,15 +213,15 @@ void SkGpuDevice::drawTextureProducerImpl(GrTextureProducer* producer,
                                      fp, producer->isAlphaOnly(), &grPaint)) {
         return;
     }
-
+    GrAA aa = GrBoolToAA(paint.isAntiAlias());
     if (canUseTextureCoordsAsLocalCoords) {
-        fRenderTargetContext->fillRectToRect(clip, grPaint, viewMatrix, clippedDstRect,
+        fRenderTargetContext->fillRectToRect(clip, grPaint, aa, viewMatrix, clippedDstRect,
                                              clippedSrcRect);
         return;
     }
 
     if (!mf) {
-        fRenderTargetContext->drawRect(clip, grPaint, viewMatrix, clippedDstRect);
+        fRenderTargetContext->drawRect(clip, grPaint, aa, viewMatrix, clippedDstRect);
         return;
     }
 
@@ -247,6 +247,6 @@ void SkGpuDevice::drawTextureProducerImpl(GrTextureProducer* producer,
     rectPath.addRect(clippedDstRect);
     rectPath.setIsVolatile(true);
     GrBlurUtils::drawPathWithMaskFilter(this->context(), fRenderTargetContext.get(), fClip,
-                                        rectPath, &grPaint, viewMatrix, mf, GrStyle::SimpleFill(),
-                                        true);
+                                        rectPath, &grPaint, aa, viewMatrix, mf,
+                                        GrStyle::SimpleFill(), true);
 }

@@ -38,7 +38,7 @@ public:
     bool apply(GrContext*, GrRenderTargetContext*, bool useHWAA, bool hasUserStencilSettings,
                GrAppliedClip* out) const final;
 
-    bool isRRect(const SkRect& rtBounds, SkRRect* rr, bool* aa) const override;
+    bool isRRect(const SkRect& rtBounds, SkRRect* rr, GrAA* aa) const override;
 
 private:
     static bool PathNeedsSWRenderer(GrContext* context,
@@ -54,7 +54,7 @@ private:
     static sk_sp<GrTexture> CreateAlphaClipMask(GrContext*, const GrReducedClip&);
 
     // Similar to createAlphaClipMask but it rasterizes in SW and uploads to the result texture.
-    static sk_sp<GrTexture> CreateSoftwareClipMask(GrTextureProvider*, const GrReducedClip&);
+    static sk_sp<GrTexture> CreateSoftwareClipMask(GrContext*, const GrReducedClip&);
 
    static bool UseSWOnlyPath(GrContext*,
                              bool hasUserStencilSettings,

@@ -80,11 +80,11 @@ void GrDrawingManager::internalFlush(GrResourceCache::FlushType type) {
     SkASSERT(result);
 
     for (int i = 0; i < fOpLists.count(); ++i) {
-        fOpLists[i]->prepareBatches(&fFlushState);
+        fOpLists[i]->prepareOps(&fFlushState);
     }
 
-    // Enable this to print out verbose batching information
 #if 0
+    // Enable this to print out verbose GrOp information
     for (int i = 0; i < fOpLists.count(); ++i) {
         SkDEBUGCODE(fOpLists[i]->dump();)
     }
@@ -94,7 +94,7 @@ void GrDrawingManager::internalFlush(GrResourceCache::FlushType type) {
     fFlushState.preIssueDraws();
 
     for (int i = 0; i < fOpLists.count(); ++i) {
-        if (fOpLists[i]->drawBatches(&fFlushState)) {
+        if (fOpLists[i]->executeOps(&fFlushState)) {
             flushed = true;
         }
     }
@@ -222,7 +222,9 @@ GrPathRenderer* GrDrawingManager::getPathRenderer(const GrPathRenderer::CanDrawP
                     new GrSoftwarePathRenderer(fContext->textureProvider(),
                                                fOptionsForPathRendererChain.fAllowPathMaskCaching);
         }
-        pr = fSoftwarePathRenderer;
+        if (fSoftwarePathRenderer->canDrawPath(args)) {
+            pr = fSoftwarePathRenderer;
+        }
     }
 
     return pr;

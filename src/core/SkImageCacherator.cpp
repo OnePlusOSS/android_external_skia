@@ -18,7 +18,7 @@
 #if SK_SUPPORT_GPU
 #include "GrContext.h"
 #include "GrGpuResourcePriv.h"
-#include "GrImageIDTextureAdjuster.h"
+#include "GrImageTextureMaker.h"
 #include "GrResourceKey.h"
 #include "GrSamplerParams.h"
 #include "GrYUVProvider.h"
@@ -214,9 +214,9 @@ bool SkImageCacherator::tryLockAsBitmap(SkBitmap* bitmap, const SkImage* client,
 }
 
 bool SkImageCacherator::lockAsBitmap(SkBitmap* bitmap, const SkImage* client,
-                                     SkDestinationSurfaceColorMode colorMode,
+                                     SkColorSpace* dstColorSpace,
                                      SkImage::CachingHint chint) {
-    CachedFormat format = this->chooseCacheFormat(colorMode);
+    CachedFormat format = this->chooseCacheFormat(dstColorSpace);
     SkImageInfo cacheInfo = this->buildCacheInfo(format);
 
     if (kNeedNewImageUniqueID == fUniqueIDs[format]) {
@@ -233,9 +233,7 @@ bool SkImageCacherator::lockAsBitmap(SkBitmap* bitmap, const SkImage* client,
 
     {
         ScopedGenerator generator(fSharedGenerator);
-        SkIRect subset = SkIRect::MakeXYWH(fOrigin.x(), fOrigin.y(),
-                                           cacheInfo.width(), cacheInfo.height());
-        tex.reset(generator->generateTexture(nullptr, &subset));
+        tex.reset(generator->generateTexture(nullptr, cacheInfo, fOrigin));
     }
     if (!tex) {
         bitmap->reset();
@@ -302,11 +300,10 @@ struct CacheCaps {
     const GrCaps* fCaps;
 };
 
-SkImageCacherator::CachedFormat SkImageCacherator::chooseCacheFormat(
-                                                           SkDestinationSurfaceColorMode colorMode,
-                                                           const GrCaps* grCaps) {
+SkImageCacherator::CachedFormat SkImageCacherator::chooseCacheFormat(SkColorSpace* dstColorSpace,
+                                                                     const GrCaps* grCaps) {
     SkColorSpace* cs = fInfo.colorSpace();
-    if (!cs || SkDestinationSurfaceColorMode::kLegacy == colorMode) {
+    if (!cs || !dstColorSpace) {
         return kLegacy_CachedFormat;
     }
 
@@ -491,12 +488,11 @@ static GrTexture* set_key_and_return(GrTexture* tex, const GrUniqueKey& key) {
     return tex;
 }
 
-sk_sp<SkColorSpace> SkImageCacherator::getColorSpace(GrContext* ctx,
-                                                     SkDestinationSurfaceColorMode colorMode) {
+sk_sp<SkColorSpace> SkImageCacherator::getColorSpace(GrContext* ctx, SkColorSpace* dstColorSpace) {
     // TODO: This isn't always correct. Picture generator currently produces textures in N32,
     // and will (soon) emit them in an arbitrary (destination) space. We will need to stash that
     // information in/on the key so we can return the correct space in case #1 of lockTexture.
-    CachedFormat format = this->chooseCacheFormat(colorMode, ctx->caps());
+    CachedFormat format = this->chooseCacheFormat(dstColorSpace, ctx->caps());
     SkImageInfo cacheInfo = this->buildCacheInfo(format);
     return sk_ref_sp(cacheInfo.colorSpace());
 }
@@ -512,8 +508,7 @@ sk_sp<SkColorSpace> SkImageCacherator::getColorSpace(GrContext* ctx,
  */
 GrTexture* SkImageCacherator::lockTexture(GrContext* ctx, const GrUniqueKey& origKey,
                                           const SkImage* client, SkImage::CachingHint chint,
-                                          bool willBeMipped,
-                                          SkDestinationSurfaceColorMode colorMode) {
+                                          bool willBeMipped, SkColorSpace* dstColorSpace) {
     // Values representing the various texture lock paths we can take. Used for logging the path
     // taken to a histogram.
     enum LockTexturePath {
@@ -529,7 +524,7 @@ GrTexture* SkImageCacherator::lockTexture(GrContext* ctx, const GrUniqueKey& ori
 
     // Determine which cached format we're going to use (which may involve decoding to a different
     // info than the generator provides).
-    CachedFormat format = this->chooseCacheFormat(colorMode, ctx->caps());
+    CachedFormat format = this->chooseCacheFormat(dstColorSpace, ctx->caps());
 
     // Fold the cache format into our texture key
     GrUniqueKey key;
@@ -544,21 +539,20 @@ GrTexture* SkImageCacherator::lockTexture(GrContext* ctx, const GrUniqueKey& ori
         }
     }
 
+    // The CachedFormat is both an index for which cache "slot" we'll use to store this particular
+    // decoded variant of the encoded data, and also a recipe for how to transform the original
+    // info to get the one that we're going to decode to.
+    SkImageInfo cacheInfo = this->buildCacheInfo(format);
+
     // 2. Ask the generator to natively create one
     {
         ScopedGenerator generator(fSharedGenerator);
-        SkIRect subset = SkIRect::MakeXYWH(fOrigin.x(), fOrigin.y(), fInfo.width(), fInfo.height());
-        if (GrTexture* tex = generator->generateTexture(ctx, &subset)) {
+        if (GrTexture* tex = generator->generateTexture(ctx, cacheInfo, fOrigin)) {
             SK_HISTOGRAM_ENUMERATION("LockTexturePath", kNative_LockTexturePath,
                                      kLockTexturePathCount);
             return set_key_and_return(tex, key);
         }
     }
-
-    // The CachedFormat is both an index for which cache "slot" we'll use to store this particular
-    // decoded variant of the encoded data, and also a recipe for how to transform the original
-    // info to get the one that we're going to decode to.
-    SkImageInfo cacheInfo = this->buildCacheInfo(format);
 
     const GrSurfaceDesc desc = GrImageInfoToSurfaceDesc(cacheInfo, *ctx->caps());
 
@@ -592,7 +586,7 @@ GrTexture* SkImageCacherator::lockTexture(GrContext* ctx, const GrUniqueKey& ori
     if (this->tryLockAsBitmap(&bitmap, client, chint, format, cacheInfo)) {
         GrTexture* tex = nullptr;
         if (willBeMipped) {
-            tex = GrGenerateMipMapsAndUploadToTexture(ctx, bitmap, colorMode);
+            tex = GrGenerateMipMapsAndUploadToTexture(ctx, bitmap, dstColorSpace);
         }
         if (!tex) {
             tex = GrUploadBitmapToTexture(ctx, bitmap);
@@ -611,21 +605,21 @@ GrTexture* SkImageCacherator::lockTexture(GrContext* ctx, const GrUniqueKey& ori
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 GrTexture* SkImageCacherator::lockAsTexture(GrContext* ctx, const GrSamplerParams& params,
-                                            SkDestinationSurfaceColorMode colorMode,
+                                            SkColorSpace* dstColorSpace,
                                             sk_sp<SkColorSpace>* texColorSpace,
                                             const SkImage* client, SkImage::CachingHint chint) {
     if (!ctx) {
         return nullptr;
     }
 
-    return GrImageTextureMaker(ctx, this, client, chint).refTextureForParams(params, colorMode,
+    return GrImageTextureMaker(ctx, this, client, chint).refTextureForParams(params, dstColorSpace,
                                                                              texColorSpace);
 }
 
 #else
 
 GrTexture* SkImageCacherator::lockAsTexture(GrContext* ctx, const GrSamplerParams&,
-                                            SkDestinationSurfaceColorMode colorMode,
+                                            SkColorSpace* dstColorSpace,
                                             sk_sp<SkColorSpace>* texColorSpace,
                                             const SkImage* client, SkImage::CachingHint) {
     return nullptr;

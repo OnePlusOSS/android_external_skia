@@ -11,7 +11,7 @@
 #include "SkString.h"
 #include "GrTypesPriv.h"
 
-class GrGLSLCaps;
+class GrShaderCaps;
 
 #define USE_UNIFORM_FLOAT_ARRAYS true
 
@@ -284,6 +284,14 @@ public:
         }
     }
 
+    void setImageStorageFormat(GrImageStorageFormat format);
+
+    void setMemoryModel(GrSLMemoryModel);
+
+    void setRestrict(GrSLRestrict);
+
+    void setIOType(GrIOType);
+
     void addModifier(const char* modifier) {
         if (modifier) {
             fExtraModifiers.appendf("%s ", modifier);
@@ -293,7 +301,7 @@ public:
     /**
      * Write a declaration of this variable to out.
      */
-    void appendDecl(const GrGLSLCaps* glslCaps, SkString* out) const;
+    void appendDecl(const GrShaderCaps*, SkString* out) const;
 
     void appendArrayAccess(int index, SkString* out) const {
         out->appendf("%s[%d]%s",
@@ -310,23 +318,6 @@ public:
     }
 
 private:
-    static const char* TypeModifierString(TypeModifier t) {
-        switch (t) {
-            case kNone_TypeModifier:
-                return "";
-            case kIn_TypeModifier:
-                return "in";
-            case kInOut_TypeModifier:
-                return "inout";
-            case kOut_TypeModifier:
-                return "out";
-            case kUniform_TypeModifier:
-                return "uniform";
-        }
-        SkFAIL("Unknown shader variable type modifier.");
-        return ""; // suppress warning
-    }
-
     GrSLType        fType;
     TypeModifier    fTypeModifier;
     int             fCount;
@@ -340,4 +331,4 @@ private:
     SkString        fExtraModifiers;
 };
 
- #endif
+#endif

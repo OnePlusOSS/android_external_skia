@@ -129,6 +129,7 @@ LOCAL_SRC_FILES := \
 	SkLinearBitmapPipelineBench.cpp \
 	SkRasterPipelineBench.cpp \
 	SortBench.cpp \
+	StreamBench.cpp \
 	StrokeBench.cpp \
 	SwizzleBench.cpp \
 	TableBench.cpp \
@@ -156,6 +157,7 @@ LOCAL_SRC_FILES := \
 	../gm/all_bitmap_configs.cpp \
 	../gm/alphagradients.cpp \
 	../gm/animatedGif.cpp \
+	../gm/animatedimageblurs.cpp \
 	../gm/anisotropic.cpp \
 	../gm/annotated_text.cpp \
 	../gm/arcofzorro.cpp \
@@ -212,6 +214,7 @@ LOCAL_SRC_FILES := \
 	../gm/complexclip.cpp \
 	../gm/complexclip2.cpp \
 	../gm/complexclip3.cpp \
+	../gm/complexclip4.cpp \
 	../gm/complexclip_blur_tiled.cpp \
 	../gm/composeshader.cpp \
 	../gm/concavepaths.cpp \
@@ -257,6 +260,7 @@ LOCAL_SRC_FILES := \
 	../gm/filltypes.cpp \
 	../gm/filltypespersp.cpp \
 	../gm/filterbitmap.cpp \
+	../gm/filterbug.cpp \
 	../gm/filterfastbounds.cpp \
 	../gm/filterindiabox.cpp \
 	../gm/fontcache.cpp \
@@ -311,7 +315,6 @@ LOCAL_SRC_FILES := \
 	../gm/imagetoyuvplanes.cpp \
 	../gm/internal_links.cpp \
 	../gm/inversepaths.cpp \
-	../gm/labpcsdemo.cpp \
 	../gm/largeglyphblur.cpp \
 	../gm/lattice.cpp \
 	../gm/lcdblendmodes.cpp \
@@ -456,6 +459,7 @@ LOCAL_SRC_FILES := \
 	../experimental/svg/model/SkSVGAttribute.cpp \
 	../experimental/svg/model/SkSVGAttributeParser.cpp \
 	../experimental/svg/model/SkSVGCircle.cpp \
+	../experimental/svg/model/SkSVGClipPath.cpp \
 	../experimental/svg/model/SkSVGContainer.cpp \
 	../experimental/svg/model/SkSVGDOM.cpp \
 	../experimental/svg/model/SkSVGEllipse.cpp \
@@ -509,7 +513,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libexpat
 
 LOCAL_STATIC_LIBRARIES := \
-	libskia_static \
+	libskia \
 	libjsoncpp
 
 LOCAL_C_INCLUDES := \
@@ -558,8 +562,7 @@ LOCAL_C_INCLUDES := \
 	external/libpng
 
 LOCAL_CFLAGS += \
-	-DSK_CRASH_HANDLER \
-	-DSK_XML
+	-DSK_CRASH_HANDLER
 
 LOCAL_MODULE_TAGS := \
 	tests

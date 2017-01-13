@@ -84,7 +84,7 @@ static void TestWStream(skiatest::Reporter* reporter) {
     for (i = 0; i < 100; i++) {
         REPORTER_ASSERT(reporter, ds.write(s, 26));
     }
-    REPORTER_ASSERT(reporter, ds.getOffset() == 100 * 26);
+    REPORTER_ASSERT(reporter, ds.bytesWritten() == 100 * 26);
 
     char* dst = new char[100 * 26 + 1];
     dst[100*26] = '*';
@@ -97,7 +97,7 @@ static void TestWStream(skiatest::Reporter* reporter) {
     {
         std::unique_ptr<SkStreamAsset> stream(ds.detachAsStream());
         REPORTER_ASSERT(reporter, 100 * 26 == stream->getLength());
-        REPORTER_ASSERT(reporter, ds.getOffset() == 0);
+        REPORTER_ASSERT(reporter, ds.bytesWritten() == 0);
         test_loop_stream(reporter, stream.get(), s, 26, 100);
 
         std::unique_ptr<SkStreamAsset> stream2(stream->duplicate());
@@ -115,18 +115,12 @@ static void TestWStream(skiatest::Reporter* reporter) {
     for (i = 0; i < 100; i++) {
         REPORTER_ASSERT(reporter, ds.write(s, 26));
     }
-    REPORTER_ASSERT(reporter, ds.getOffset() == 100 * 26);
-
-    {
-        sk_sp<SkData> data = ds.snapshotAsData();
-        REPORTER_ASSERT(reporter, 100 * 26 == data->size());
-        REPORTER_ASSERT(reporter, memcmp(dst, data->data(), data->size()) == 0);
-    }
+    REPORTER_ASSERT(reporter, ds.bytesWritten() == 100 * 26);
 
     {
         // Test that this works after a snapshot.
         std::unique_ptr<SkStreamAsset> stream(ds.detachAsStream());
-        REPORTER_ASSERT(reporter, ds.getOffset() == 0);
+        REPORTER_ASSERT(reporter, ds.bytesWritten() == 0);
         test_loop_stream(reporter, stream.get(), s, 26, 100);
 
         std::unique_ptr<SkStreamAsset> stream2(stream->duplicate());
@@ -352,6 +346,7 @@ DEF_TEST(StreamPeek_BlockMemoryStream, rep) {
     SkRandom rand(kSeed << 1);
     uint8_t buffer[4096];
     SkDynamicMemoryWStream dynamicMemoryWStream;
+    size_t totalWritten = 0;
     for (int i = 0; i < 32; ++i) {
         // Randomize the length of the blocks.
         size_t size = rand.nextRangeU(1, sizeof(buffer));
@@ -359,6 +354,8 @@ DEF_TEST(StreamPeek_BlockMemoryStream, rep) {
             buffer[j] = valueSource.nextU() & 0xFF;
         }
         dynamicMemoryWStream.write(buffer, size);
+        totalWritten += size;
+        REPORTER_ASSERT(rep, totalWritten == dynamicMemoryWStream.bytesWritten());
     }
     std::unique_ptr<SkStreamAsset> asset(dynamicMemoryWStream.detachAsStream());
     sk_sp<SkData> expected(SkData::MakeUninitialized(asset->getLength()));

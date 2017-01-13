@@ -16,9 +16,9 @@
 #include "SkBitmap.h"
 #include "SkGr.h"
 #include "SkGradientShader.h"
-#include "batches/GrDrawBatch.h"
-#include "batches/GrRectBatchFactory.h"
 #include "effects/GrYUVEffect.h"
+#include "ops/GrDrawOp.h"
+#include "ops/GrRectOpFactory.h"
 
 #define YSIZE 8
 #define USIZE 4
@@ -82,14 +82,11 @@ protected:
 
         sk_sp<GrTexture> texture[3];
         texture[0].reset(
-            GrRefCachedBitmapTexture(context, fBmp[0], GrSamplerParams::ClampBilerp(),
-                                     SkDestinationSurfaceColorMode::kGammaAndColorSpaceAware));
+            GrRefCachedBitmapTexture(context, fBmp[0], GrSamplerParams::ClampBilerp()));
         texture[1].reset(
-            GrRefCachedBitmapTexture(context, fBmp[1], GrSamplerParams::ClampBilerp(),
-                                     SkDestinationSurfaceColorMode::kGammaAndColorSpaceAware));
+            GrRefCachedBitmapTexture(context, fBmp[1], GrSamplerParams::ClampBilerp()));
         texture[2].reset(
-            GrRefCachedBitmapTexture(context, fBmp[2], GrSamplerParams::ClampBilerp(),
-                                     SkDestinationSurfaceColorMode::kGammaAndColorSpaceAware));
+            GrRefCachedBitmapTexture(context, fBmp[2], GrSamplerParams::ClampBilerp()));
 
         if (!texture[0] || !texture[1] || !texture[2]) {
             return;
@@ -126,10 +123,10 @@ protected:
                     SkMatrix viewMatrix;
                     viewMatrix.setTranslate(x, y);
                     grPaint.addColorFragmentProcessor(std::move(fp));
-                    sk_sp<GrDrawBatch> batch(
-                            GrRectBatchFactory::CreateNonAAFill(GrColor_WHITE, viewMatrix,
-                                                                renderRect, nullptr, nullptr));
-                    renderTargetContext->priv().testingOnly_drawBatch(grPaint, batch.get());
+                    sk_sp<GrDrawOp> op(GrRectOpFactory::MakeNonAAFill(
+                            GrColor_WHITE, viewMatrix, renderRect, nullptr, nullptr));
+                    renderTargetContext->priv().testingOnly_addDrawOp(grPaint, GrAAType::kNone,
+                                                                      std::move(op));
                 }
                 x += renderRect.width() + kTestPad;
             }
@@ -207,14 +204,11 @@ protected:
 
         sk_sp<GrTexture> texture[3];
         texture[0].reset(
-            GrRefCachedBitmapTexture(context, fBmp[0], GrSamplerParams::ClampBilerp(),
-                                     SkDestinationSurfaceColorMode::kGammaAndColorSpaceAware));
+            GrRefCachedBitmapTexture(context, fBmp[0], GrSamplerParams::ClampBilerp()));
         texture[1].reset(
-            GrRefCachedBitmapTexture(context, fBmp[1], GrSamplerParams::ClampBilerp(),
-                                     SkDestinationSurfaceColorMode::kGammaAndColorSpaceAware));
+            GrRefCachedBitmapTexture(context, fBmp[1], GrSamplerParams::ClampBilerp()));
         texture[2].reset(
-            GrRefCachedBitmapTexture(context, fBmp[1], GrSamplerParams::ClampBilerp(),
-                                     SkDestinationSurfaceColorMode::kGammaAndColorSpaceAware));
+            GrRefCachedBitmapTexture(context, fBmp[1], GrSamplerParams::ClampBilerp()));
 
         if (!texture[0] || !texture[1] || !texture[2]) {
             return;
@@ -242,9 +236,10 @@ protected:
                 SkMatrix viewMatrix;
                 viewMatrix.setTranslate(x, y);
                 grPaint.addColorFragmentProcessor(fp);
-                sk_sp<GrDrawBatch> batch(GrRectBatchFactory::CreateNonAAFill(
-                    GrColor_WHITE, viewMatrix, renderRect, nullptr, nullptr));
-                renderTargetContext->priv().testingOnly_drawBatch(grPaint, batch.get());
+                sk_sp<GrDrawOp> op(GrRectOpFactory::MakeNonAAFill(GrColor_WHITE, viewMatrix,
+                                                                  renderRect, nullptr, nullptr));
+                renderTargetContext->priv().testingOnly_addDrawOp(grPaint, GrAAType::kNone,
+                                                                  std::move(op));
             }
         }
     }

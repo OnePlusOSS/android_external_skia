@@ -24,8 +24,7 @@ GrTextureContext::GrTextureContext(GrContext* context,
     : GrSurfaceContext(context, auditTrail, singleOwner)
     , fDrawingManager(drawingMgr)
     , fTextureProxy(std::move(textureProxy))
-    , fOpList(SkSafeRef(fTextureProxy->getLastTextureOpList()))
-{
+    , fOpList(SkSafeRef(fTextureProxy->getLastTextureOpList())) {
     SkDEBUGCODE(this->validate();)
 }
 
@@ -45,6 +44,12 @@ GrTextureContext::~GrTextureContext() {
     SkSafeUnref(fOpList);
 }
 
+GrRenderTargetProxy* GrTextureContext::asDeferredRenderTarget() {
+    // If the proxy can return an RTProxy it should've been wrapped in a RTContext
+    SkASSERT(!fTextureProxy->asRenderTargetProxy());
+    return nullptr;
+}
+
 GrTextureOpList* GrTextureContext::getOpList() {
     ASSERT_SINGLE_OWNER
     SkDEBUGCODE(this->validate();)
@@ -56,12 +61,26 @@ GrTextureOpList* GrTextureContext::getOpList() {
     return fOpList;
 }
 
-bool GrTextureContext::copySurface(GrSurface* src, const SkIRect& srcRect,
-                                   const SkIPoint& dstPoint) {
+// TODO: move this (and GrRenderTargetContext::copy) to GrSurfaceContext?
+bool GrTextureContext::onCopy(GrSurfaceProxy* srcProxy,
+                              const SkIRect& srcRect,
+                              const SkIPoint& dstPoint) {
     ASSERT_SINGLE_OWNER
     RETURN_FALSE_IF_ABANDONED
     SkDEBUGCODE(this->validate();)
-    GR_AUDIT_TRAIL_AUTO_FRAME(fAuditTrail, "GrTextureContext::copySurface");
+    GR_AUDIT_TRAIL_AUTO_FRAME(fAuditTrail, "GrTextureContext::copy");
+
+    // TODO: defer instantiation until flush time
+    sk_sp<GrSurface> src(sk_ref_sp(srcProxy->instantiate(fContext->textureProvider())));
+    if (!src) {
+        return false;
+    }
+
+#ifndef ENABLE_MDB
+    // We can't yet fully defer copies to textures, so GrTextureContext::copySurface will
+    // execute the copy immediately. Ensure the data is ready.
+    src->flushWrites();
+#endif
 
     // TODO: this needs to be fixed up since it ends the deferrable of the GrTexture
     sk_sp<GrTexture> tex(sk_ref_sp(fTextureProxy->instantiate(fContext->textureProvider())));
@@ -70,12 +89,12 @@ bool GrTextureContext::copySurface(GrSurface* src, const SkIRect& srcRect,
     }
 
     GrTextureOpList* opList = this->getOpList();
-    bool result = opList->copySurface(tex.get(), src, srcRect, dstPoint);
+    bool result = opList->copySurface(tex.get(), src.get(), srcRect, dstPoint);
 
 #ifndef ENABLE_MDB
-    GrBatchFlushState flushState(fContext->getGpu(), nullptr);
-    opList->prepareBatches(&flushState);
-    opList->drawBatches(&flushState);
+    GrOpFlushState flushState(fContext->getGpu(), nullptr);
+    opList->prepareOps(&flushState);
+    opList->executeOps(&flushState);
     opList->reset();
 #endif
 

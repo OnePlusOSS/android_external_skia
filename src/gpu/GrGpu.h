@@ -12,14 +12,13 @@
 #include "GrProgramDesc.h"
 #include "GrSwizzle.h"
 #include "GrAllocator.h"
-#include "GrTextureParamsAdjuster.h"
+#include "GrTextureProducer.h"
 #include "GrTypes.h"
 #include "GrXferProcessor.h"
 #include "SkPath.h"
 #include "SkTArray.h"
 #include <map>
 
-class GrBatchTracker;
 class GrBuffer;
 class GrContext;
 struct GrContextOptions;
@@ -367,9 +366,11 @@ public:
     }
 
     // Creates a GrGpuCommandBuffer in which the GrOpList can send draw commands to instead of
-    // directly to the Gpu object.
+    // directly to the Gpu object. This currently does not take a GrRenderTarget. The command buffer
+    // is expected to infer the render target from the first draw, clear, or discard. This is an
+    // awkward workaround that goes away after MDB is complete and the render target is known from
+    // the GrRenderTargetOpList.
     virtual GrGpuCommandBuffer* createCommandBuffer(
-            GrRenderTarget* target,
             const GrGpuCommandBuffer::LoadAndStoreInfo& colorInfo,
             const GrGpuCommandBuffer::LoadAndStoreInfo& stencilInfo) = 0;
 

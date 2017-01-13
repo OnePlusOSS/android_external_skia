@@ -3,7 +3,7 @@ use_relative_paths = True
 # Dependencies on outside packages.
 #
 deps = {
-  "buildtools":  "https://chromium.googlesource.com/chromium/buildtools.git@5fd66957f08bb752dca714a591c84587c9d70762",
+  "buildtools":  "https://chromium.googlesource.com/chromium/buildtools.git@55ad626b08ef971fd82a62b7abb325359542952b",
 
   "common": "https://skia.googlesource.com/common.git@9737551d7a52c3db3262db5856e6bcd62c462b92",
 
@@ -11,15 +11,15 @@ deps = {
   #   - can use use our existing t_p/e/libjpeg instead of pulling it for Android?
 
   "third_party/externals/angle2"  : "https://chromium.googlesource.com/angle/angle.git@d445357315299e30c18c756f657ff928653128c2",
-  "third_party/externals/freetype": "https://skia.googlesource.com/third_party/freetype2.git@4d3f7ca8cedbddad40b9e93a82926618e3fb4265",
+  "third_party/externals/freetype": "https://skia.googlesource.com/third_party/freetype2.git@ffd8f6223607e9d61de33467fcd113f2a15dae36",
   "third_party/externals/gyp"     : "https://chromium.googlesource.com/external/gyp.git@87ac4d0e63fc7dd8152a350327fea8dcf031bf56",
   "third_party/externals/harfbuzz": "https://skia.googlesource.com/third_party/harfbuzz.git@1.3.0",
   "third_party/externals/jsoncpp" : "https://chromium.googlesource.com/external/github.com/open-source-parsers/jsoncpp.git@1.0.0",
-  "third_party/externals/libwebp" : "https://chromium.googlesource.com/webm/libwebp.git@v0.5.0",
+  "third_party/externals/libwebp" : "https://chromium.googlesource.com/webm/libwebp.git@v0.5.2-rc2",
   "third_party/externals/zlib"    : "https://chromium.googlesource.com/chromium/src/third_party/zlib@4576304a4b9835aa8646c9735b079e1d96858633",
 
   "third_party/externals/dng_sdk" : "https://android.googlesource.com/platform/external/dng_sdk.git@96443b262250c390b0caefbf3eed8463ba35ecae",
-  "third_party/externals/piex"    : "https://android.googlesource.com/platform/external/piex.git@be908191d0a6883a95333bdc0bca749c9b830969",
+  "third_party/externals/piex"    : "https://android.googlesource.com/platform/external/piex.git@8f540f64b6c170a16fb7e6e52d61819705c1522a",
 
   "third_party/externals/libjpeg-turbo"             : "https://skia.googlesource.com/third_party/libjpeg-turbo.git@debddedc75850bcdeb8a57258572f48b802a4bb3",
   # libjpeg-turbo depends on yasm to compile .asm files
@@ -45,3 +45,10 @@ deps = {
 }
 
 recursedeps = [ "common" ]
+
+hooks = []
+
+import os
+import sys
+if os.path.exists('bin/fetch-gn'):
+  hooks.append({ 'action': [sys.executable, 'bin/fetch-gn'] })

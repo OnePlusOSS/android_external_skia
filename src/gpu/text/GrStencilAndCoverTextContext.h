@@ -12,11 +12,11 @@
 #include "GrStyle.h"
 #include "SkDrawFilter.h"
 #include "SkOpts.h"
-#include "SkTextBlob.h"
 #include "SkTHash.h"
 #include "SkTInternalLList.h"
 #include "SkTLList.h"
-#include "batches/GrDrawPathBatch.h"
+#include "SkTextBlob.h"
+#include "ops/GrDrawPathOp.h"
 
 class GrAtlasTextContext;
 class GrTextStrike;
@@ -88,10 +88,10 @@ private:
 
         size_t computeSizeInCache() const;
 
-        bool isAntiAlias() const { return fFont.isAntiAlias(); }
+        GrAA isAntiAlias() const { return fFont.isAntiAlias() ? GrAA::kYes : GrAA::kNo; }
 
     private:
-        typedef GrDrawPathRangeBatch::InstanceData InstanceData;
+        typedef GrDrawPathRangeOp::InstanceData InstanceData;
 
         SkGlyphCache* getGlyphCache() const;
         GrPathRange* createGlyphs(GrContext*) const;

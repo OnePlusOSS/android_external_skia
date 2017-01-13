@@ -112,6 +112,8 @@ public:
      */
      sk_sp<GrRenderTarget> wrapBackendRenderTarget(const GrBackendRenderTargetDesc& desc);
 
+     static const int kMinScratchTextureSize;
+
 protected:
     GrTextureProvider(GrGpu* gpu, GrResourceCache* cache, GrSingleOwner* singleOwner);
 
@@ -139,6 +141,7 @@ protected:
         kExact_ScratchTextureFlag           = 0x1,
         kNoPendingIO_ScratchTextureFlag     = 0x2, // (http://skbug.com/4156)
         kNoCreate_ScratchTextureFlag        = 0x4,
+        kLastScratchTextureFlag = kNoCreate_ScratchTextureFlag
     };
 
     /** A common impl for GrTextureProvider and GrResourceProvider variants. */

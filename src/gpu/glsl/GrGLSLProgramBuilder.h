@@ -8,6 +8,7 @@
 #ifndef GrGLSLProgramBuilder_DEFINED
 #define GrGLSLProgramBuilder_DEFINED
 
+#include "GrCaps.h"
 #include "GrGeometryProcessor.h"
 #include "GrGpu.h"
 #include "glsl/GrGLSLFragmentProcessor.h"
@@ -19,21 +20,23 @@
 #include "glsl/GrGLSLVertexShaderBuilder.h"
 #include "glsl/GrGLSLXferProcessor.h"
 
-class GrGLSLCaps;
 class GrShaderVar;
 class GrGLSLVaryingHandler;
 class GrGLSLExpr4;
+class GrShaderCaps;
 
 typedef SkSTArray<8, GrGLSLFragmentProcessor*, true> GrGLSLFragProcs;
 
 class GrGLSLProgramBuilder {
 public:
-    typedef GrGLSLUniformHandler::UniformHandle UniformHandle;
+    using UniformHandle      = GrGLSLUniformHandler::UniformHandle;
+    using SamplerHandle      = GrGLSLUniformHandler::SamplerHandle;
+    using ImageStorageHandle = GrGLSLUniformHandler::ImageStorageHandle;
 
     virtual ~GrGLSLProgramBuilder() {}
 
     virtual const GrCaps* caps() const = 0;
-    virtual const GrGLSLCaps* glslCaps() const = 0;
+    const GrShaderCaps* shaderCaps() const { return this->caps()->shaderCaps(); }
 
     const GrPrimitiveProcessor& primitiveProcessor() const { return fPrimProc; }
     const GrPipeline& pipeline() const { return fPipeline; }
@@ -42,14 +45,16 @@ public:
 
     void appendUniformDecls(GrShaderFlags visibility, SkString*) const;
 
-    typedef GrGLSLUniformHandler::SamplerHandle SamplerHandle;
-
     const GrShaderVar& samplerVariable(SamplerHandle handle) const {
         return this->uniformHandler()->samplerVariable(handle);
     }
 
     GrSwizzle samplerSwizzle(SamplerHandle handle) const {
         return this->uniformHandler()->samplerSwizzle(handle);
+    }
+
+    const GrShaderVar& imageStorageVariable(ImageStorageHandle handle) const {
+        return this->uniformHandler()->imageStorageVariable(handle);
     }
 
     // Handles for program uniforms (other than per-effect uniforms)
@@ -67,7 +72,7 @@ public:
 
     // Used to add a uniform for the RenderTarget height (used for frag position) without mangling
     // the name of the uniform inside of a stage.
-    void addRTHeightUniform(const char* name, const char** outName);
+    void addRTHeightUniform(const char* name);
 
     // Generates a name for a variable. The generated string will be name prefixed by the prefix
     // char (unless the prefix is '\0'). It also will mangle the name to be stage-specific unless
@@ -156,17 +161,18 @@ private:
                                 const GrGLSLExpr4& coverageIn,
                                 bool ignoresCoverage,
                                 GrPixelLocalStorageState plsState);
-
-    void emitSamplers(const GrProcessor& processor,
-                      SkTArray<SamplerHandle>* outTexSamplers,
-                      SkTArray<SamplerHandle>* outBufferSamplers);
-    void emitSampler(GrSLType samplerType,
-                     GrPixelConfig,
-                     const char* name,
-                     GrShaderFlags visibility,
-                     SkTArray<SamplerHandle>* outSamplers);
+    void emitSamplersAndImageStorages(const GrProcessor& processor,
+                                      SkTArray<SamplerHandle>* outTexSamplerHandles,
+                                      SkTArray<SamplerHandle>* outBufferSamplerHandles,
+                                      SkTArray<ImageStorageHandle>* outImageStorageHandles);
+    void emitSampler(GrSLType samplerType, GrPixelConfig, const char* name,
+                     GrShaderFlags visibility, SkTArray<SamplerHandle >* outSamplerHandles);
+    void emitImageStorage(const GrProcessor::ImageStorageAccess&,
+                          const char* name,
+                          SkTArray<ImageStorageHandle>* outImageStorageHandles);
     void emitFSOutputSwizzle(bool hasSecondaryOutput);
     bool checkSamplerCounts();
+    bool checkImageStorageCounts();
 
 #ifdef SK_DEBUG
     void verify(const GrPrimitiveProcessor&);
@@ -177,6 +183,9 @@ private:
     int                         fNumVertexSamplers;
     int                         fNumGeometrySamplers;
     int                         fNumFragmentSamplers;
+    int                         fNumVertexImageStorages;
+    int                         fNumGeometryImageStorages;
+    int                         fNumFragmentImageStorages;
     SkSTArray<4, GrShaderVar>   fTransformedCoordVars;
 };
 

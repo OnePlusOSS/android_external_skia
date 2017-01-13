@@ -42,8 +42,6 @@ class SkSurface;
 class SkSurface_Base;
 class SkTextBlob;
 
-//#define SK_SUPPORT_LEGACY_CLIP_REGIONOPS
-
 /** \class SkCanvas
 
     A Canvas encapsulates all of the state about drawing into a device (bitmap).
@@ -59,37 +57,12 @@ class SkTextBlob;
     color, typeface, textSize, strokeWidth, shader (e.g. gradients, patterns),
     etc.
 */
-class SK_API SkCanvas
-#ifdef SK_SUPPORT_LEGACY_CANVAS_IS_REFCNT
-: public SkRefCnt
-#else
-: SkNoncopyable
-#endif
-{
+class SK_API SkCanvas : SkNoncopyable {
     enum PrivateSaveLayerFlags {
         kDontClipToLayer_PrivateSaveLayerFlag   = 1U << 31,
     };
 
 public:
-#ifdef SK_SUPPORT_LEGACY_CLIP_REGIONOPS
-    typedef SkRegion::Op ClipOp;
-
-    static const ClipOp kDifference_Op         = SkRegion::kDifference_Op;
-    static const ClipOp kIntersect_Op          = SkRegion::kIntersect_Op;
-    static const ClipOp kUnion_Op              = SkRegion::kUnion_Op;
-    static const ClipOp kXOR_Op                = SkRegion::kXOR_Op;
-    static const ClipOp kReverseDifference_Op  = SkRegion::kReverseDifference_Op;
-    static const ClipOp kReplace_Op            = SkRegion::kReplace_Op;
-#else
-    typedef SkClipOp ClipOp;
-
-    static const ClipOp kDifference_Op         = kDifference_SkClipOp;
-    static const ClipOp kIntersect_Op          = kIntersect_SkClipOp;
-    static const ClipOp kUnion_Op              = kUnion_SkClipOp;
-    static const ClipOp kXOR_Op                = kXOR_SkClipOp;
-    static const ClipOp kReverseDifference_Op  = kReverseDifference_SkClipOp;
-    static const ClipOp kReplace_Op            = kReplace_SkClipOp;
-#endif
     /**
      *  Attempt to allocate raster canvas, matching the ImageInfo, that will draw directly into the
      *  specified pixels. To access the pixels after drawing to them, the caller should call
@@ -111,16 +84,6 @@ public:
                                                          size_t rowBytes) {
         return MakeRasterDirect(SkImageInfo::MakeN32Premul(width, height), pixels, rowBytes);
     }
-
-#ifdef SK_SUPPORT_LEGACY_CANVAS_IS_REFCNT
-    static SkCanvas* NewRasterDirect(const SkImageInfo& info, void* pixels, size_t rowBytes) {
-        return MakeRasterDirect(info, pixels, rowBytes).release();
-    }
-
-    static SkCanvas* NewRasterDirectN32(int width, int height, SkPMColor* pixels, size_t rowBytes) {
-        return MakeRasterDirectN32(width, height, pixels, rowBytes).release();
-    }
-#endif
 
     /**
      *  Creates an empty canvas with no backing device/pixels, and zero
@@ -203,10 +166,6 @@ protected:  // Can we make this private?
 #endif
     SkBaseDevice* getDevice() const;
 public:
-    SkBaseDevice* getDevice_just_for_deprecated_compatibility_testing() const {
-        return this->getDevice();
-    }
-
     /**
      *  saveLayer() can create another device (which is later drawn onto
      *  the previous device). getTopDevice() returns the top-most device current
@@ -509,13 +468,24 @@ public:
      *  @param op The region op to apply to the current clip
      *  @param doAntiAlias true if the clip should be antialiased
      */
-    void clipRect(const SkRect& rect, ClipOp, bool doAntiAlias);
-    void clipRect(const SkRect& rect, ClipOp op) {
+    void clipRect(const SkRect& rect, SkClipOp, bool doAntiAlias);
+    void clipRect(const SkRect& rect, SkClipOp op) {
         this->clipRect(rect, op, false);
     }
     void clipRect(const SkRect& rect, bool doAntiAlias = false) {
-        this->clipRect(rect, kIntersect_Op, doAntiAlias);
+        this->clipRect(rect, SkClipOp::kIntersect, doAntiAlias);
     }
+
+    /**
+     * Sets the max clip rectangle, which can be set by clipRect, clipRRect and
+     * clipPath and intersect the current clip with the specified rect.
+     * The max clip affects only future ops (it is not retroactive).
+     * We DON'T record the clip restriction in pictures.
+     * This is private API to be used only by Android framework.
+     * @param rect   The maximum allowed clip in device coordinates.
+     *               Empty rect means max clip is not enforced.
+     */
+    void androidFramework_setDeviceClipRestriction(const SkIRect& rect);
 
     /**
      *  Modify the current clip with the specified SkRRect.
@@ -523,12 +493,12 @@ public:
      *  @param op The region op to apply to the current clip
      *  @param doAntiAlias true if the clip should be antialiased
      */
-    void clipRRect(const SkRRect& rrect, ClipOp op, bool doAntiAlias);
-    void clipRRect(const SkRRect& rrect, ClipOp op) {
+    void clipRRect(const SkRRect& rrect, SkClipOp op, bool doAntiAlias);
+    void clipRRect(const SkRRect& rrect, SkClipOp op) {
         this->clipRRect(rrect, op, false);
     }
     void clipRRect(const SkRRect& rrect, bool doAntiAlias = false) {
-        this->clipRRect(rrect, kIntersect_Op, doAntiAlias);
+        this->clipRRect(rrect, SkClipOp::kIntersect, doAntiAlias);
     }
 
     /**
@@ -537,12 +507,12 @@ public:
      *  @param op The region op to apply to the current clip
      *  @param doAntiAlias true if the clip should be antialiased
      */
-    void clipPath(const SkPath& path, ClipOp op, bool doAntiAlias);
-    void clipPath(const SkPath& path, ClipOp op) {
+    void clipPath(const SkPath& path, SkClipOp op, bool doAntiAlias);
+    void clipPath(const SkPath& path, SkClipOp op) {
         this->clipPath(path, op, false);
     }
     void clipPath(const SkPath& path, bool doAntiAlias = false) {
-        this->clipPath(path, kIntersect_Op, doAntiAlias);
+        this->clipPath(path, SkClipOp::kIntersect, doAntiAlias);
     }
 
     /** EXPERIMENTAL -- only used for testing
@@ -559,7 +529,7 @@ public:
         @param deviceRgn    The region to apply to the current clip
         @param op The region op to apply to the current clip
     */
-    void clipRegion(const SkRegion& deviceRgn, ClipOp op = kIntersect_Op);
+    void clipRegion(const SkRegion& deviceRgn, SkClipOp op = SkClipOp::kIntersect);
 
     /** Return true if the specified rectangle, after being transformed by the
         current matrix, would lie completely outside of the current clip. Call
@@ -1495,10 +1465,10 @@ protected:
         kSoft_ClipEdgeStyle
     };
 
-    virtual void onClipRect(const SkRect& rect, ClipOp, ClipEdgeStyle);
-    virtual void onClipRRect(const SkRRect& rrect, ClipOp, ClipEdgeStyle);
-    virtual void onClipPath(const SkPath& path, ClipOp, ClipEdgeStyle);
-    virtual void onClipRegion(const SkRegion& deviceRgn, ClipOp);
+    virtual void onClipRect(const SkRect& rect, SkClipOp, ClipEdgeStyle);
+    virtual void onClipRRect(const SkRRect& rrect, SkClipOp, ClipEdgeStyle);
+    virtual void onClipPath(const SkPath& path, SkClipOp, ClipEdgeStyle);
+    virtual void onClipRegion(const SkRegion& deviceRgn, SkClipOp);
 
     virtual void onDiscard();
 
@@ -1589,7 +1559,7 @@ private:
     enum {
         kMCRecSize      = 128,  // most recent measurement
         kMCRecCount     = 32,   // common depth for save/restores
-        kDeviceCMSize   = 176,  // most recent measurement
+        kDeviceCMSize   = 184,  // most recent measurement
     };
     intptr_t fMCRecStorage[kMCRecSize * kMCRecCount / sizeof(intptr_t)];
     intptr_t fDeviceCMStorage[kDeviceCMSize / sizeof(intptr_t)];
@@ -1609,6 +1579,7 @@ private:
     friend class SkSurface_Gpu;
 
     bool fDeviceCMDirty;            // cleared by updateDeviceCMCache()
+    SkIRect fClipRestrictionRect = SkIRect::MakeEmpty();
     void updateDeviceCMCache();
 
     void doSave();
@@ -1620,13 +1591,12 @@ private:
     friend class SkLua;             // needs top layer size and offset
     friend class SkDebugCanvas;     // needs experimental fAllowSimplifyClip
     friend class SkSurface_Raster;  // needs getDevice()
-    friend class SkRecorder;        // InitFlags
-    friend class SkLiteRecorder;        // InitFlags
-    friend class SkNoSaveLayerCanvas;   // InitFlags
+    friend class SkRecorder;        // resetForNextPicture
+    friend class SkLiteRecorder;    // resetForNextPicture
+    friend class SkNoDrawCanvas;    // InitFlags
     friend class SkPictureImageFilter;  // SkCanvas(SkBaseDevice*, SkSurfaceProps*, InitFlags)
     friend class SkPictureRecord;   // predrawNotify (why does it need it? <reed>)
     friend class SkPicturePlayback; // SaveFlagsToSaveLayerFlags
-    friend class SkPipeCanvas;      // InitFlags
     friend class SkDeferredCanvas;  // For use of resetForNextPicture
     friend class SkOverdrawCanvas;
 
@@ -1758,9 +1728,9 @@ private:
 class SkCanvasClipVisitor {
 public:
     virtual ~SkCanvasClipVisitor();
-    virtual void clipRect(const SkRect&, SkCanvas::ClipOp, bool antialias) = 0;
-    virtual void clipRRect(const SkRRect&, SkCanvas::ClipOp, bool antialias) = 0;
-    virtual void clipPath(const SkPath&, SkCanvas::ClipOp, bool antialias) = 0;
+    virtual void clipRect(const SkRect&, SkClipOp, bool antialias) = 0;
+    virtual void clipRRect(const SkRRect&, SkClipOp, bool antialias) = 0;
+    virtual void clipPath(const SkPath&, SkClipOp, bool antialias) = 0;
 };
 
 #endif

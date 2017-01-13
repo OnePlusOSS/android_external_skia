@@ -13,35 +13,13 @@
 #include "SkPath.h"
 #include "SkSurface.h"
 #include "SkTypeface.h"
+#include "SkClipOpPriv.h"
 
 static const int kBmpSize = 24;
 static const int kMaxX = 250;
 static const int kMaxY = 250;
 static const int kPtsLen = 10;
 static const int kTxtLen = 5;
-
-static void init_bitmap(Fuzz* fuzz, SkBitmap* bmp) {
-    uint8_t colorType;
-    fuzz->nextRange(&colorType, 0, (int)kLastEnum_SkColorType);
-    SkImageInfo info = SkImageInfo::Make(kBmpSize,
-                                         kBmpSize,
-                                         (SkColorType)colorType,
-                                         kPremul_SkAlphaType);
-    if (!bmp->tryAllocPixels(info)) {
-        SkDebugf("Bitmap not allocated\n");
-    }
-    bool b;
-    fuzz->next(&b);
-    if (b) { // initialize
-        SkCanvas canvas(*bmp);
-        canvas.clear(0);
-        SkColor c;
-        fuzz->next(&c);
-        SkPaint p; // TODO: maybe init_paint?
-        p.setColor(c);
-        canvas.drawRect(SkRect::MakeXYWH(0, 0, kBmpSize, kBmpSize), p);
-    }
-}
 
 static void init_string(Fuzz* fuzz, char* str, size_t bufSize) {
     for (size_t i = 0; i < bufSize-1; ++i) {
@@ -90,6 +68,32 @@ static void init_paint(Fuzz* fuzz, SkPaint* p) {
     p->setStyle(static_cast<SkPaint::Style>(tmp_u8));
 }
 
+static void init_bitmap(Fuzz* fuzz, SkBitmap* bmp) {
+    uint8_t colorType;
+    fuzz->nextRange(&colorType, 0, (int)kLastEnum_SkColorType);
+    SkImageInfo info = SkImageInfo::Make(kBmpSize,
+                                         kBmpSize,
+                                         (SkColorType)colorType,
+                                         kPremul_SkAlphaType);
+    if (!bmp->tryAllocPixels(info)) {
+        SkDebugf("Bitmap not allocated\n");
+    }
+    SkCanvas canvas(*bmp);
+    canvas.clear(0);
+
+    bool b;
+    fuzz->next(&b);
+    SkPaint p;
+    if (b) {
+        init_paint(fuzz, &p);
+    }
+    else {
+        SkColor c;
+        fuzz->next(&c);
+        p.setColor(c);
+    }
+    canvas.drawRect(SkRect::MakeXYWH(0, 0, kBmpSize, kBmpSize), p);
+}
 
 static void init_surface(Fuzz* fuzz, sk_sp<SkSurface>* s) {
     uint8_t x, y;
@@ -195,7 +199,7 @@ static void fuzz_drawRect(Fuzz* fuzz) {
     fuzz->next(&bl);
     fuzz->next(&a, &b, &c, &d);
     r = SkRect::MakeXYWH(a, b, c, d);
-    cnv->clipRect(r, SkCanvas::kIntersect_Op, bl);
+    cnv->clipRect(r, kIntersect_SkClipOp, bl);
 }
 
 static void fuzz_drawPath(Fuzz* fuzz) {
@@ -246,7 +250,7 @@ static void fuzz_drawPath(Fuzz* fuzz) {
 
     bool bl;
     fuzz->next(&bl);
-    cnv->clipPath(path, SkCanvas::kIntersect_Op, bl);
+    cnv->clipPath(path, kIntersect_SkClipOp, bl);
 }
 
 static void fuzz_drawBitmap(Fuzz* fuzz) {
