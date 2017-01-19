@@ -24,6 +24,7 @@
 #include "SkGrPriv.h"
 #include "SkImage_Gpu.h"
 #include "SkImageCacherator.h"
+#include "SkImageInfoPriv.h"
 #include "SkMipMap.h"
 #include "SkPixelRef.h"
 
@@ -90,6 +91,10 @@ bool SkImage_Gpu::getROPixels(SkBitmap* dst, SkColorSpace* dstColorSpace,
     return true;
 }
 
+sk_sp<GrSurfaceProxy> SkImage_Gpu::refProxy() const {
+    return GrSurfaceProxy::MakeWrapped(fTexture);
+}
+
 GrTexture* SkImage_Gpu::asTextureRef(GrContext* ctx, const GrSamplerParams& params,
                                      SkColorSpace* dstColorSpace,
                                      sk_sp<SkColorSpace>* texColorSpace) const {
@@ -124,14 +129,18 @@ static void apply_premul(const SkImageInfo& info, void* pixels, size_t rowBytes)
 
 bool SkImage_Gpu::onReadPixels(const SkImageInfo& info, void* pixels, size_t rowBytes,
                                int srcX, int srcY, CachingHint) const {
+    if (!SkImageInfoValidConversion(info, this->onImageInfo())) {
+        return false;
+    }
+
     GrPixelConfig config = SkImageInfo2GrPixelConfig(info, *fTexture->getContext()->caps());
     uint32_t flags = 0;
     if (kUnpremul_SkAlphaType == info.alphaType() && kPremul_SkAlphaType == fAlphaType) {
         // let the GPU perform this transformation for us
         flags = GrContext::kUnpremul_PixelOpsFlag;
     }
-    if (!fTexture->readPixels(srcX, srcY, info.width(), info.height(), config,
-                              pixels, rowBytes, flags)) {
+    if (!fTexture->readPixels(fColorSpace.get(), srcX, srcY, info.width(), info.height(), config,
+                              info.colorSpace(), pixels, rowBytes, flags)) {
         return false;
     }
     // do we have to manually fix-up the alpha channel?
@@ -298,7 +307,7 @@ static sk_sp<SkImage> make_from_yuv_textures_copy(GrContext* ctx, SkYUVColorSpac
 
     const SkRect rect = SkRect::MakeWH(SkIntToScalar(width), SkIntToScalar(height));
 
-    renderTargetContext->drawRect(GrNoClip(), paint, GrAA::kNo, SkMatrix::I(), rect);
+    renderTargetContext->drawRect(GrNoClip(), std::move(paint), GrAA::kNo, SkMatrix::I(), rect);
 
     if (!renderTargetContext->accessRenderTarget()) {
         return nullptr;
@@ -306,7 +315,7 @@ static sk_sp<SkImage> make_from_yuv_textures_copy(GrContext* ctx, SkYUVColorSpac
     ctx->flushSurfaceWrites(renderTargetContext->accessRenderTarget());
     return sk_make_sp<SkImage_Gpu>(width, height, kNeedNewImageUniqueID,
                                    kOpaque_SkAlphaType, renderTargetContext->asTexture(),
-                                   sk_ref_sp(renderTargetContext->getColorSpace()), budgeted);
+                                   renderTargetContext->refColorSpace(), budgeted);
 }
 
 sk_sp<SkImage> SkImage::MakeFromYUVTexturesCopy(GrContext* ctx, SkYUVColorSpace colorSpace,

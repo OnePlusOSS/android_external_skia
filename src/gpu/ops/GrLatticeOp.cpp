@@ -15,12 +15,10 @@
 #include "SkLatticeIter.h"
 #include "SkRect.h"
 
-static sk_sp<GrGeometryProcessor> create_gp(bool readsCoverage) {
+static sk_sp<GrGeometryProcessor> create_gp() {
     using namespace GrDefaultGeoProcFactory;
-    Color color(Color::kAttribute_Type);
-    Coverage coverage(readsCoverage ? Coverage::kSolid_Type : Coverage::kNone_Type);
-    LocalCoords localCoords(LocalCoords::kHasExplicit_Type);
-    return GrDefaultGeoProcFactory::Make(color, coverage, localCoords, SkMatrix::I());
+    return GrDefaultGeoProcFactory::Make(Color::kAttribute_Type, Coverage::kSolid_Type,
+                                         LocalCoords::kHasExplicit_Type, SkMatrix::I());
 }
 
 class NonAALatticeOp final : public GrMeshDrawOp {
@@ -70,11 +68,10 @@ private:
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& analysioptimizations) override {
         analysioptimizations.getOverrideColorIfSet(&fPatches[0].fColor);
-        fOptimizations = analysioptimizations;
     }
 
     void onPrepareDraws(Target* target) const override {
-        sk_sp<GrGeometryProcessor> gp(create_gp(fOptimizations.readsCoverage()));
+        sk_sp<GrGeometryProcessor> gp(create_gp());
         if (!gp) {
             SkDebugf("Couldn't create GrGeometryProcessor\n");
             return;
@@ -148,13 +145,6 @@ private:
         SkASSERT(this->fImageWidth == that->fImageWidth &&
                  this->fImageHeight == that->fImageHeight);
 
-        // In the event of two ops, one who can tweak, one who cannot, we just fall back to not
-        // tweaking.
-        if (fOptimizations.canTweakAlphaForCoverage() &&
-            !that->fOptimizations.canTweakAlphaForCoverage()) {
-            fOptimizations = that->fOptimizations;
-        }
-
         fPatches.move_back_n(that->fPatches.count(), that->fPatches.begin());
         this->joinBounds(*that);
         return true;
@@ -167,7 +157,6 @@ private:
         GrColor fColor;
     };
 
-    GrPipelineOptimizations fOptimizations;
     int fImageWidth;
     int fImageHeight;
     SkSTArray<1, Patch, true> fPatches;
@@ -176,9 +165,10 @@ private:
 };
 
 namespace GrLatticeOp {
-sk_sp<GrDrawOp> MakeNonAA(GrColor color, const SkMatrix& viewMatrix, int imageWidth,
-                          int imageHeight, std::unique_ptr<SkLatticeIter> iter, const SkRect& dst) {
-    return sk_sp<GrDrawOp>(
+std::unique_ptr<GrDrawOp> MakeNonAA(GrColor color, const SkMatrix& viewMatrix, int imageWidth,
+                                    int imageHeight, std::unique_ptr<SkLatticeIter> iter,
+                                    const SkRect& dst) {
+    return std::unique_ptr<GrDrawOp>(
             new NonAALatticeOp(color, viewMatrix, imageWidth, imageHeight, std::move(iter), dst));
 }
 };

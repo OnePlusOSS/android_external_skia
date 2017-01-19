@@ -27,14 +27,11 @@ static const int kIndicesPerInstance = 6;
     The vertex attrib order is always pos, color, [local coords].
  */
 static sk_sp<GrGeometryProcessor> make_persp_gp(const SkMatrix& viewMatrix,
-                                                bool readsCoverage,
                                                 bool hasExplicitLocalCoords,
                                                 const SkMatrix* localMatrix) {
     SkASSERT(viewMatrix.hasPerspective() || (localMatrix && localMatrix->hasPerspective()));
 
     using namespace GrDefaultGeoProcFactory;
-    Color color(Color::kAttribute_Type);
-    Coverage coverage(readsCoverage ? Coverage::kSolid_Type : Coverage::kNone_Type);
 
     // If we have perspective on the viewMatrix then we won't map on the CPU, nor will we map
     // the local rect on the cpu (in case the localMatrix also has perspective).
@@ -44,14 +41,16 @@ static sk_sp<GrGeometryProcessor> make_persp_gp(const SkMatrix& viewMatrix,
         LocalCoords localCoords(hasExplicitLocalCoords ? LocalCoords::kHasExplicit_Type
                                                        : LocalCoords::kUsePosition_Type,
                                 localMatrix);
-        return GrDefaultGeoProcFactory::Make(color, coverage, localCoords, viewMatrix);
+        return GrDefaultGeoProcFactory::Make(Color::kAttribute_Type, Coverage::kSolid_Type,
+                                             localCoords, viewMatrix);
     } else if (hasExplicitLocalCoords) {
         LocalCoords localCoords(LocalCoords::kHasExplicit_Type, localMatrix);
-        return GrDefaultGeoProcFactory::Make(color, coverage, localCoords, SkMatrix::I());
+        return GrDefaultGeoProcFactory::Make(Color::kAttribute_Type, Coverage::kSolid_Type,
+                                             localCoords, SkMatrix::I());
     } else {
         LocalCoords localCoords(LocalCoords::kUsePosition_Type, localMatrix);
-        return GrDefaultGeoProcFactory::MakeForDeviceSpace(color, coverage, localCoords,
-                                                           viewMatrix);
+        return GrDefaultGeoProcFactory::MakeForDeviceSpace(
+                Color::kAttribute_Type, Coverage::kSolid_Type, localCoords, viewMatrix);
     }
 }
 
@@ -137,12 +136,10 @@ private:
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
         optimizations.getOverrideColorIfSet(&fRects[0].fColor);
-        fOptimizations = optimizations;
     }
 
     void onPrepareDraws(Target* target) const override {
         sk_sp<GrGeometryProcessor> gp = make_persp_gp(fViewMatrix,
-                                                      fOptimizations.readsCoverage(),
                                                       fHasLocalRect,
                                                       fHasLocalMatrix ? &fLocalMatrix : nullptr);
         if (!gp) {
@@ -200,13 +197,6 @@ private:
             return false;
         }
 
-        // In the event of two ops, one who can tweak, one who cannot, we just fall back to not
-        // tweaking.
-        if (fOptimizations.canTweakAlphaForCoverage() &&
-            !that->fOptimizations.canTweakAlphaForCoverage()) {
-            fOptimizations = that->fOptimizations;
-        }
-
         fRects.push_back_n(that->fRects.count(), that->fRects.begin());
         this->joinBounds(*that);
         return true;
@@ -218,7 +208,6 @@ private:
         SkRect fLocalRect;
     };
 
-    GrPipelineOptimizations fOptimizations;
     SkSTArray<1, RectInfo, true> fRects;
     bool fHasLocalMatrix;
     bool fHasLocalRect;
@@ -230,12 +219,12 @@ private:
 
 namespace GrNonAAFillRectOp {
 
-sk_sp<GrDrawOp> MakeWithPerspective(GrColor color,
-                                    const SkMatrix& viewMatrix,
-                                    const SkRect& rect,
-                                    const SkRect* localRect,
-                                    const SkMatrix* localMatrix) {
-    return sk_sp<GrDrawOp>(
+std::unique_ptr<GrDrawOp> MakeWithPerspective(GrColor color,
+                                              const SkMatrix& viewMatrix,
+                                              const SkRect& rect,
+                                              const SkRect* localRect,
+                                              const SkMatrix* localMatrix) {
+    return std::unique_ptr<GrDrawOp>(
             new NonAAFillRectPerspectiveOp(color, viewMatrix, rect, localRect, localMatrix));
 }
 };

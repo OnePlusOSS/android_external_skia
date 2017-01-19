@@ -160,12 +160,12 @@ class TessellatingPathOp final : public GrMeshDrawOp {
 public:
     DEFINE_OP_CLASS_ID
 
-    static sk_sp<GrDrawOp> Make(const GrColor& color,
-                                const GrShape& shape,
-                                const SkMatrix& viewMatrix,
-                                SkIRect devClipBounds,
-                                bool antiAlias) {
-        return sk_sp<GrDrawOp>(
+    static std::unique_ptr<GrDrawOp> Make(const GrColor& color,
+                                          const GrShape& shape,
+                                          const SkMatrix& viewMatrix,
+                                          SkIRect devClipBounds,
+                                          bool antiAlias) {
+        return std::unique_ptr<GrDrawOp>(
                 new TessellatingPathOp(color, shape, viewMatrix, devClipBounds, antiAlias));
     }
 
@@ -186,11 +186,9 @@ private:
     }
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
-        if (!optimizations.readsColor()) {
-            fColor = GrColor_ILLEGAL;
-        }
         optimizations.getOverrideColorIfSet(&fColor);
-        fOptimizations = optimizations;
+        fCanTweakAlphaForCoverage = optimizations.canTweakAlphaForCoverage();
+        fNeedsLocalCoords = optimizations.readsLocalCoords();
     }
 
     SkPath getPath() const {
@@ -262,9 +260,8 @@ private:
         SkScalar tol = GrPathUtils::kDefaultTolerance;
         bool isLinear;
         DynamicVertexAllocator allocator(gp->getVertexStride(), target);
-        bool canTweakAlphaForCoverage = fOptimizations.canTweakAlphaForCoverage();
         int count = GrTessellator::PathToTriangles(path, tol, clipBounds, &allocator,
-                                                   true, fColor, canTweakAlphaForCoverage,
+                                                   true, fColor, fCanTweakAlphaForCoverage,
                                                    &isLinear);
         if (count == 0) {
             return;
@@ -278,28 +275,26 @@ private:
             using namespace GrDefaultGeoProcFactory;
 
             Color color(fColor);
-            LocalCoords localCoords(fOptimizations.readsLocalCoords()
-                                            ? LocalCoords::kUsePosition_Type
-                                            : LocalCoords::kUnused_Type);
+            LocalCoords::Type localCoordsType = fNeedsLocalCoords
+                                                        ? LocalCoords::kUsePosition_Type
+                                                        : LocalCoords::kUnused_Type;
             Coverage::Type coverageType;
             if (fAntiAlias) {
                 color = Color(Color::kAttribute_Type);
-                if (fOptimizations.canTweakAlphaForCoverage()) {
+                if (fCanTweakAlphaForCoverage) {
                     coverageType = Coverage::kSolid_Type;
                 } else {
                     coverageType = Coverage::kAttribute_Type;
                 }
-            } else if (fOptimizations.readsCoverage()) {
+            } else {
                 coverageType = Coverage::kSolid_Type;
-            } else {
-                coverageType = Coverage::kNone_Type;
             }
-            Coverage coverage(coverageType);
             if (fAntiAlias) {
-                gp = GrDefaultGeoProcFactory::MakeForDeviceSpace(color, coverage, localCoords,
-                                                                 fViewMatrix);
+                gp = GrDefaultGeoProcFactory::MakeForDeviceSpace(color, coverageType,
+                                                                 localCoordsType, fViewMatrix);
             } else {
-                gp = GrDefaultGeoProcFactory::Make(color, coverage, localCoords, fViewMatrix);
+                gp = GrDefaultGeoProcFactory::Make(color, coverageType, localCoordsType,
+                                                   fViewMatrix);
             }
         }
         if (fAntiAlias) {
@@ -346,7 +341,8 @@ private:
     SkMatrix                fViewMatrix;
     SkIRect                 fDevClipBounds;
     bool                    fAntiAlias;
-    GrPipelineOptimizations fOptimizations;
+    bool                    fCanTweakAlphaForCoverage;
+    bool                    fNeedsLocalCoords;
 
     typedef GrMeshDrawOp INHERITED;
 };
@@ -358,12 +354,12 @@ bool GrTessellatingPathRenderer::onDrawPath(const DrawPathArgs& args) {
     args.fClip->getConservativeBounds(args.fRenderTargetContext->width(),
                                       args.fRenderTargetContext->height(),
                                       &clipBoundsI);
-    sk_sp<GrDrawOp> op = TessellatingPathOp::Make(args.fPaint->getColor(),
-                                                  *args.fShape,
-                                                  *args.fViewMatrix,
-                                                  clipBoundsI,
-                                                  GrAAType::kCoverage == args.fAAType);
-    GrPipelineBuilder pipelineBuilder(*args.fPaint, args.fAAType);
+    std::unique_ptr<GrDrawOp> op = TessellatingPathOp::Make(args.fPaint.getColor(),
+                                                            *args.fShape,
+                                                            *args.fViewMatrix,
+                                                            clipBoundsI,
+                                                            GrAAType::kCoverage == args.fAAType);
+    GrPipelineBuilder pipelineBuilder(std::move(args.fPaint), args.fAAType);
     pipelineBuilder.setUserStencil(args.fUserStencilSettings);
     args.fRenderTargetContext->addDrawOp(pipelineBuilder, *args.fClip, std::move(op));
     return true;

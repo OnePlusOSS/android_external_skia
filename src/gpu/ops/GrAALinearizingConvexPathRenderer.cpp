@@ -103,38 +103,32 @@ static void extract_verts(const GrAAConvexTessellator& tess,
 
 static sk_sp<GrGeometryProcessor> create_fill_gp(bool tweakAlphaForCoverage,
                                                  const SkMatrix& viewMatrix,
-                                                 bool usesLocalCoords,
-                                                 bool coverageIgnored) {
+                                                 bool usesLocalCoords) {
     using namespace GrDefaultGeoProcFactory;
 
-    Color color(Color::kAttribute_Type);
     Coverage::Type coverageType;
-    // TODO remove coverage if coverage is ignored
-    /*if (coverageIgnored) {
-        coverageType = Coverage::kNone_Type;
-    } else*/ if (tweakAlphaForCoverage) {
+    if (tweakAlphaForCoverage) {
         coverageType = Coverage::kSolid_Type;
     } else {
         coverageType = Coverage::kAttribute_Type;
     }
-    Coverage coverage(coverageType);
-    LocalCoords localCoords(usesLocalCoords ? LocalCoords::kUsePosition_Type :
-                                              LocalCoords::kUnused_Type);
-    return MakeForDeviceSpace(color, coverage, localCoords, viewMatrix);
+    LocalCoords::Type localCoordsType =
+            usesLocalCoords ? LocalCoords::kUsePosition_Type : LocalCoords::kUnused_Type;
+    return MakeForDeviceSpace(Color::kAttribute_Type, coverageType, localCoordsType, viewMatrix);
 }
 
 class AAFlatteningConvexPathOp final : public GrMeshDrawOp {
 public:
     DEFINE_OP_CLASS_ID
-    static sk_sp<GrDrawOp> Make(GrColor color,
-                                const SkMatrix& viewMatrix,
-                                const SkPath& path,
-                                SkScalar strokeWidth,
-                                SkStrokeRec::Style style,
-                                SkPaint::Join join,
-                                SkScalar miterLimit) {
-        return sk_sp<GrDrawOp>(new AAFlatteningConvexPathOp(color, viewMatrix, path, strokeWidth,
-                                                            style, join, miterLimit));
+    static std::unique_ptr<GrDrawOp> Make(GrColor color,
+                                          const SkMatrix& viewMatrix,
+                                          const SkPath& path,
+                                          SkScalar strokeWidth,
+                                          SkStrokeRec::Style style,
+                                          SkPaint::Join join,
+                                          SkScalar miterLimit) {
+        return std::unique_ptr<GrDrawOp>(new AAFlatteningConvexPathOp(
+                color, viewMatrix, path, strokeWidth, style, join, miterLimit));
     }
 
     const char* name() const override { return "AAFlatteningConvexPathOp"; }
@@ -184,14 +178,8 @@ private:
     }
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
-        if (!optimizations.readsColor()) {
-            fPaths[0].fColor = GrColor_ILLEGAL;
-        }
         optimizations.getOverrideColorIfSet(&fPaths[0].fColor);
-
-        fColor = fPaths[0].fColor;
         fUsesLocalCoords = optimizations.readsLocalCoords();
-        fCoverageIgnored = !optimizations.readsCoverage();
         fCanTweakAlphaForCoverage = optimizations.canTweakAlphaForCoverage();
     }
 
@@ -228,10 +216,8 @@ private:
         bool canTweakAlphaForCoverage = this->canTweakAlphaForCoverage();
 
         // Setup GrGeometryProcessor
-        sk_sp<GrGeometryProcessor> gp(create_fill_gp(canTweakAlphaForCoverage,
-                                                     this->viewMatrix(),
-                                                     this->usesLocalCoords(),
-                                                     this->coverageIgnored()));
+        sk_sp<GrGeometryProcessor> gp(create_fill_gp(
+                canTweakAlphaForCoverage, this->viewMatrix(), this->usesLocalCoords()));
         if (!gp) {
             SkDebugf("Couldn't create a GrGeometryProcessor\n");
             return;
@@ -313,11 +299,9 @@ private:
         return true;
     }
 
-    GrColor color() const { return fColor; }
     bool usesLocalCoords() const { return fUsesLocalCoords; }
     bool canTweakAlphaForCoverage() const { return fCanTweakAlphaForCoverage; }
     const SkMatrix& viewMatrix() const { return fPaths[0].fViewMatrix; }
-    bool coverageIgnored() const { return fCoverageIgnored; }
 
     struct PathData {
         GrColor fColor;
@@ -329,9 +313,7 @@ private:
         SkScalar fMiterLimit;
     };
 
-    GrColor fColor;
     bool fUsesLocalCoords;
-    bool fCoverageIgnored;
     bool fCanTweakAlphaForCoverage;
     SkSTArray<1, PathData, true> fPaths;
 
@@ -353,11 +335,11 @@ bool GrAALinearizingConvexPathRenderer::onDrawPath(const DrawPathArgs& args) {
     SkPaint::Join join = fill ? SkPaint::Join::kMiter_Join : stroke.getJoin();
     SkScalar miterLimit = stroke.getMiter();
 
-    sk_sp<GrDrawOp> op =
-            AAFlatteningConvexPathOp::Make(args.fPaint->getColor(), *args.fViewMatrix, path,
+    std::unique_ptr<GrDrawOp> op =
+            AAFlatteningConvexPathOp::Make(args.fPaint.getColor(), *args.fViewMatrix, path,
                                            strokeWidth, stroke.getStyle(), join, miterLimit);
 
-    GrPipelineBuilder pipelineBuilder(*args.fPaint, args.fAAType);
+    GrPipelineBuilder pipelineBuilder(std::move(args.fPaint), args.fAAType);
     pipelineBuilder.setUserStencil(args.fUserStencilSettings);
 
     args.fRenderTargetContext->addDrawOp(pipelineBuilder, *args.fClip, std::move(op));

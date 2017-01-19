@@ -7,11 +7,12 @@
 
 #include "GrPipeline.h"
 
+#include "GrAppliedClip.h"
 #include "GrCaps.h"
-#include "GrRenderTargetContext.h"
 #include "GrGpu.h"
 #include "GrPipelineBuilder.h"
 #include "GrProcOptInfo.h"
+#include "GrRenderTargetContext.h"
 #include "GrRenderTargetOpList.h"
 #include "GrRenderTargetPriv.h"
 #include "GrXferProcessor.h"
@@ -30,8 +31,8 @@ GrPipeline* GrPipeline::CreateAt(void* memory, const CreateArgs& args,
     GrPipeline* pipeline = new (memory) GrPipeline;
     pipeline->fRenderTarget.reset(rt);
     SkASSERT(pipeline->fRenderTarget);
-    pipeline->fScissorState = *args.fScissor;
-    pipeline->fWindowRectsState = *args.fWindowRectsState;
+    pipeline->fScissorState = args.fAppliedClip->scissorState();
+    pipeline->fWindowRectsState = args.fAppliedClip->windowRectsState();
     pipeline->fUserStencilSettings = userStencil;
     pipeline->fDrawFace = builder.getDrawFace();
 
@@ -51,10 +52,10 @@ GrPipeline* GrPipeline::CreateAt(void* memory, const CreateArgs& args,
     if (builder.getUsesDistanceVectorField()) {
         pipeline->fFlags |= kUsesDistanceVectorField_Flag;
     }
-    if (args.fHasStencilClip) {
+    if (args.fAppliedClip->hasStencilClip()) {
         pipeline->fFlags |= kHasStencilClip_Flag;
     }
-    if (!userStencil->isDisabled(args.fHasStencilClip)) {
+    if (!userStencil->isDisabled(args.fAppliedClip->hasStencilClip())) {
         pipeline->fFlags |= kStencilEnabled_Flag;
     }
 
@@ -84,10 +85,9 @@ GrPipeline* GrPipeline::CreateAt(void* memory, const CreateArgs& args,
 
     const GrXferProcessor* xpForOpts = xferProcessor ? xferProcessor.get() :
                                                        &GrPorterDuffXPFactory::SimpleSrcOverXP();
-    optFlags = xpForOpts->getOptimizations(args.fAnalysis,
-                                           userStencil->doesWrite(args.fHasStencilClip),
-                                           &overrideColor,
-                                           *args.fCaps);
+    optFlags = xpForOpts->getOptimizations(
+            args.fAnalysis, userStencil->doesWrite(args.fAppliedClip->hasStencilClip()),
+            &overrideColor, *args.fCaps);
 
     // When path rendering the stencil settings are not always set on the GrPipelineBuilder
     // so we must check the draw type. In cases where we will skip drawing we simply return a
@@ -111,9 +111,10 @@ GrPipeline* GrPipeline::CreateAt(void* memory, const CreateArgs& args,
     // information.
     int firstCoverageProcessorIdx = 0;
 
-    pipeline->adjustProgramFromOptimizations(builder, optFlags, args.fAnalysis.fColorPOI,
-                                             args.fAnalysis.fCoveragePOI, &firstColorProcessorIdx,
-                                             &firstCoverageProcessorIdx);
+    if ((optFlags & GrXferProcessor::kIgnoreColor_OptFlag) ||
+        (optFlags & GrXferProcessor::kOverrideColor_OptFlag)) {
+        firstColorProcessorIdx = builder.numColorFragmentProcessors();
+    }
 
     bool usesLocalCoords = false;
 
@@ -121,6 +122,9 @@ GrPipeline* GrPipeline::CreateAt(void* memory, const CreateArgs& args,
     pipeline->fNumColorProcessors = builder.numColorFragmentProcessors() - firstColorProcessorIdx;
     int numTotalProcessors = pipeline->fNumColorProcessors +
                              builder.numCoverageFragmentProcessors() - firstCoverageProcessorIdx;
+    if (args.fAppliedClip->clipCoverageFragmentProcessor()) {
+        ++numTotalProcessors;
+    }
     pipeline->fFragmentProcessors.reset(numTotalProcessors);
     int currFPIdx = 0;
     for (int i = firstColorProcessorIdx; i < builder.numColorFragmentProcessors();
@@ -136,18 +140,16 @@ GrPipeline* GrPipeline::CreateAt(void* memory, const CreateArgs& args,
         pipeline->fFragmentProcessors[currFPIdx].reset(fp);
         usesLocalCoords = usesLocalCoords || fp->usesLocalCoords();
     }
+    if (const GrFragmentProcessor* fp = args.fAppliedClip->clipCoverageFragmentProcessor()) {
+        pipeline->fFragmentProcessors[currFPIdx].reset(fp);
+        usesLocalCoords = usesLocalCoords || fp->usesLocalCoords();
+    }
 
     // Setup info we need to pass to GrPrimitiveProcessors that are used with this GrPipeline.
     optimizations->fFlags = 0;
-    if (!SkToBool(optFlags & GrXferProcessor::kIgnoreColor_OptFlag)) {
-        optimizations->fFlags |= GrPipelineOptimizations::kReadsColor_Flag;
-    }
     if (GrColor_ILLEGAL != overrideColor) {
         optimizations->fFlags |= GrPipelineOptimizations::kUseOverrideColor_Flag;
         optimizations->fOverrideColor = overrideColor;
-    }
-    if (!SkToBool(optFlags & GrXferProcessor::kIgnoreCoverage_OptFlag)) {
-        optimizations->fFlags |= GrPipelineOptimizations::kReadsCoverage_Flag;
     }
     if (usesLocalCoords) {
         optimizations->fFlags |= GrPipelineOptimizations::kReadsLocalCoords_Flag;
@@ -194,24 +196,6 @@ void GrPipeline::addDependenciesTo(GrRenderTarget* rt) const {
     }
 }
 
-void GrPipeline::adjustProgramFromOptimizations(const GrPipelineBuilder& pipelineBuilder,
-                                                GrXferProcessor::OptFlags flags,
-                                                const GrProcOptInfo& colorPOI,
-                                                const GrProcOptInfo& coveragePOI,
-                                                int* firstColorProcessorIdx,
-                                                int* firstCoverageProcessorIdx) {
-    fIgnoresCoverage = SkToBool(flags & GrXferProcessor::kIgnoreCoverage_OptFlag);
-
-    if ((flags & GrXferProcessor::kIgnoreColor_OptFlag) ||
-        (flags & GrXferProcessor::kOverrideColor_OptFlag)) {
-        *firstColorProcessorIdx = pipelineBuilder.numColorFragmentProcessors();
-    }
-
-    if (flags & GrXferProcessor::kIgnoreCoverage_OptFlag) {
-        *firstCoverageProcessorIdx = pipelineBuilder.numCoverageFragmentProcessors();
-    }
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 bool GrPipeline::AreEqual(const GrPipeline& a, const GrPipeline& b) {
@@ -224,8 +208,7 @@ bool GrPipeline::AreEqual(const GrPipeline& a, const GrPipeline& b) {
         !a.fWindowRectsState.cheapEqualTo(b.fWindowRectsState) ||
         a.fFlags != b.fFlags ||
         a.fUserStencilSettings != b.fUserStencilSettings ||
-        a.fDrawFace != b.fDrawFace ||
-        a.fIgnoresCoverage != b.fIgnoresCoverage) {
+        a.fDrawFace != b.fDrawFace) {
         return false;
     }
 

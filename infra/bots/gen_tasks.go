@@ -66,8 +66,11 @@ var (
 		"Build-Ubuntu-Clang-x86_64-Debug",
 		"Build-Ubuntu-Clang-x86_64-Debug-ASAN",
 		"Build-Ubuntu-Clang-x86_64-Debug-MSAN",
+		"Build-Ubuntu-Clang-x86_64-Debug-Vulkan",
 		"Build-Ubuntu-Clang-x86_64-Release",
+		"Build-Ubuntu-Clang-x86_64-Release-Fast",
 		"Build-Ubuntu-Clang-x86_64-Release-TSAN",
+		"Build-Ubuntu-Clang-x86_64-Release-Vulkan",
 		"Build-Ubuntu-GCC-x86-Debug",
 		"Build-Ubuntu-GCC-x86-Release",
 		"Build-Ubuntu-GCC-x86_64-Debug",
@@ -75,7 +78,6 @@ var (
 		"Build-Ubuntu-GCC-x86_64-Debug-SK_USE_DISCARDABLE_SCALEDIMAGECACHE",
 		"Build-Ubuntu-GCC-x86_64-Release",
 		"Build-Ubuntu-GCC-x86_64-Release-ANGLE",
-		"Build-Ubuntu-GCC-x86_64-Release-Fast",
 		"Build-Ubuntu-GCC-x86_64-Release-Mesa",
 		"Build-Ubuntu-GCC-x86_64-Release-NoGPU",
 		"Build-Ubuntu-GCC-x86_64-Release-PDFium",
@@ -126,7 +128,6 @@ var (
 		"Perf-Android-Clang-Nexus7-GPU-Tegra3-arm-Debug-Android",
 		"Perf-Android-Clang-Nexus7-GPU-Tegra3-arm-Release-Android",
 		"Perf-Android-Clang-NexusPlayer-CPU-Moorefield-x86-Debug-Android",
-		"Perf-Android-Clang-NexusPlayer-CPU-Moorefield-x86-Release-Android",
 		"Perf-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android",
 		// "Perf-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android_Vulkan",
 		"Perf-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android",
@@ -150,6 +151,7 @@ var (
 		"Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Debug-ASAN",
 		"Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Debug-MSAN",
 		"Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release",
+		"Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-Fast",
 		"Perf-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Debug-ASAN",
 		"Perf-Ubuntu-GCC-GCE-CPU-AVX2-x86-Debug",
 		"Perf-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Debug",
@@ -160,27 +162,43 @@ var (
 		"Perf-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind",
 		"Perf-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Debug",
 		"Perf-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Release",
+		"Perf-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Debug",
+		"Perf-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release",
+		"Perf-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Debug-Vulkan",
+		"Perf-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release-Vulkan",
 		"Perf-Win10-MSVC-Golo-GPU-GT610-x86_64-Release",
+		"Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug",
+		"Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug-ANGLE",
+		"Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug-Vulkan",
+		"Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release",
+		"Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release-ANGLE",
+		"Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release-Vulkan",
 		"Perf-Win10-MSVC-NUC-GPU-IntelIris6100-x86_64-Debug-ANGLE",
 		"Perf-Win10-MSVC-NUC-GPU-IntelIris6100-x86_64-Release-ANGLE",
+		"Perf-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Debug",
+		"Perf-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Release",
 		"Perf-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Debug",
 		"Perf-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Debug-Vulkan",
 		"Perf-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Release",
 		"Perf-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Release-Vulkan",
+		"Perf-Win10-MSVC-ShuttleB-GPU-IntelHD4600-x86_64-Debug",
+		"Perf-Win10-MSVC-ShuttleB-GPU-IntelHD4600-x86_64-Release",
 		"Perf-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Debug",
 		"Perf-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Debug-ANGLE",
 		"Perf-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Release",
 		"Perf-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Release-ANGLE",
 		"Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug",
 		"Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release",
+		"Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug",
+		"Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug-ANGLE",
+		"Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug-Vulkan",
+		"Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release",
+		"Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release-ANGLE",
+		"Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release-Vulkan",
 		"Perf-Win2k8-MSVC-GCE-CPU-AVX2-x86-Debug",
 		"Perf-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Debug",
 		"Perf-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Debug-GDI",
 		"Perf-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Release",
-		"Perf-Win8-MSVC-ShuttleA-GPU-HD7770-x86_64-Debug",
-		"Perf-Win8-MSVC-ShuttleA-GPU-HD7770-x86_64-Release",
-		"Perf-Win8-MSVC-ShuttleB-GPU-HD4600-x86_64-Debug",
-		"Perf-Win8-MSVC-ShuttleB-GPU-HD4600-x86_64-Release",
 		"Perf-iOS-Clang-iPadMini4-GPU-GX6450-Arm7-Debug",
 		"Perf-iOS-Clang-iPadMini4-GPU-GX6450-Arm7-Release",
 		"Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android",
@@ -229,6 +247,7 @@ var (
 		"Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Debug-ASAN",
 		"Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Debug-MSAN",
 		"Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release",
+		"Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-Fast",
 		"Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-TSAN",
 		"Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Debug-ASAN",
 		"Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-TSAN",
@@ -239,33 +258,48 @@ var (
 		"Test-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Debug-CT_IMG_DECODE_100k_SKPs",
 		"Test-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Debug-SK_USE_DISCARDABLE_SCALEDIMAGECACHE",
 		"Test-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Release",
-		"Test-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Release-Fast",
 		"Test-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Release-SKNX_NO_SIMD",
 		"Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind",
 		"Test-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Debug",
 		"Test-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Release",
+		"Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Debug",
+		"Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release",
+		"Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Debug-Vulkan",
+		"Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release-Vulkan",
 		"Test-Win10-MSVC-Golo-GPU-GT610-x86_64-Release",
+		"Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug",
+		"Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug-ANGLE",
+		"Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug-Vulkan",
+		"Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release",
+		"Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release-ANGLE",
+		"Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release-Vulkan",
 		"Test-Win10-MSVC-NUC-GPU-IntelIris6100-x86_64-Debug-ANGLE",
 		"Test-Win10-MSVC-NUC-GPU-IntelIris6100-x86_64-Release-ANGLE",
+		"Test-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Debug",
+		"Test-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Release",
 		"Test-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Debug",
 		"Test-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Debug-Vulkan",
 		"Test-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Release",
+		"Test-Win10-MSVC-ShuttleB-GPU-IntelHD4600-x86_64-Debug",
+		"Test-Win10-MSVC-ShuttleB-GPU-IntelHD4600-x86_64-Release",
 		"Test-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Debug",
 		"Test-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Debug-ANGLE",
 		"Test-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Release",
 		"Test-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Release-ANGLE",
 		"Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug",
 		"Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release",
+		"Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug",
+		"Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug-ANGLE",
+		"Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug-Vulkan",
+		"Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release",
+		"Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release-ANGLE",
+		"Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release-Vulkan",
 		"Test-Win2k8-MSVC-GCE-CPU-AVX2-x86-Debug",
 		"Test-Win2k8-MSVC-GCE-CPU-AVX2-x86-Release",
 		"Test-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Debug",
 		"Test-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Debug-GDI",
 		"Test-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Release",
 		"Test-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Release-GDI",
-		"Test-Win8-MSVC-ShuttleA-GPU-HD7770-x86_64-Debug",
-		"Test-Win8-MSVC-ShuttleA-GPU-HD7770-x86_64-Release",
-		"Test-Win8-MSVC-ShuttleB-GPU-HD4600-x86_64-Debug",
-		"Test-Win8-MSVC-ShuttleB-GPU-HD4600-x86_64-Release",
 		"Test-iOS-Clang-iPadMini4-GPU-GX6450-Arm7-Debug",
 		"Test-iOS-Clang-iPadMini4-GPU-GX6450-Arm7-Release",
 	}
@@ -302,6 +336,8 @@ func deriveCompileTaskName(jobName string, parts map[string]string) string {
 			task_os = "Mac"
 		} else if strings.Contains(task_os, "Win") {
 			task_os = "Win"
+		} else if strings.Contains(task_os, "Ubuntu") {
+			task_os = "Ubuntu"
 		}
 		jobNameMap := map[string]string{
 			"role":          "Build",
@@ -330,15 +366,20 @@ func swarmDimensions(parts map[string]string) []string {
 	}
 	if os, ok := parts["os"]; ok {
 		d["os"] = map[string]string{
-			"Android": "Android",
-			"Mac":     "Mac-10.11",
-			"Ubuntu":  DEFAULT_OS_LINUX,
-			"Win":     "Windows-2008ServerR2-SP1",
-			"Win10":   "Windows-10-10586",
-			"Win2k8":  "Windows-2008ServerR2-SP1",
-			"Win8":    "Windows-8.1-SP0",
-			"iOS":     "iOS-9.3.1",
+			"Android":  "Android",
+			"Mac":      "Mac-10.11",
+			"Ubuntu":   DEFAULT_OS_LINUX,
+			"Ubuntu16": "Ubuntu-16.04",
+			"Win":      "Windows-2008ServerR2-SP1",
+			"Win10":    "Windows-10-14393",
+			"Win2k8":   "Windows-2008ServerR2-SP1",
+			"Win8":     "Windows-8.1-SP0",
+			"iOS":      "iOS-9.3.1",
 		}[os]
+		// Chrome Golo has a different Windows image.
+		if parts["model"] == "Golo" && os == "Win10" {
+			d["os"] = "Windows-10-10586"
+		}
 	} else {
 		d["os"] = DEFAULT_OS
 	}
@@ -352,15 +393,15 @@ func swarmDimensions(parts map[string]string) []string {
 				"GalaxyTab3":    {"goyawifi", "JDQ39"},
 				"NVIDIA_Shield": {"foster", "MRA58K"},
 				"Nexus10":       {"manta", "LMY49J"},
-				"Nexus5":        {"hammerhead", "MOB31E"},
+				"Nexus5":        {"hammerhead", "M4B30Z"},
 				"Nexus6":        {"shamu", "M"},
 				"Nexus6p":       {"angler", "NMF26C"},
 				"Nexus7":        {"grouper", "LMY47V"},
 				"Nexus7v2":      {"flo", "M"},
-				"NexusPlayer":   {"fugu", "NRD90R"},
-				"Pixel":         {"sailfish", "NMF25"},
+				"NexusPlayer":   {"fugu", "N2G10B"},
+				"Pixel":         {"sailfish", "NMF26Q"},
 				"PixelC":        {"dragon", "NMF26H"},
-				"PixelXL":       {"marlin", "NMF25"},
+				"PixelXL":       {"marlin", "NMF26Q"},
 			}[parts["model"]]
 			d["device_type"] = deviceInfo[0]
 			d["device_os"] = deviceInfo[1]
@@ -384,15 +425,21 @@ func swarmDimensions(parts map[string]string) []string {
 			}
 		} else {
 			d["gpu"] = map[string]string{
-				"GeForce320M":   "10de:08a4",
-				"GT610":         "10de:104a",
-				"GTX550Ti":      "10de:1244",
-				"GTX660":        "10de:11c0",
-				"GTX960":        "10de:1401",
-				"HD4000":        "8086:0a2e",
-				"HD4600":        "8086:0412",
-				"HD7770":        "1002:683d",
+				"AMDHD7770":   "1002:683d",
+				"GeForce320M": "10de:08a4",
+				"GT610":       "10de:104a",
+				"GTX1070":     "10de:1ba1",
+				"GTX550Ti":    "10de:1244",
+				"GTX660":      "10de:11c0",
+				"GTX960":      "10de:1401",
+				// TODO(benjaminwagner): This device ID doesn't
+				// match HD4000.
+				"HD4000": "8086:0a2e",
+				// This bot will eventually go away, so I'm not
+				// going to bother renaming it.
 				"iHD530":        "8086:1912",
+				"IntelHD4600":   "8086:0412",
+				"IntelIris540":  "8086:1926",
 				"IntelIris6100": "8086:162b",
 			}[parts["cpu_or_gpu_value"]]
 		}
@@ -424,8 +471,13 @@ func compile(b *specs.TasksCfgBuilder, name string, parts map[string]string) str
 		} else {
 			pkgs = append(pkgs, b.MustGetCipdPackageFromAsset("android_ndk_linux"))
 		}
-	} else if strings.Contains(name, "Ubuntu") && strings.Contains(name, "Clang") {
-		pkgs = append(pkgs, b.MustGetCipdPackageFromAsset("clang_linux"))
+	} else if strings.Contains(name, "Ubuntu") {
+		if strings.Contains(name, "Clang") {
+			pkgs = append(pkgs, b.MustGetCipdPackageFromAsset("clang_linux"))
+		}
+		if strings.Contains(name, "Vulkan") {
+			pkgs = append(pkgs, b.MustGetCipdPackageFromAsset("linux_vulkan_sdk"))
+		}
 	} else if strings.Contains(name, "Win") {
 		pkgs = append(pkgs, b.MustGetCipdPackageFromAsset("win_toolchain"))
 		if strings.Contains(name, "Vulkan") {
@@ -819,7 +871,7 @@ func process(b *specs.TasksCfgBuilder, name string) {
 func main() {
 	b := specs.MustNewTasksCfgBuilder()
 	// Create the JobNameSchema.
-	schema, err := NewJobNameSchema(path.Join(b.CheckoutRoot(), "infra", "bots", "recipe_modules", "builder_name_schema", "builder_name_schema.json"))
+	schema, err := NewJobNameSchema(path.Join(b.CheckoutRoot(), "infra", "bots", ".recipe_deps", "skia-recipes", "recipe_modules", "builder_name_schema", "builder_name_schema.json"))
 	if err != nil {
 		glog.Fatal(err)
 	}

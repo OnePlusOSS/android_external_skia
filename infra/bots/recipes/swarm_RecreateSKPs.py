@@ -8,15 +8,15 @@
 
 DEPS = [
   'build/file',
-  'core',
   'depot_tools/gclient',
-  'infra',
   'recipe_engine/path',
   'recipe_engine/properties',
   'recipe_engine/python',
   'recipe_engine/raw_io',
   'recipe_engine/step',
-  'vars',
+  'skia-recipes/core',
+  'skia-recipes/infra',
+  'skia-recipes/vars',
 ]
 
 
@@ -151,6 +151,7 @@ def GenTests(api):
       api.properties(buildername=builder,
                      mastername=mastername,
                      slavename=slavename,
+                     repository='https://skia.googlesource.com/skia.git',
                      revision='abc123',
                      buildnumber=2,
                      path_config='kitchen',
@@ -164,6 +165,7 @@ def GenTests(api):
       api.properties(buildername=builder,
                      mastername=mastername,
                      slavename=slavename,
+                     repository='https://skia.googlesource.com/skia.git',
                      revision='abc123',
                      buildnumber=2,
                      path_config='kitchen',
@@ -176,6 +178,7 @@ def GenTests(api):
       api.properties(buildername=builder,
                      mastername=mastername,
                      slavename=slavename,
+                     repository='https://skia.googlesource.com/skia.git',
                      revision='abc123',
                      buildnumber=2,
                      path_config='kitchen',

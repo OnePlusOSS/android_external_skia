@@ -56,7 +56,7 @@ void GrSWMaskHelper::drawRect(const SkRect& rect, SkRegion::Op op, GrAA aa, uint
  */
 void GrSWMaskHelper::drawShape(const GrShape& shape, SkRegion::Op op, GrAA aa, uint8_t alpha) {
     SkPaint paint;
-    paint.setPathEffect(sk_ref_sp(shape.style().pathEffect()));
+    paint.setPathEffect(shape.style().refPathEffect());
     shape.style().strokeRec().applyToPaint(&paint);
     paint.setAntiAlias(GrAA::kYes == aa);
 
@@ -160,7 +160,7 @@ sk_sp<GrTexture> GrSWMaskHelper::DrawShapeMaskToTexture(GrContext* context,
 
 void GrSWMaskHelper::DrawToTargetWithShapeMask(GrTexture* texture,
                                                GrRenderTargetContext* renderTargetContext,
-                                               const GrPaint& paint,
+                                               GrPaint&& paint,
                                                const GrUserStencilSettings& userStencilSettings,
                                                const GrClip& clip,
                                                const SkMatrix& viewMatrix,
@@ -181,16 +181,11 @@ void GrSWMaskHelper::DrawToTargetWithShapeMask(GrTexture* texture,
     maskMatrix.preTranslate(SkIntToScalar(-textureOriginInDeviceSpace.fX),
                             SkIntToScalar(-textureOriginInDeviceSpace.fY));
     maskMatrix.preConcat(viewMatrix);
-    GrPipelineBuilder pipelineBuilder(paint, GrAAType::kNone);
+    std::unique_ptr<GrDrawOp> op = GrRectOpFactory::MakeNonAAFill(paint.getColor(), SkMatrix::I(),
+                                                                  dstRect, nullptr, &invert);
+    paint.addCoverageFragmentProcessor(GrSimpleTextureEffect::Make(
+            texture, nullptr, maskMatrix, GrSamplerParams::kNone_FilterMode));
+    GrPipelineBuilder pipelineBuilder(std::move(paint), GrAAType::kNone);
     pipelineBuilder.setUserStencil(&userStencilSettings);
-
-    pipelineBuilder.addCoverageFragmentProcessor(
-                         GrSimpleTextureEffect::Make(texture,
-                                                     nullptr,
-                                                     maskMatrix,
-                                                     GrSamplerParams::kNone_FilterMode));
-
-    sk_sp<GrDrawOp> op = GrRectOpFactory::MakeNonAAFill(paint.getColor(), SkMatrix::I(), dstRect,
-                                                        nullptr, &invert);
     renderTargetContext->addDrawOp(pipelineBuilder, clip, std::move(op));
 }

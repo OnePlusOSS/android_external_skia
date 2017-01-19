@@ -28,13 +28,10 @@ static const int kIndicesPerInstance = 6;
 
     The vertex attrib order is always pos, color, [local coords].
  */
-static sk_sp<GrGeometryProcessor> make_gp(bool readsCoverage) {
+static sk_sp<GrGeometryProcessor> make_gp() {
     using namespace GrDefaultGeoProcFactory;
-    Color color(Color::kAttribute_Type);
-    Coverage coverage(readsCoverage ? Coverage::kSolid_Type : Coverage::kNone_Type);
-
-    LocalCoords localCoords(LocalCoords::kHasExplicit_Type);
-    return GrDefaultGeoProcFactory::Make(color, coverage, localCoords, SkMatrix::I());
+    return GrDefaultGeoProcFactory::Make(Color::kAttribute_Type, Coverage::kSolid_Type,
+                                         LocalCoords::kHasExplicit_Type, SkMatrix::I());
 }
 
 static void tesselate(intptr_t vertices,
@@ -120,11 +117,10 @@ private:
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
         optimizations.getOverrideColorIfSet(&fRects[0].fColor);
-        fOptimizations = optimizations;
     }
 
     void onPrepareDraws(Target* target) const override {
-        sk_sp<GrGeometryProcessor> gp = make_gp(fOptimizations.readsCoverage());
+        sk_sp<GrGeometryProcessor> gp = make_gp();
         if (!gp) {
             SkDebugf("Couldn't create GrGeometryProcessor\n");
             return;
@@ -161,13 +157,6 @@ private:
             return false;
         }
 
-        // In the event of two ops, one who can tweak, one who cannot, we just fall back to not
-        // tweaking.
-        if (fOptimizations.canTweakAlphaForCoverage() &&
-            !that->fOptimizations.canTweakAlphaForCoverage()) {
-            fOptimizations = that->fOptimizations;
-        }
-
         fRects.push_back_n(that->fRects.count(), that->fRects.begin());
         this->joinBounds(*that);
         return true;
@@ -180,7 +169,6 @@ private:
         GrQuad fLocalQuad;
     };
 
-    GrPipelineOptimizations fOptimizations;
     SkSTArray<1, RectInfo, true> fRects;
 
     typedef GrMeshDrawOp INHERITED;
@@ -188,12 +176,13 @@ private:
 
 namespace GrNonAAFillRectOp {
 
-sk_sp<GrDrawOp> Make(GrColor color,
-                     const SkMatrix& viewMatrix,
-                     const SkRect& rect,
-                     const SkRect* localRect,
-                     const SkMatrix* localMatrix) {
-    return sk_sp<GrDrawOp>(new NonAAFillRectOp(color, viewMatrix, rect, localRect, localMatrix));
+std::unique_ptr<GrDrawOp> Make(GrColor color,
+                               const SkMatrix& viewMatrix,
+                               const SkRect& rect,
+                               const SkRect* localRect,
+                               const SkMatrix* localMatrix) {
+    return std::unique_ptr<GrDrawOp>(
+            new NonAAFillRectOp(color, viewMatrix, rect, localRect, localMatrix));
 }
 };
 

@@ -33,7 +33,7 @@ private:
                                                  bool doesStencilWrite,
                                                  GrColor* color,
                                                  const GrCaps& caps) const override {
-        return GrXferProcessor::kIgnoreColor_OptFlag | GrXferProcessor::kIgnoreCoverage_OptFlag;
+        return GrXferProcessor::kIgnoreColor_OptFlag;
     }
 
     void onGetGLSLProcessorKey(const GrShaderCaps& caps, GrProcessorKeyBuilder* b) const override;
@@ -88,11 +88,6 @@ void DisableColorXP::onGetBlendInfo(GrXferProcessor::BlendInfo* blendInfo) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-GrDisableColorXPFactory::GrDisableColorXPFactory() {
-    this->initClassID<GrDisableColorXPFactory>();
-}
-
 GrXferProcessor* GrDisableColorXPFactory::onCreateXferProcessor(const GrCaps& caps,
                                                                 const GrPipelineAnalysis& analysis,
                                                                 bool hasMixedSamples,
@@ -103,6 +98,6 @@ GrXferProcessor* GrDisableColorXPFactory::onCreateXferProcessor(const GrCaps& ca
 
 GR_DEFINE_XP_FACTORY_TEST(GrDisableColorXPFactory);
 
-sk_sp<GrXPFactory> GrDisableColorXPFactory::TestCreate(GrProcessorTestData*) {
-    return GrDisableColorXPFactory::Make();
+const GrXPFactory* GrDisableColorXPFactory::TestGet(GrProcessorTestData*) {
+    return GrDisableColorXPFactory::Get();
 }

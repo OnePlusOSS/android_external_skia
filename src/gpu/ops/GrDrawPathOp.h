@@ -30,10 +30,10 @@ protected:
     }
 
 protected:
-    const GrPipelineOptimizations& optimizations() const { return fOptimizations; }
     const SkMatrix& viewMatrix() const { return fViewMatrix; }
     GrColor color() const { return fColor; }
     GrPathRendering::FillType fillType() const { return fFillType; }
+    bool blendsWithDst() const { return fBlendsWithDst; }
 
 private:
     void getPipelineAnalysisInput(GrPipelineAnalysisDrawOpInput* input) const override {
@@ -43,7 +43,7 @@ private:
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
         optimizations.getOverrideColorIfSet(&fColor);
-        fOptimizations = optimizations;
+        fBlendsWithDst = optimizations.willColorBlendWithDst();
     }
 
     void onPrepare(GrOpFlushState*) override;  // Initializes fStencilPassSettings.
@@ -52,7 +52,7 @@ private:
     GrColor fColor;
     GrPathRendering::FillType fFillType;
     GrStencilSettings fStencilPassSettings;
-    GrPipelineOptimizations fOptimizations;
+    bool fBlendsWithDst;
 
     typedef GrDrawOp INHERITED;
 };
@@ -61,8 +61,9 @@ class GrDrawPathOp final : public GrDrawPathOpBase {
 public:
     DEFINE_OP_CLASS_ID
 
-    static sk_sp<GrDrawOp> Make(const SkMatrix& viewMatrix, GrColor color, const GrPath* path) {
-        return sk_sp<GrDrawOp>(new GrDrawPathOp(viewMatrix, color, path));
+    static std::unique_ptr<GrDrawOp> Make(const SkMatrix& viewMatrix, GrColor color,
+                                          const GrPath* path) {
+        return std::unique_ptr<GrDrawOp>(new GrDrawPathOp(viewMatrix, color, path));
     }
 
     const char* name() const override { return "DrawPath"; }
@@ -91,7 +92,7 @@ public:
 
     DEFINE_OP_CLASS_ID
 
-    struct InstanceData : public SkNoncopyable {
+    struct InstanceData : private ::SkNoncopyable {
     public:
         static InstanceData* Alloc(TransformType transformType, int reserveCnt) {
             int transformSize = GrPathRendering::PathTransformSize(transformType);
@@ -150,11 +151,12 @@ public:
         SkDEBUGCODE(int fReserveCnt;)
     };
 
-    static sk_sp<GrDrawOp> Make(const SkMatrix& viewMatrix, SkScalar scale, SkScalar x, SkScalar y,
-                                GrColor color, GrPathRendering::FillType fill, GrPathRange* range,
-                                const InstanceData* instanceData, const SkRect& bounds) {
-        return sk_sp<GrDrawOp>(new GrDrawPathRangeOp(viewMatrix, scale, x, y, color, fill, range,
-                                                     instanceData, bounds));
+    static std::unique_ptr<GrDrawOp> Make(const SkMatrix& viewMatrix, SkScalar scale, SkScalar x,
+                                          SkScalar y, GrColor color, GrPathRendering::FillType fill,
+                                          GrPathRange* range, const InstanceData* instanceData,
+                                          const SkRect& bounds) {
+        return std::unique_ptr<GrDrawOp>(new GrDrawPathRangeOp(viewMatrix, scale, x, y, color, fill,
+                                                               range, instanceData, bounds));
     }
 
     const char* name() const override { return "DrawPathRange"; }

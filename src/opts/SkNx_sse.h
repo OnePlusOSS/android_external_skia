@@ -283,6 +283,8 @@ public:
     AI SkNx operator + (const SkNx& o) const { return _mm_add_epi16(fVec, o.fVec); }
     AI SkNx operator - (const SkNx& o) const { return _mm_sub_epi16(fVec, o.fVec); }
     AI SkNx operator * (const SkNx& o) const { return _mm_mullo_epi16(fVec, o.fVec); }
+    AI SkNx operator & (const SkNx& o) const { return _mm_and_si128(fVec, o.fVec); }
+    AI SkNx operator | (const SkNx& o) const { return _mm_or_si128(fVec, o.fVec); }
 
     AI SkNx operator << (int bits) const { return _mm_slli_epi16(fVec, bits); }
     AI SkNx operator >> (int bits) const { return _mm_srli_epi16(fVec, bits); }
@@ -348,6 +350,8 @@ public:
     AI SkNx operator + (const SkNx& o) const { return _mm_add_epi16(fVec, o.fVec); }
     AI SkNx operator - (const SkNx& o) const { return _mm_sub_epi16(fVec, o.fVec); }
     AI SkNx operator * (const SkNx& o) const { return _mm_mullo_epi16(fVec, o.fVec); }
+    AI SkNx operator & (const SkNx& o) const { return _mm_and_si128(fVec, o.fVec); }
+    AI SkNx operator | (const SkNx& o) const { return _mm_or_si128(fVec, o.fVec); }
 
     AI SkNx operator << (int bits) const { return _mm_slli_epi16(fVec, bits); }
     AI SkNx operator >> (int bits) const { return _mm_srli_epi16(fVec, bits); }
@@ -567,10 +571,10 @@ public:
                    _26 = unpacklo_pd(rg2367, ba2367),  // r2 ...      | r6 ...
                    _37 = unpackhi_pd(rg2367, ba2367);  // r3 ...      | r7 ...
 
-            __m256 _01 = _mm256_permute2f128_ps(_04, _15, 16),  // 16 == 010 000 == lo, lo
-                   _23 = _mm256_permute2f128_ps(_26, _37, 16),
-                   _45 = _mm256_permute2f128_ps(_04, _15, 25),  // 25 == 011 001 == hi, hi
-                   _67 = _mm256_permute2f128_ps(_26, _37, 25);
+            __m256 _01 = _mm256_permute2f128_ps(_04, _15, 32),  // 32 == 0010 0000 == lo, lo
+                   _23 = _mm256_permute2f128_ps(_26, _37, 32),
+                   _45 = _mm256_permute2f128_ps(_04, _15, 49),  // 49 == 0011 0001 == hi, hi
+                   _67 = _mm256_permute2f128_ps(_26, _37, 49);
 
             _mm256_storeu_ps((float*)ptr + 0*8, _01);
             _mm256_storeu_ps((float*)ptr + 1*8, _23);
@@ -634,6 +638,14 @@ public:
         return _mm256_cvtepi32_ps(SkNx_cast<int>(src).fVec);
     }
 
+    template<> AI /*static*/ Sk8i SkNx_cast<int>(const Sk8h& src) {
+        return _mm256_cvtepu16_epi32(src.fVec);
+    }
+
+    template<> AI /*static*/ Sk8f SkNx_cast<float>(const Sk8h& src) {
+        return _mm256_cvtepi32_ps(SkNx_cast<int>(src).fVec);
+    }
+
     template<> AI /*static*/ Sk8f SkNx_cast<float>(const Sk8i& src) {
         return _mm256_cvtepi32_ps(src.fVec);
     }
@@ -642,13 +654,14 @@ public:
         return _mm256_cvttps_epi32(src.fVec);
     }
 
-    template<> AI /*static*/ Sk8i SkNx_cast<int>(const Sk8h& src) {
-        return _mm256_cvtepu16_epi32(src.fVec);
-    }
     template<> AI /*static*/ Sk8h SkNx_cast<uint16_t>(const Sk8i& src) {
         __m128i lo = _mm256_extractf128_si256(src.fVec, 0),
                 hi = _mm256_extractf128_si256(src.fVec, 1);
         return _mm_packus_epi32(lo, hi);
+    }
+    template<> AI /*static*/ Sk8b SkNx_cast<uint8_t>(const Sk8i& src) {
+        auto _16 = SkNx_cast<uint16_t>(src);
+        return _mm_packus_epi16(_16.fVec, _16.fVec);
     }
 
 #endif

@@ -366,7 +366,7 @@ sk_sp<SkSpecialImage> SkDisplacementMapEffect::onFilterImage(SkSpecialImage* sou
         }
         paint.setGammaCorrect(renderTargetContext->isGammaCorrect());
 
-        renderTargetContext->drawRect(GrNoClip(), paint, GrAA::kNo, matrix,
+        renderTargetContext->drawRect(GrNoClip(), std::move(paint), GrAA::kNo, matrix,
                                       SkRect::Make(colorBounds));
 
         offset->fX = bounds.left();
@@ -376,7 +376,7 @@ sk_sp<SkSpecialImage> SkDisplacementMapEffect::onFilterImage(SkSpecialImage* sou
                                             SkIRect::MakeWH(bounds.width(), bounds.height()),
                                             kNeedNewImageUniqueID_SpecialImage,
                                             sk_ref_sp(renderTargetContext->asDeferredTexture()),
-                                            sk_ref_sp(renderTargetContext->getColorSpace()));
+                                            renderTargetContext->refColorSpace());
     }
 #endif
 
@@ -499,7 +499,7 @@ GrDisplacementMapEffect::GrDisplacementMapEffect(
     : fDisplacementTransform(offsetMatrix, displacement, GrSamplerParams::kNone_FilterMode)
     , fDisplacementSampler(displacement)
     , fColorTransform(color, GrSamplerParams::kNone_FilterMode)
-    , fDomain(GrTextureDomain::MakeTexelDomain(color, SkIRect::MakeSize(colorDimensions)),
+    , fDomain(color, GrTextureDomain::MakeTexelDomain(SkIRect::MakeSize(colorDimensions)),
               GrTextureDomain::kDecal_Mode)
     , fColorSampler(color)
     , fColorSpaceXform(std::move(colorSpaceXform))
@@ -571,7 +571,7 @@ void GrGLDisplacementMapEffect::emitCode(EmitArgs& args) {
     const char* scaleUni = args.fUniformHandler->getUniformCStr(fScaleUni);
     const char* dColor = "dColor";
     const char* cCoords = "cCoords";
-    const char* nearZero = "1e-6"; // Since 6.10352e−5 is the smallest half float, use
+    const char* nearZero = "1e-6"; // Since 6.10352e-5 is the smallest half float, use
                                    // a number smaller than that to approximate 0, but
                                    // leave room for 32-bit float GPU rounding errors.
 
@@ -651,7 +651,7 @@ void GrGLDisplacementMapEffect::onSetData(const GrGLSLProgramDataManager& pdman,
     pdman.set2f(fScaleUni, SkScalarToFloat(scaleX),
                 colorTex->origin() == kTopLeft_GrSurfaceOrigin ?
                 SkScalarToFloat(scaleY) : SkScalarToFloat(-scaleY));
-    fGLDomain.setData(pdman, displacementMap.domain(), colorTex->origin());
+    fGLDomain.setData(pdman, displacementMap.domain(), colorTex);
     if (SkToBool(displacementMap.colorSpaceXform())) {
         pdman.setSkMatrix44(fColorSpaceXformUni, displacementMap.colorSpaceXform()->srcToDst());
     }

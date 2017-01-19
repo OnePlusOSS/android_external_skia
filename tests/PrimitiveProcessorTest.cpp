@@ -31,7 +31,9 @@ public:
 
     const char* name() const override { return "Dummy Op"; }
 
-    static sk_sp<GrDrawOp> Make(int numAttribs) { return sk_sp<GrDrawOp>(new Op(numAttribs)); }
+    static std::unique_ptr<GrDrawOp> Make(int numAttribs) {
+        return std::unique_ptr<GrDrawOp>(new Op(numAttribs));
+    }
 
 private:
     Op(int numAttribs) : INHERITED(ClassID()), fNumAttribs(numAttribs) {
@@ -123,7 +125,7 @@ DEF_GPUTEST_FOR_ALL_CONTEXTS(VertexAttributeCount, reporter, ctxInfo) {
 #endif
     GrPaint grPaint;
     // This one should succeed.
-    renderTargetContext->priv().testingOnly_addDrawOp(grPaint, GrAAType::kNone,
+    renderTargetContext->priv().testingOnly_addDrawOp(GrPaint(grPaint), GrAAType::kNone,
                                                       Op::Make(attribCnt));
     context->flush();
 #if GR_GPU_STATS
@@ -131,7 +133,7 @@ DEF_GPUTEST_FOR_ALL_CONTEXTS(VertexAttributeCount, reporter, ctxInfo) {
     REPORTER_ASSERT(reporter, context->getGpu()->stats()->numFailedDraws() == 0);
 #endif
     context->resetGpuStats();
-    renderTargetContext->priv().testingOnly_addDrawOp(grPaint, GrAAType::kNone,
+    renderTargetContext->priv().testingOnly_addDrawOp(std::move(grPaint), GrAAType::kNone,
                                                       Op::Make(attribCnt + 1));
     context->flush();
 #if GR_GPU_STATS

@@ -5,11 +5,11 @@
  * found in the LICENSE file.
  */
 
+#include "SkArenaAlloc.h"
 #include "SkBlitter.h"
 #include "SkBlendModePriv.h"
 #include "SkColor.h"
 #include "SkColorFilter.h"
-#include "SkFixedAlloc.h"
 #include "SkOpts.h"
 #include "SkPM4f.h"
 #include "SkPM4fPriv.h"
@@ -27,8 +27,6 @@ public:
         : fDst(dst)
         , fBlend(blend)
         , fPaintColor(paintColor)
-        , fScratchAlloc(fScratch, sizeof(fScratch))
-        , fScratchFallback(&fScratchAlloc)
     {}
 
     void blitH    (int x, int y, int w)                            override;
@@ -64,8 +62,7 @@ private:
 
     // Scratch space for shaders and color filters to use.
     char            fScratch[64];
-    SkFixedAlloc    fScratchAlloc;
-    SkFallbackAlloc fScratchFallback;
+    SkArenaAlloc    fArena{fScratch, sizeof(fScratch), 128};
 
     typedef SkBlitter INHERITED;
 };
@@ -79,9 +76,10 @@ SkBlitter* SkCreateRasterPipelineBlitter(const SkPixmap& dst,
 
 static bool supported(const SkImageInfo& info) {
     switch (info.colorType()) {
+        case kAlpha_8_SkColorType:  return true;
+        case kRGB_565_SkColorType:  return true;
         case kN32_SkColorType:      return info.gammaCloseToSRGB();
         case kRGBA_F16_SkColorType: return true;
-        case kRGB_565_SkColorType:  return true;
         default:                    return false;
     }
 }
@@ -115,7 +113,7 @@ SkBlitter* SkRasterPipelineBlitter::Create(const SkPixmap& dst,
     bool is_opaque   = paintColor->a() == 1.0f,
          is_constant = true;
     if (shader) {
-        if (!shader->appendStages(pipeline, dst.colorSpace(), &blitter->fScratchFallback,
+        if (!shader->appendStages(pipeline, dst.colorSpace(), &blitter->fArena,
                                   ctm, paint)) {
             return earlyOut();
         }
@@ -131,7 +129,7 @@ SkBlitter* SkRasterPipelineBlitter::Create(const SkPixmap& dst,
     }
 
     if (colorFilter) {
-        if (!colorFilter->appendStages(pipeline, dst.colorSpace(), &blitter->fScratchFallback,
+        if (!colorFilter->appendStages(pipeline, dst.colorSpace(), &blitter->fArena,
                                        is_opaque)) {
             return earlyOut();
         }
@@ -186,19 +184,22 @@ SkBlitter* SkRasterPipelineBlitter::Create(const SkPixmap& dst,
 void SkRasterPipelineBlitter::append_load_d(SkRasterPipeline* p) const {
     SkASSERT(supported(fDst.info()));
 
+    p->append(SkRasterPipeline::move_src_dst);
     switch (fDst.info().colorType()) {
-        case kRGB_565_SkColorType:   p->append(SkRasterPipeline::load_565_d,  &fDstPtr); break;
+        case kAlpha_8_SkColorType:   p->append(SkRasterPipeline::load_a8,   &fDstPtr); break;
+        case kRGB_565_SkColorType:   p->append(SkRasterPipeline::load_565,  &fDstPtr); break;
         case kBGRA_8888_SkColorType:
-        case kRGBA_8888_SkColorType: p->append(SkRasterPipeline::load_8888_d, &fDstPtr); break;
-        case kRGBA_F16_SkColorType:  p->append(SkRasterPipeline::load_f16_d,  &fDstPtr); break;
+        case kRGBA_8888_SkColorType: p->append(SkRasterPipeline::load_8888, &fDstPtr); break;
+        case kRGBA_F16_SkColorType:  p->append(SkRasterPipeline::load_f16,  &fDstPtr); break;
         default: break;
     }
     if (fDst.info().colorType() == kBGRA_8888_SkColorType) {
-        p->append(SkRasterPipeline::swap_rb_d);
+        p->append(SkRasterPipeline::swap_rb);
     }
     if (fDst.info().gammaCloseToSRGB()) {
-        p->append_from_srgb_d(fDst.info().alphaType());
+        p->append_from_srgb(fDst.info().alphaType());
     }
+    p->append(SkRasterPipeline::swap);
 }
 
 void SkRasterPipelineBlitter::append_store(SkRasterPipeline* p) const {
@@ -211,6 +212,7 @@ void SkRasterPipelineBlitter::append_store(SkRasterPipeline* p) const {
 
     SkASSERT(supported(fDst.info()));
     switch (fDst.info().colorType()) {
+        case kAlpha_8_SkColorType:   p->append(SkRasterPipeline::store_a8,   &fDstPtr); break;
         case kRGB_565_SkColorType:   p->append(SkRasterPipeline::store_565,  &fDstPtr); break;
         case kBGRA_8888_SkColorType:
         case kRGBA_8888_SkColorType: p->append(SkRasterPipeline::store_8888, &fDstPtr); break;

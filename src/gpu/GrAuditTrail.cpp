@@ -10,7 +10,7 @@
 
 const int GrAuditTrail::kGrAuditTrailInvalidID = -1;
 
-void GrAuditTrail::addOp(const GrOp* op) {
+void GrAuditTrail::addOp(const GrOp* op, GrGpuResource::UniqueID renderTargetID) {
     SkASSERT(fEnabled);
     Op* auditOp = new Op;
     fOpPool.emplace_back(auditOp);
@@ -44,7 +44,7 @@ void GrAuditTrail::addOp(const GrOp* op) {
 
     // We use the op pointer as a key to find the OpNode we are 'glomming' ops onto
     fIDLookup.set(op->uniqueID(), auditOp->fOpListID);
-    OpNode* opNode = new OpNode(op->renderTargetUniqueID());
+    OpNode* opNode = new OpNode(renderTargetID);
     opNode->fBounds = op->bounds();
     opNode->fChildren.push_back(auditOp);
     fOpList.emplace_back(opNode);
@@ -226,7 +226,7 @@ static SkString pretty_print_json(SkString json) {
 SkString GrAuditTrail::toJson(bool prettyPrint) const {
     SkString json;
     json.append("{");
-    JsonifyTArray(&json, "Batches", fOpList, false);
+    JsonifyTArray(&json, "Ops", fOpList, false);
     json.append("}");
 
     if (prettyPrint) {
@@ -241,7 +241,7 @@ SkString GrAuditTrail::toJson(int clientID, bool prettyPrint) const {
     json.append("{");
     Ops** ops = fClientIDLookup.find(clientID);
     if (ops) {
-        JsonifyTArray(&json, "Batches", **ops, false);
+        JsonifyTArray(&json, "Ops", **ops, false);
     }
     json.appendf("}");
 
@@ -266,7 +266,7 @@ SkString GrAuditTrail::Op::toJson() const {
     json.append("{");
     json.appendf("\"Name\": \"%s\",", fName.c_str());
     json.appendf("\"ClientID\": \"%d\",", fClientID);
-    json.appendf("\"BatchListID\": \"%d\",", fOpListID);
+    json.appendf("\"OpListID\": \"%d\",", fOpListID);
     json.appendf("\"ChildID\": \"%d\",", fChildID);
     skrect_to_json(&json, "Bounds", fBounds);
     if (fStackTrace.count()) {
@@ -288,7 +288,7 @@ SkString GrAuditTrail::OpNode::toJson() const {
     json.append("{");
     json.appendf("\"RenderTarget\": \"%u\",", fRenderTargetUniqueID.asUInt());
     skrect_to_json(&json, "Bounds", fBounds);
-    JsonifyTArray(&json, "Batches", fChildren, true);
+    JsonifyTArray(&json, "Ops", fChildren, true);
     json.append("}");
     return json;
 }

@@ -62,8 +62,9 @@ public:
         return string;
     }
 
-    static sk_sp<GrDrawOp> Make(GrColor color, const SkMatrix& viewMatrix, const SkRect& rect,
-                                const SkStrokeRec& stroke, bool snapToPixelCenters) {
+    static std::unique_ptr<GrDrawOp> Make(GrColor color, const SkMatrix& viewMatrix,
+                                          const SkRect& rect, const SkStrokeRec& stroke,
+                                          bool snapToPixelCenters) {
         if (!allowed_stroke(stroke)) {
             return nullptr;
         }
@@ -94,7 +95,7 @@ public:
         } else {
             op->setTransformedBounds(bounds, op->fViewMatrix, HasAABloat::kNo, IsZeroArea::kNo);
         }
-        return sk_sp<GrDrawOp>(op);
+        return std::unique_ptr<GrDrawOp>(op);
     }
 
 private:
@@ -110,12 +111,11 @@ private:
         {
             using namespace GrDefaultGeoProcFactory;
             Color color(fColor);
-            Coverage coverage(fOptimizations.readsCoverage() ? Coverage::kSolid_Type
-                                                             : Coverage::kNone_Type);
-            LocalCoords localCoords(fOptimizations.readsLocalCoords()
-                                            ? LocalCoords::kUsePosition_Type
-                                            : LocalCoords::kUnused_Type);
-            gp = GrDefaultGeoProcFactory::Make(color, coverage, localCoords, fViewMatrix);
+            LocalCoords::Type localCoordsType = fNeedsLocalCoords
+                                                        ? LocalCoords::kUsePosition_Type
+                                                        : LocalCoords::kUnused_Type;
+            gp = GrDefaultGeoProcFactory::Make(color, Coverage::kSolid_Type, localCoordsType,
+                                               fViewMatrix);
         }
 
         size_t vertexStride = gp->getVertexStride();
@@ -161,7 +161,7 @@ private:
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
         optimizations.getOverrideColorIfSet(&fColor);
-        fOptimizations = optimizations;
+        fNeedsLocalCoords = optimizations.readsLocalCoords();
     }
 
     bool onCombineIfPossible(GrOp* t, const GrCaps&) override {
@@ -174,7 +174,7 @@ private:
     SkMatrix fViewMatrix;
     SkRect fRect;
     SkScalar fStrokeWidth;
-    GrPipelineOptimizations fOptimizations;
+    bool fNeedsLocalCoords;
 
     const static int kVertsPerHairlineRect = 5;
     const static int kVertsPerStrokeRect = 10;
@@ -184,11 +184,11 @@ private:
 
 namespace GrNonAAStrokeRectOp {
 
-sk_sp<GrDrawOp> Make(GrColor color,
-                     const SkMatrix& viewMatrix,
-                     const SkRect& rect,
-                     const SkStrokeRec& stroke,
-                     bool snapToPixelCenters) {
+std::unique_ptr<GrDrawOp> Make(GrColor color,
+                               const SkMatrix& viewMatrix,
+                               const SkRect& rect,
+                               const SkStrokeRec& stroke,
+                               bool snapToPixelCenters) {
     return NonAAStrokeRectOp::Make(color, viewMatrix, rect, stroke, snapToPixelCenters);
 }
 }

@@ -12,14 +12,8 @@
 #include "effects/GrPorterDuffXferProcessor.h"
 #include "effects/GrSimpleTextureEffect.h"
 
-GrPaint::GrPaint()
-    : fDisableOutputConversionToSRGB(false)
-    , fAllowSRGBInputs(false)
-    , fUsesDistanceVectorField(false)
-    , fColor(GrColor4f::OpaqueWhite()) {}
-
 void GrPaint::setCoverageSetOpXPFactory(SkRegion::Op regionOp, bool invertCoverage) {
-    fXPFactory = GrCoverageSetOpXPFactory::Make(regionOp, invertCoverage);
+    fXPFactory = GrCoverageSetOpXPFactory::Get(regionOp, invertCoverage);
 }
 
 void GrPaint::addColorTextureProcessor(GrTexture* texture,
@@ -51,10 +45,10 @@ void GrPaint::addCoverageTextureProcessor(GrTexture* texture,
 }
 
 bool GrPaint::internalIsConstantBlendedColor(GrColor paintColor, GrColor* color) const {
-    GrProcOptInfo colorProcInfo;
-    colorProcInfo.calcWithInitialValues(
-        sk_sp_address_as_pointer_address(fColorFragmentProcessors.begin()),
-        this->numColorFragmentProcessors(), paintColor, kRGBA_GrColorComponentFlags, false);
+    GrProcOptInfo colorProcInfo(paintColor, kRGBA_GrColorComponentFlags);
+    colorProcInfo.analyzeProcessors(
+            sk_sp_address_as_pointer_address(fColorFragmentProcessors.begin()),
+            this->numColorFragmentProcessors());
 
     GrXPFactory::InvariantBlendedColor blendedColor;
     if (fXPFactory) {

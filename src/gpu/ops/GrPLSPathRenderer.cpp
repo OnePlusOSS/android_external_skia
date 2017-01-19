@@ -634,7 +634,6 @@ public:
 
     const Attribute* inPosition() const { return fInPosition; }
     GrColor color() const { return fColor; }
-    bool colorIgnored() const { return GrColor_ILLEGAL == fColor; }
     const SkMatrix& localMatrix() const { return fLocalMatrix; }
     bool usesLocalCoords() const { return fUsesLocalCoords; }
 
@@ -683,10 +682,8 @@ public:
             fsBuilder->codeAppend("coverage += pls.windings[2] != 0 ? 0.25 : 0.0;");
             fsBuilder->codeAppend("coverage += pls.windings[3] != 0 ? 0.25 : 0.0;");
             fsBuilder->codeAppend("}");
-            if (!fe.colorIgnored()) {
-                this->setupUniformColor(fsBuilder, uniformHandler, args.fOutputColor,
-                                        &fColorUniform);
-            }
+            this->setupUniformColor(fsBuilder, uniformHandler, args.fOutputColor,
+                                    &fColorUniform);
             fsBuilder->codeAppendf("%s = vec4(coverage);", args.fOutputCoverage);
             fsBuilder->codeAppendf("%s = vec4(1.0, 0.0, 1.0, 1.0);", args.fOutputColor);
         }
@@ -704,7 +701,7 @@ public:
                      FPCoordTransformIter&& transformIter) override {
             const PLSFinishEffect& fe = gp.cast<PLSFinishEffect>();
             pdman.set1f(fUseEvenOdd, fe.fUseEvenOdd);
-            if (fe.color() != fColor && !fe.colorIgnored()) {
+            if (fe.color() != fColor) {
                 GrGLfloat c[4];
                 GrColorToRGBAFloat(fe.color(), c);
                 pdman.set4fv(fColorUniform, 1, c);
@@ -766,8 +763,9 @@ bool GrPLSPathRenderer::onCanDrawPath(const CanDrawPathArgs& args) const {
 class PLSPathOp final : public GrMeshDrawOp {
 public:
     DEFINE_OP_CLASS_ID
-    static sk_sp<GrDrawOp> Make(GrColor color, const SkPath& path, const SkMatrix& viewMatrix) {
-        return sk_sp<GrDrawOp>(new PLSPathOp(color, path, viewMatrix));
+    static std::unique_ptr<GrDrawOp> Make(GrColor color, const SkPath& path,
+                                          const SkMatrix& viewMatrix) {
+        return std::unique_ptr<GrDrawOp>(new PLSPathOp(color, path, viewMatrix));
     }
 
     const char* name() const override { return "PLSPathOp"; }
@@ -795,9 +793,6 @@ private:
     }
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
-        if (!optimizations.readsColor()) {
-            fColor = GrColor_ILLEGAL;
-        }
         optimizations.getOverrideColorIfSet(&fColor);
 
         fUsesLocalCoords = optimizations.readsLocalCoords();
@@ -931,8 +926,8 @@ bool GrPLSPathRenderer::onDrawPath(const DrawPathArgs& args) {
     SkPath path;
     args.fShape->asPath(&path);
 
-    sk_sp<GrDrawOp> op = PLSPathOp::Make(args.fPaint->getColor(), path, *args.fViewMatrix);
-    GrPipelineBuilder pipelineBuilder(*args.fPaint, args.fAAType);
+    std::unique_ptr<GrDrawOp> op = PLSPathOp::Make(args.fPaint.getColor(), path, *args.fViewMatrix);
+    GrPipelineBuilder pipelineBuilder(std::move(args.fPaint), args.fAAType);
     pipelineBuilder.setUserStencil(args.fUserStencilSettings);
 
     args.fRenderTargetContext->addDrawOp(pipelineBuilder, *args.fClip, std::move(op));

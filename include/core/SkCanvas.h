@@ -15,6 +15,7 @@
 #include "SkDeque.h"
 #include "SkImage.h"
 #include "SkPaint.h"
+#include "SkRasterHandleAllocator.h"
 #include "SkRefCnt.h"
 #include "SkRegion.h"
 #include "SkSurfaceProps.h"
@@ -156,36 +157,6 @@ public:
     SkISize getDeviceSize() const { return this->getBaseLayerSize(); }
 
     /**
-     *  DEPRECATED.
-     *  Return the canvas' device object, which may be null. The device holds
-     *  the bitmap of the pixels that the canvas draws into. The reference count
-     *  of the returned device is not changed by this call.
-     */
-#ifndef SK_SUPPORT_LEGACY_GETDEVICE
-protected:  // Can we make this private?
-#endif
-    SkBaseDevice* getDevice() const;
-public:
-    /**
-     *  saveLayer() can create another device (which is later drawn onto
-     *  the previous device). getTopDevice() returns the top-most device current
-     *  installed. Note that this can change on other calls like save/restore,
-     *  so do not access this device after subsequent canvas calls.
-     *  The reference count of the device is not changed.
-     *
-     * @param updateMatrixClip If this is true, then before the device is
-     *        returned, we ensure that its has been notified about the current
-     *        matrix and clip. Note: this happens automatically when the device
-     *        is drawn to, but is optional here, as there is a small perf hit
-     *        sometimes.
-     */
-#ifndef SK_SUPPORT_LEGACY_GETTOPDEVICE
-private:
-#endif
-    SkBaseDevice* getTopDevice(bool updateMatrixClip = false) const;
-public:
-
-    /**
      *  Create a new surface matching the specified info, one that attempts to
      *  be maximally compatible when used with this canvas. If there is no matching Surface type,
      *  NULL is returned.
@@ -216,6 +187,8 @@ public:
      *  On failure, returns NULL and the info, rowBytes, and origin parameters are ignored.
      */
     void* accessTopLayerPixels(SkImageInfo* info, size_t* rowBytes, SkIPoint* origin = NULL);
+
+    SkRasterHandleAllocator::Handle accessTopRasterHandle() const;
 
     /**
      *  If the canvas has readable pixels in its base layer (and is not recording to a picture
@@ -565,7 +538,6 @@ public:
         then taking its bounds.
     */
     virtual bool getClipDeviceBounds(SkIRect* bounds) const;
-
 
     /** Fill the entire canvas' bitmap (restricted to the current clip) with the
         specified ARGB color, using the specified mode.
@@ -1316,15 +1288,6 @@ public:
     */
     const SkMatrix& getTotalMatrix() const;
 
-    /** Return the clip stack. The clip stack stores all the individual
-     *  clips organized by the save/restore frame in which they were
-     *  added.
-     *  @return the current clip stack ("list" of individual clip elements)
-     */
-    const SkClipStack* getClipStack() const {
-        return fClipStack.get();
-    }
-
     typedef SkCanvasClipVisitor ClipVisitor;
     /**
      *  Replays the clip operations, back to front, that have been applied to
@@ -1549,6 +1512,9 @@ private:
                                                                 : kNotOpaque_ShaderOverrideOpacity);
     }
 
+    SkBaseDevice* getDevice() const;
+    SkBaseDevice* getTopDevice() const;
+
     class MCRec;
 
     sk_sp<SkClipStack> fClipStack;
@@ -1569,6 +1535,7 @@ private:
     int         fSaveCount;         // value returned by getSaveCount()
 
     SkMetaData* fMetaData;
+    std::unique_ptr<SkRasterHandleAllocator> fAllocator;
 
     SkSurface_Base*  fSurfaceBase;
     SkSurface_Base* getSurfaceBase() const { return fSurfaceBase; }
@@ -1599,6 +1566,7 @@ private:
     friend class SkPicturePlayback; // SaveFlagsToSaveLayerFlags
     friend class SkDeferredCanvas;  // For use of resetForNextPicture
     friend class SkOverdrawCanvas;
+    friend class SkRasterHandleAllocator;
 
     enum InitFlags {
         kDefault_InitFlags                  = 0,
@@ -1606,6 +1574,8 @@ private:
     };
     SkCanvas(const SkIRect& bounds, InitFlags);
     SkCanvas(SkBaseDevice* device, InitFlags);
+    SkCanvas(const SkBitmap&, std::unique_ptr<SkRasterHandleAllocator>,
+             SkRasterHandleAllocator::Handle);
 
     void resetForNextPicture(const SkIRect& bounds);
 
@@ -1656,6 +1626,18 @@ private:
      */
     bool canDrawBitmapAsSprite(SkScalar x, SkScalar y, int w, int h, const SkPaint&);
 
+#ifdef SK_SUPPORT_LEGACY_CANVAS_GETCLIPSTACK
+public:
+#endif
+    /** Return the clip stack. The clip stack stores all the individual
+     *  clips organized by the save/restore frame in which they were
+     *  added.
+     *  @return the current clip stack ("list" of individual clip elements)
+     */
+    const SkClipStack* getClipStack() const {
+        return fClipStack.get();
+    }
+private:
 
     /**
      *  Keep track of the device clip bounds and if the matrix is scale-translate.  This allows

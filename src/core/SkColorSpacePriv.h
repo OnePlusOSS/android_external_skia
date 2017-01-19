@@ -11,19 +11,6 @@
 
 #define SkColorSpacePrintf(...)
 
-#if defined(SK_USE_LEGACY_D50_MATRICES)
-static constexpr float gSRGB_toXYZD50[] {
-    0.4358f, 0.3853f, 0.1430f,    // Rx, Gx, Bx
-    0.2224f, 0.7170f, 0.0606f,    // Ry, Gy, Gz
-    0.0139f, 0.0971f, 0.7139f,    // Rz, Gz, Bz
-};
-
-static constexpr float gAdobeRGB_toXYZD50[] {
-    0.6098f, 0.2052f, 0.1492f,    // Rx, Gx, Bx
-    0.3111f, 0.6257f, 0.0632f,    // Ry, Gy, By
-    0.0195f, 0.0609f, 0.7448f,    // Rz, Gz, Bz
-};
-#else
 static constexpr float gSRGB_toXYZD50[] {
     0.4360747f, 0.3850649f, 0.1430804f, // Rx, Gx, Bx
     0.2225045f, 0.7168786f, 0.0606169f, // Ry, Gy, Gz
@@ -35,7 +22,6 @@ static constexpr float gAdobeRGB_toXYZD50[] {
     0.3111242f, 0.6256560f, 0.0632197f, // Ry, Gy, Gz
     0.0194811f, 0.0608902f, 0.7448387f, // Rz, Gz, Bz
 };
-#endif
 
 static inline bool color_space_almost_equal(float a, float b) {
     return SkTAbs(a - b) < 0.01f;
@@ -65,7 +51,7 @@ static inline bool is_valid_transfer_fn(const SkColorSpaceTransferFn& coeffs) {
     }
 
     if (coeffs.fD == 0.0f) {
-        // Y = (aX + b)^g + c  for always
+        // Y = (aX + b)^g + e  for always
         if (0.0f == coeffs.fA || 0.0f == coeffs.fG) {
             SkColorSpacePrintf("A or G is zero, constant transfer function "
                                "is nonsense");
@@ -74,16 +60,16 @@ static inline bool is_valid_transfer_fn(const SkColorSpaceTransferFn& coeffs) {
     }
 
     if (coeffs.fD >= 1.0f) {
-        // Y = eX + f          for always
-        if (0.0f == coeffs.fE) {
-            SkColorSpacePrintf("E is zero, constant transfer function is "
+        // Y = cX + f          for always
+        if (0.0f == coeffs.fC) {
+            SkColorSpacePrintf("C is zero, constant transfer function is "
                                "nonsense");
             return false;
         }
     }
 
     if ((0.0f == coeffs.fA || 0.0f == coeffs.fG) && 0.0f == coeffs.fC) {
-        SkColorSpacePrintf("A or G, and E are zero, constant transfer function "
+        SkColorSpacePrintf("A or G, and C are zero, constant transfer function "
                            "is nonsense");
         return false;
     }
@@ -114,11 +100,27 @@ static inline bool is_almost_srgb(const SkColorSpaceTransferFn& coeffs) {
 static inline bool is_almost_2dot2(const SkColorSpaceTransferFn& coeffs) {
     return color_space_almost_equal(1.0f, coeffs.fA) &&
            color_space_almost_equal(0.0f, coeffs.fB) &&
-           color_space_almost_equal(0.0f, coeffs.fC) &&
-           color_space_almost_equal(0.0f, coeffs.fD) &&
            color_space_almost_equal(0.0f, coeffs.fE) &&
+           color_space_almost_equal(2.2f, coeffs.fG) &&
+           coeffs.fD <= 0.0f;
+}
+
+static inline bool is_almost_linear(const SkColorSpaceTransferFn& coeffs) {
+    // OutputVal = InputVal ^ 1.0f
+    const bool linearExp =
+           color_space_almost_equal(1.0f, coeffs.fA) &&
+           color_space_almost_equal(0.0f, coeffs.fB) &&
+           color_space_almost_equal(0.0f, coeffs.fE) &&
+           color_space_almost_equal(1.0f, coeffs.fG) &&
+           coeffs.fD <= 0.0f;
+
+    // OutputVal = 1.0f * InputVal
+    const bool linearFn =
+           color_space_almost_equal(1.0f, coeffs.fC) &&
            color_space_almost_equal(0.0f, coeffs.fF) &&
-           color_space_almost_equal(2.2f, coeffs.fG);
+           coeffs.fD >= 1.0f;
+
+    return linearExp || linearFn;
 }
 
 static inline void value_to_parametric(SkColorSpaceTransferFn* coeffs, float exponent) {

@@ -679,18 +679,18 @@ class AAHairlineOp final : public GrMeshDrawOp {
 public:
     DEFINE_OP_CLASS_ID
 
-    static sk_sp<GrDrawOp> Make(GrColor color,
-                                const SkMatrix& viewMatrix,
-                                const SkPath& path,
-                                const GrStyle& style,
-                                const SkIRect& devClipBounds) {
+    static std::unique_ptr<GrDrawOp> Make(GrColor color,
+                                          const SkMatrix& viewMatrix,
+                                          const SkPath& path,
+                                          const GrStyle& style,
+                                          const SkIRect& devClipBounds) {
         SkScalar hairlineCoverage;
         uint8_t newCoverage = 0xff;
         if (GrPathRenderer::IsStrokeHairlineOrEquivalent(style, viewMatrix, &hairlineCoverage)) {
             newCoverage = SkScalarRoundToInt(hairlineCoverage * 0xff);
         }
 
-        return sk_sp<GrDrawOp>(
+        return std::unique_ptr<GrDrawOp>(
                 new AAHairlineOp(color, newCoverage, viewMatrix, path, devClipBounds));
     }
 
@@ -723,9 +723,6 @@ private:
     }
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
-        if (!optimizations.readsColor()) {
-            fColor = GrColor_ILLEGAL;
-        }
         optimizations.getOverrideColorIfSet(&fColor);
         fUsesLocalCoords = optimizations.readsLocalCoords();
     }
@@ -840,11 +837,10 @@ void AAHairlineOp::onPrepareDraws(Target* target) const {
             using namespace GrDefaultGeoProcFactory;
 
             Color color(this->color());
-            Coverage coverage(Coverage::kAttribute_Type);
             LocalCoords localCoords(this->usesLocalCoords() ? LocalCoords::kUsePosition_Type :
                                     LocalCoords::kUnused_Type);
             localCoords.fMatrix = geometryProcessorLocalM;
-            lineGP = GrDefaultGeoProcFactory::Make(color, coverage, localCoords,
+            lineGP = GrDefaultGeoProcFactory::Make(color, Coverage::kAttribute_Type, localCoords,
                                                    *geometryProcessorViewM);
         }
 
@@ -956,9 +952,9 @@ bool GrAAHairLinePathRenderer::onDrawPath(const DrawPathArgs& args) {
                                       &devClipBounds);
     SkPath path;
     args.fShape->asPath(&path);
-    sk_sp<GrDrawOp> op = AAHairlineOp::Make(args.fPaint->getColor(), *args.fViewMatrix, path,
-                                            args.fShape->style(), devClipBounds);
-    GrPipelineBuilder pipelineBuilder(*args.fPaint, args.fAAType);
+    std::unique_ptr<GrDrawOp> op = AAHairlineOp::Make(args.fPaint.getColor(), *args.fViewMatrix,
+                                                      path, args.fShape->style(), devClipBounds);
+    GrPipelineBuilder pipelineBuilder(std::move(args.fPaint), args.fAAType);
     pipelineBuilder.setUserStencil(args.fUserStencilSettings);
     args.fRenderTargetContext->addDrawOp(pipelineBuilder, *args.fClip, std::move(op));
     return true;

@@ -98,11 +98,11 @@ class DefaultPathOp final : public GrMeshDrawOp {
 public:
     DEFINE_OP_CLASS_ID
 
-    static sk_sp<GrDrawOp> Make(GrColor color, const SkPath& path, SkScalar tolerance,
-                                uint8_t coverage, const SkMatrix& viewMatrix, bool isHairline,
-                                const SkRect& devBounds) {
-        return sk_sp<GrDrawOp>(new DefaultPathOp(color, path, tolerance, coverage, viewMatrix,
-                                                 isHairline, devBounds));
+    static std::unique_ptr<GrDrawOp> Make(GrColor color, const SkPath& path, SkScalar tolerance,
+                                          uint8_t coverage, const SkMatrix& viewMatrix,
+                                          bool isHairline, const SkRect& devBounds) {
+        return std::unique_ptr<GrDrawOp>(new DefaultPathOp(color, path, tolerance, coverage,
+                                                           viewMatrix, isHairline, devBounds));
     }
 
     const char* name() const override { return "DefaultPathOp"; }
@@ -138,12 +138,8 @@ private:
     }
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
-        if (!optimizations.readsColor()) {
-            fColor = GrColor_ILLEGAL;
-        }
         optimizations.getOverrideColorIfSet(&fColor);
         fUsesLocalCoords = optimizations.readsLocalCoords();
-        fCoverageIgnored = !optimizations.readsCoverage();
     }
 
     void onPrepareDraws(Target* target) const override {
@@ -152,9 +148,6 @@ private:
             using namespace GrDefaultGeoProcFactory;
             Color color(this->color());
             Coverage coverage(this->coverage());
-            if (this->coverageIgnored()) {
-                coverage.fType = Coverage::kNone_Type;
-            }
             LocalCoords localCoords(this->usesLocalCoords() ? LocalCoords::kUsePosition_Type :
                                                               LocalCoords::kUnused_Type);
             gp = GrDefaultGeoProcFactory::Make(color, coverage, localCoords, this->viewMatrix());
@@ -395,7 +388,6 @@ private:
     bool usesLocalCoords() const { return fUsesLocalCoords; }
     const SkMatrix& viewMatrix() const { return fViewMatrix; }
     bool isHairline() const { return fIsHairline; }
-    bool coverageIgnored() const { return fCoverageIgnored; }
 
     struct PathData {
         SkPath fPath;
@@ -406,7 +398,6 @@ private:
     uint8_t fCoverage;
     SkMatrix fViewMatrix;
     bool fUsesLocalCoords;
-    bool fCoverageIgnored;
     bool fIsHairline;
     SkSTArray<1, PathData, true> fPaths;
 
@@ -414,7 +405,7 @@ private:
 };
 
 bool GrDefaultPathRenderer::internalDrawPath(GrRenderTargetContext* renderTargetContext,
-                                             const GrPaint& paint,
+                                             GrPaint&& paint,
                                              GrAAType aaType,
                                              const GrUserStencilSettings& userStencilSettings,
                                              const GrClip& clip,
@@ -555,24 +546,26 @@ bool GrDefaultPathRenderer::internalDrawPath(GrRenderTargetContext* renderTarget
             }
             const SkMatrix& viewM = (reverse && viewMatrix.hasPerspective()) ? SkMatrix::I() :
                                                                                viewMatrix;
-            sk_sp<GrDrawOp> op(GrRectOpFactory::MakeNonAAFill(paint.getColor(), viewM, bounds,
-                                                              nullptr, &localMatrix));
+            std::unique_ptr<GrDrawOp> op(GrRectOpFactory::MakeNonAAFill(
+                    paint.getColor(), viewM, bounds, nullptr, &localMatrix));
 
             SkASSERT(GrDrawFace::kBoth == drawFace[p]);
-            GrPipelineBuilder pipelineBuilder(paint, aaType);
+            GrPipelineBuilder pipelineBuilder(std::move(paint), aaType);
             pipelineBuilder.setDrawFace(drawFace[p]);
             pipelineBuilder.setUserStencil(passes[p]);
             renderTargetContext->addDrawOp(pipelineBuilder, clip, std::move(op));
         } else {
-            sk_sp<GrDrawOp> op =
+            std::unique_ptr<GrDrawOp> op =
                     DefaultPathOp::Make(paint.getColor(), path, srcSpaceTol, newCoverage,
                                         viewMatrix, isHairline, devBounds);
-            GrPipelineBuilder pipelineBuilder(paint, aaType);
+            bool stencilPass = stencilOnly || passCount > 1;
+            GrPaint::MoveOrNew passPaint(paint, stencilPass);
+            if (stencilPass) {
+                passPaint.paint().setXPFactory(GrDisableColorXPFactory::Get());
+            }
+            GrPipelineBuilder pipelineBuilder(std::move(passPaint), aaType);
             pipelineBuilder.setDrawFace(drawFace[p]);
             pipelineBuilder.setUserStencil(passes[p]);
-            if (passCount > 1) {
-                pipelineBuilder.setDisableColorXPFactory();
-            }
             renderTargetContext->addDrawOp(pipelineBuilder, clip, std::move(op));
         }
     }
@@ -590,7 +583,7 @@ bool GrDefaultPathRenderer::onDrawPath(const DrawPathArgs& args) {
     GR_AUDIT_TRAIL_AUTO_FRAME(args.fRenderTargetContext->auditTrail(),
                               "GrDefaultPathRenderer::onDrawPath");
     return this->internalDrawPath(args.fRenderTargetContext,
-                                  *args.fPaint,
+                                  std::move(args.fPaint),
                                   args.fAAType,
                                   *args.fUserStencilSettings,
                                   *args.fClip,
@@ -605,9 +598,9 @@ void GrDefaultPathRenderer::onStencilPath(const StencilPathArgs& args) {
     SkASSERT(!args.fShape->inverseFilled());
 
     GrPaint paint;
-    paint.setXPFactory(GrDisableColorXPFactory::Make());
+    paint.setXPFactory(GrDisableColorXPFactory::Get());
 
-    this->internalDrawPath(args.fRenderTargetContext, paint, args.fAAType,
+    this->internalDrawPath(args.fRenderTargetContext, std::move(paint), args.fAAType,
                            GrUserStencilSettings::kUnused, *args.fClip, *args.fViewMatrix,
                            *args.fShape, true);
 }

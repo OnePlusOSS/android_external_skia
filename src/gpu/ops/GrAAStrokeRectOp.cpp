@@ -97,17 +97,15 @@ static sk_sp<GrGeometryProcessor> create_stroke_rect_gp(bool tweakAlphaForCovera
                                                         bool usesLocalCoords) {
     using namespace GrDefaultGeoProcFactory;
 
-    Color color(Color::kAttribute_Type);
     Coverage::Type coverageType;
     if (tweakAlphaForCoverage) {
         coverageType = Coverage::kSolid_Type;
     } else {
         coverageType = Coverage::kAttribute_Type;
     }
-    Coverage coverage(coverageType);
-    LocalCoords localCoords(usesLocalCoords ? LocalCoords::kUsePosition_Type
-                                            : LocalCoords::kUnused_Type);
-    return MakeForDeviceSpace(color, coverage, localCoords, viewMatrix);
+    LocalCoords::Type localCoordsType =
+            usesLocalCoords ? LocalCoords::kUsePosition_Type : LocalCoords::kUnused_Type;
+    return MakeForDeviceSpace(Color::kAttribute_Type, coverageType, localCoordsType, viewMatrix);
 }
 
 class AAStrokeRectOp final : public GrMeshDrawOp {
@@ -125,8 +123,8 @@ public:
         fMiterStroke = true;
     }
 
-    static sk_sp<GrDrawOp> Make(GrColor color, const SkMatrix& viewMatrix, const SkRect& rect,
-                                const SkStrokeRec& stroke) {
+    static std::unique_ptr<GrDrawOp> Make(GrColor color, const SkMatrix& viewMatrix,
+                                          const SkRect& rect, const SkStrokeRec& stroke) {
         bool isMiter;
         if (!allowed_stroke(stroke, &isMiter)) {
             return nullptr;
@@ -140,7 +138,7 @@ public:
         info.fColor = color;
         op->setBounds(info.fDevOutside, HasAABloat::kYes, IsZeroArea::kNo);
         op->fViewMatrix = viewMatrix;
-        return sk_sp<GrDrawOp>(op);
+        return std::unique_ptr<GrDrawOp>(op);
     }
 
     const char* name() const override { return "AAStrokeRect"; }
@@ -222,9 +220,6 @@ private:
 };
 
 void AAStrokeRectOp::applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) {
-    if (!optimizations.readsColor()) {
-        fRects[0].fColor = GrColor_ILLEGAL;
-    }
     optimizations.getOverrideColorIfSet(&fRects[0].fColor);
 
     fUsesLocalCoords = optimizations.readsLocalCoords();
@@ -565,17 +560,17 @@ void AAStrokeRectOp::generateAAStrokeRectGeometry(void* vertices,
 
 namespace GrAAStrokeRectOp {
 
-sk_sp<GrDrawOp> MakeFillBetweenRects(GrColor color,
-                                     const SkMatrix& viewMatrix,
-                                     const SkRect& devOutside,
-                                     const SkRect& devInside) {
-    return sk_sp<GrDrawOp>(new AAStrokeRectOp(color, viewMatrix, devOutside, devInside));
+std::unique_ptr<GrDrawOp> MakeFillBetweenRects(GrColor color,
+                                               const SkMatrix& viewMatrix,
+                                               const SkRect& devOutside,
+                                               const SkRect& devInside) {
+    return std::unique_ptr<GrDrawOp>(new AAStrokeRectOp(color, viewMatrix, devOutside, devInside));
 }
 
-sk_sp<GrDrawOp> Make(GrColor color,
-                     const SkMatrix& viewMatrix,
-                     const SkRect& rect,
-                     const SkStrokeRec& stroke) {
+std::unique_ptr<GrDrawOp> Make(GrColor color,
+                               const SkMatrix& viewMatrix,
+                               const SkRect& rect,
+                               const SkStrokeRec& stroke) {
     return AAStrokeRectOp::Make(color, viewMatrix, rect, stroke);
 }
 }

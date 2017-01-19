@@ -79,20 +79,6 @@ bool SkImage::scalePixels(const SkPixmap& dst, SkFilterQuality quality, CachingH
     return false;
 }
 
-#ifdef SK_SUPPORT_LEGACY_PREROLL
-void SkImage::preroll(GrContext* ctx) const {
-    // For now, and to maintain parity w/ previous pixelref behavior, we just force the image
-    // to produce a cached raster-bitmap form, so that drawing to a raster canvas should be fast.
-    //
-    SkBitmap bm;
-    SkColorSpace* legacyColorSpace = nullptr;
-    if (as_IB(this)->getROPixels(&bm, legacyColorSpace)) {
-        bm.lockPixels();
-        bm.unlockPixels();
-    }
-}
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 SkAlphaType SkImage::alphaType() const {
@@ -106,9 +92,6 @@ sk_sp<SkShader> SkImage::makeShader(SkShader::TileMode tileX, SkShader::TileMode
 
 SkData* SkImage::encode(SkEncodedImageFormat type, int quality) const {
     SkBitmap bm;
-    // TODO: Right now, the encoders don't handle F16 or linearly premultiplied data. Once they do,
-    // we should decode in "color space aware" mode, then re-encode that. For now, work around this
-    // by asking for a legacy decode (which gives us the raw data in N32).
     SkColorSpace* legacyColorSpace = nullptr;
     if (as_IB(this)->getROPixels(&bm, legacyColorSpace)) {
         SkDynamicMemoryWStream buf;
@@ -126,9 +109,6 @@ SkData* SkImage::encode(SkPixelSerializer* serializer) const {
 
     SkBitmap bm;
     SkAutoPixmapUnlock apu;
-    // TODO: Right now, the encoders don't handle F16 or linearly premultiplied data. Once they do,
-    // we should decode in "color space aware" mode, then re-encode that. For now, work around this
-    // by asking for a legacy decode (which gives us the raw data in N32).
     SkColorSpace* legacyColorSpace = nullptr;
     if (as_IB(this)->getROPixels(&bm, legacyColorSpace) &&
         bm.requestLock(&apu)) {
@@ -214,20 +194,6 @@ GrBackendObject SkImage::getTextureHandle(bool) const { return 0; }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static bool raster_canvas_supports(const SkImageInfo& info) {
-    switch (info.colorType()) {
-        case kN32_SkColorType:
-            return kUnpremul_SkAlphaType != info.alphaType();
-        case kRGB_565_SkColorType:
-            return true;
-        case kAlpha_8_SkColorType:
-            return true;
-        default:
-            break;
-    }
-    return false;
-}
-
 SkImage_Base::SkImage_Base(int width, int height, uint32_t uniqueID)
     : INHERITED(width, height, uniqueID)
     , fAddedToCache(false)
@@ -237,23 +203,6 @@ SkImage_Base::~SkImage_Base() {
     if (fAddedToCache.load()) {
         SkNotifyBitmapGenIDIsStale(this->uniqueID());
     }
-}
-
-bool SkImage_Base::onReadPixels(const SkImageInfo& dstInfo, void* dstPixels, size_t dstRowBytes,
-                                int srcX, int srcY, CachingHint) const {
-    if (!raster_canvas_supports(dstInfo)) {
-        return false;
-    }
-
-    SkBitmap bm;
-    bm.installPixels(dstInfo, dstPixels, dstRowBytes);
-    SkCanvas canvas(bm);
-
-    SkPaint paint;
-    paint.setBlendMode(SkBlendMode::kSrc);
-    canvas.drawImage(this, -SkIntToScalar(srcX), -SkIntToScalar(srcY), &paint);
-
-    return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -314,20 +263,18 @@ bool SkImage_Base::onAsLegacyBitmap(SkBitmap* bitmap, LegacyBitmapMode mode) con
 }
 
 sk_sp<SkImage> SkImage::MakeFromPicture(sk_sp<SkPicture> picture, const SkISize& dimensions,
-                                        const SkMatrix* matrix, const SkPaint* paint,
-                                        sk_sp<SkColorSpace> colorSpace) {
-    if (!picture) {
-        return nullptr;
-    }
-    return MakeFromGenerator(SkImageGenerator::NewFromPicture(dimensions, picture.get(), matrix,
-                                                              paint, std::move(colorSpace)));
+                                        const SkMatrix* matrix, const SkPaint* paint) {
+    return SkImage::MakeFromPicture(std::move(picture), dimensions, matrix, paint, BitDepth::kU8,
+                                    nullptr);
 }
 
 sk_sp<SkImage> SkImage::MakeFromPicture(sk_sp<SkPicture> picture, const SkISize& dimensions,
-                                        const SkMatrix* matrix, const SkPaint* paint) {
-    return MakeFromPicture(std::move(picture), dimensions, matrix, paint, nullptr);
+                                        const SkMatrix* matrix, const SkPaint* paint,
+                                        BitDepth bitDepth, sk_sp<SkColorSpace> colorSpace) {
+    return MakeFromGenerator(SkImageGenerator::NewFromPicture(dimensions, picture.get(), matrix,
+                                                              paint, bitDepth,
+                                                              std::move(colorSpace)));
 }
-
 sk_sp<SkImage> SkImage::makeWithFilter(const SkImageFilter* filter, const SkIRect& subset,
                                        const SkIRect& clipBounds, SkIRect* outSubset,
                                        SkIPoint* offset) const {
@@ -461,4 +408,31 @@ void SkImage_unpinAsTexture(const SkImage* image, GrContext* ctx) {
     SkASSERT(image);
     SkASSERT(ctx);
     as_IB(image)->onUnpinAsTexture(ctx);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+sk_sp<SkImage> SkImageMakeRasterCopyAndAssignColorSpace(const SkImage* src,
+                                                        SkColorSpace* colorSpace) {
+    // Read the pixels out of the source image, with no conversion
+    SkImageInfo info = as_IB(src)->onImageInfo();
+    if (kUnknown_SkColorType == info.colorType()) {
+        SkDEBUGFAIL("Unexpected color type");
+        return nullptr;
+    }
+
+    size_t rowBytes = info.minRowBytes();
+    size_t size = info.getSafeSize(rowBytes);
+    auto data = SkData::MakeUninitialized(size);
+    if (!data) {
+        return nullptr;
+    }
+
+    SkPixmap pm(info, data->writable_data(), rowBytes);
+    if (!src->readPixels(pm, 0, 0, SkImage::kDisallow_CachingHint)) {
+        return nullptr;
+    }
+
+    // Wrap them in a new image with a different color space
+    return SkImage::MakeRasterData(info.makeColorSpace(sk_ref_sp(colorSpace)), data, rowBytes);
 }
