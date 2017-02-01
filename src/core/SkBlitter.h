@@ -108,12 +108,6 @@ public:
     virtual bool isNullBlitter() const;
 
     /**
-     *  Special methods for SkShaderBlitter. On all other classes this is a no-op.
-     */
-    virtual bool resetShaderContext(const SkShader::ContextRec&);
-    virtual SkShader::Context* getShaderContext() const;
-
-    /**
      * Special methods for blitters that can blit more than one row at a time.
      * This function returns the number of rows that this blitter could optimally
      * process at a time. It is still required to support blitting one scanline

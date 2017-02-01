@@ -14,13 +14,11 @@
 #include "SkSurfaceProps.h"
 
 class SkBitmap;
-class SkClipStack;
 class SkDraw;
 class SkDrawFilter;
 class SkImageFilterCache;
 struct SkIRect;
 class SkMatrix;
-class SkMetaData;
 class SkRasterHandleAllocator;
 class SkRegion;
 class SkSpecialImage;
@@ -33,8 +31,6 @@ public:
     */
     explicit SkBaseDevice(const SkImageInfo&, const SkSurfaceProps&);
     virtual ~SkBaseDevice();
-
-    SkMetaData& getMetaData();
 
     /**
      *  Return ImageInfo for this device. If the canvas is not backed by pixels
@@ -77,16 +73,6 @@ public:
     bool isOpaque() const {
         return this->imageInfo().isOpaque();
     }
-
-#ifdef SK_SUPPORT_LEGACY_ACCESSBITMAP
-    /** Return the bitmap associated with this device. Call this each time you need
-        to access the bitmap, as it notifies the subclass to perform any flushing
-        etc. before you examine the pixels.
-        @param changePixels set to true if the caller plans to change the pixels
-        @return the device's bitmap
-    */
-    const SkBitmap& accessBitmap(bool changePixels);
-#endif
 
     bool writePixels(const SkImageInfo&, const void*, size_t rowBytes, int x, int y);
 
@@ -245,17 +231,6 @@ protected:
 
     ///////////////////////////////////////////////////////////////////////////
 
-#ifdef SK_SUPPORT_LEGACY_ACCESSBITMAP
-    /** Update as needed the pixel value in the bitmap, so that the caller can
-        access the pixels directly.
-        @return The device contents as a bitmap
-    */
-    virtual const SkBitmap& onAccessBitmap() {
-        SkASSERT(0);
-        return fLegacyBitmap;
-    }
-#endif
-
     virtual GrContext* context() const { return nullptr; }
 
     virtual sk_sp<SkSurface> makeSurface(const SkImageInfo&, const SkSurfaceProps&);
@@ -368,14 +343,9 @@ private:
                                    const SkRect& dst, const SkPaint& paint,
                                    SkCanvas::SrcRectConstraint constraint);
 
-    SkIPoint    fOrigin;
-    SkMetaData* fMetaData;
+    SkIPoint             fOrigin;
     const SkImageInfo    fInfo;
     const SkSurfaceProps fSurfaceProps;
-
-#ifdef SK_SUPPORT_LEGACY_ACCESSBITMAP
-    SkBitmap    fLegacyBitmap;
-#endif
 
     typedef SkRefCnt INHERITED;
 };

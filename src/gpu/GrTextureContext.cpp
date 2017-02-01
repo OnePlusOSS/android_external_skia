@@ -14,7 +14,7 @@
 
 #define ASSERT_SINGLE_OWNER \
     SkDEBUGCODE(GrSingleOwner::AutoEnforce debug_SingleOwner(fSingleOwner);)
-#define RETURN_FALSE_IF_ABANDONED  if (fDrawingManager->wasAbandoned()) { return false; }
+#define RETURN_FALSE_IF_ABANDONED  if (this->drawingManager()->wasAbandoned()) { return false; }
 
 GrTextureContext::GrTextureContext(GrContext* context,
                                    GrDrawingManager* drawingMgr,
@@ -22,8 +22,7 @@ GrTextureContext::GrTextureContext(GrContext* context,
                                    sk_sp<SkColorSpace> colorSpace,
                                    GrAuditTrail* auditTrail,
                                    GrSingleOwner* singleOwner)
-    : GrSurfaceContext(context, std::move(colorSpace), auditTrail, singleOwner)
-    , fDrawingManager(drawingMgr)
+    : GrSurfaceContext(context, drawingMgr, std::move(colorSpace), auditTrail, singleOwner)
     , fTextureProxy(std::move(textureProxy))
     , fOpList(SkSafeRef(fTextureProxy->getLastTextureOpList())) {
     SkDEBUGCODE(this->validate();)
@@ -45,7 +44,13 @@ GrTextureContext::~GrTextureContext() {
     SkSafeUnref(fOpList);
 }
 
-GrRenderTargetProxy* GrTextureContext::asDeferredRenderTarget() {
+GrRenderTargetProxy* GrTextureContext::asRenderTargetProxy() {
+    // If the proxy can return an RTProxy it should've been wrapped in a RTContext
+    SkASSERT(!fTextureProxy->asRenderTargetProxy());
+    return nullptr;
+}
+
+sk_sp<GrRenderTargetProxy> GrTextureContext::asRenderTargetProxyRef() {
     // If the proxy can return an RTProxy it should've been wrapped in a RTContext
     SkASSERT(!fTextureProxy->asRenderTargetProxy());
     return nullptr;
@@ -56,7 +61,7 @@ GrTextureOpList* GrTextureContext::getOpList() {
     SkDEBUGCODE(this->validate();)
 
     if (!fOpList || fOpList->isClosed()) {
-        fOpList = fDrawingManager->newOpList(fTextureProxy.get());
+        fOpList = this->drawingManager()->newOpList(fTextureProxy.get());
     }
 
     return fOpList;

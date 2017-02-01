@@ -440,6 +440,18 @@ STAGE_CTX(constant_color, const SkPM4f*) {
     a = ctx->a();
 }
 
+// Set up registers with values relevant to shaders.
+STAGE_CTX(seed_shader, const int*) {
+    int y = *ctx;
+
+    static const float dx[] = { 0,1,2,3,4,5,6,7 };
+    r = x + 0.5f + SkNf::Load(dx);  // dst pixel center x coordinates
+    g = y + 0.5f;                   // dst pixel center y coordinate(s)
+    b = 1.0f;
+    a = 0.0f;
+    dr = dg = db = da = 0.0f;
+}
+
 // s' = sc for a scalar c.
 STAGE_CTX(scale_1_float, const float*) {
     SkNf c = *ctx;
@@ -591,6 +603,40 @@ STAGE_CTX(load_u16_be, const uint64_t**) {
     a = (1.0f / 65535.0f) * SkNx_cast<float>((ah << 8) | (ah >> 8));
 }
 
+STAGE_CTX(load_rgb_u16_be, const uint16_t**) {
+    auto ptr = *ctx + 3*x;
+    const void* src = ptr;
+    uint16_t buf[N*3] = {0};
+    if (tail) {
+        memcpy(buf, src, tail*3*sizeof(uint16_t));
+        src = buf;
+    }
+
+    SkNh rh, gh, bh;
+    SkNh::Load3(src, &rh, &gh, &bh);
+    r = (1.0f / 65535.0f) * SkNx_cast<float>((rh << 8) | (rh >> 8));
+    g = (1.0f / 65535.0f) * SkNx_cast<float>((gh << 8) | (gh >> 8));
+    b = (1.0f / 65535.0f) * SkNx_cast<float>((bh << 8) | (bh >> 8));
+    a = 1.0f;
+}
+
+STAGE_CTX(store_u16_be, uint64_t**) {
+    auto to_u16_be = [](const SkNf& x) {
+        SkNh x16 = SkNx_cast<uint16_t>(65535.0f * x);
+        return (x16 << 8) | (x16 >> 8);
+    };
+
+    auto ptr = *ctx + x;
+    SkNx<N, uint64_t> px;
+    SkNh::Store4(tail ? (void*)&px : (void*)ptr, to_u16_be(r),
+                                                 to_u16_be(g),
+                                                 to_u16_be(b),
+                                                 to_u16_be(a));
+    if (tail) {
+        store(tail, px, ptr);
+    }
+}
+
 STAGE_CTX(load_tables, const LoadTablesContext*) {
     auto ptr = (const uint32_t*)ctx->fSrc + x;
 
@@ -619,6 +665,25 @@ STAGE_CTX(load_tables_u16_be, const LoadTablesContext*) {
     g = gather(tail, ctx->fG, SkNx_cast<int>(gh & 0xff));
     b = gather(tail, ctx->fB, SkNx_cast<int>(bh & 0xff));
     a = (1.0f / 65535.0f) * SkNx_cast<float>((ah << 8) | (ah >> 8));
+}
+
+STAGE_CTX(load_tables_rgb_u16_be, const LoadTablesContext*) {
+    auto ptr = (const uint16_t*)ctx->fSrc + 3*x;
+    const void* src = ptr;
+    uint16_t buf[N*3] = {0};
+    if (tail) {
+        memcpy(buf, src, tail*3*sizeof(uint16_t));
+        src = buf;
+    }
+
+    SkNh rh, gh, bh;
+    SkNh::Load3(src, &rh, &gh, &bh);
+
+    // ctx->fSrc is big-endian, so "& 0xff" grabs the 8 most significant bits of each component.
+    r = gather(tail, ctx->fR, SkNx_cast<int>(rh & 0xff));
+    g = gather(tail, ctx->fG, SkNx_cast<int>(gh & 0xff));
+    b = gather(tail, ctx->fB, SkNx_cast<int>(bh & 0xff));
+    a = 1.0f;
 }
 
 STAGE_CTX(store_tables, const StoreTablesContext*) {
@@ -818,21 +883,28 @@ SI SkNf assert_in_tile(const SkNf& v, float limit) {
     return v;
 }
 
+SI SkNf ulp_before(float v) {
+    SkASSERT(v > 0);
+    SkNf vs(v);
+    SkNu uvs = SkNu::Load(&vs) - 1;
+    return SkNf::Load(&uvs);
+}
+
 SI SkNf clamp(const SkNf& v, float limit) {
-    SkNf result = SkNf::Max(0, SkNf::Min(v, limit - 0.5f));
+    SkNf result = SkNf::Max(0, SkNf::Min(v, ulp_before(limit)));
     return assert_in_tile(result, limit);
 }
 SI SkNf repeat(const SkNf& v, float limit) {
     SkNf result = v - (v/limit).floor()*limit;
     // For small negative v, (v/limit).floor()*limit can dominate v in the subtraction,
     // which leaves result == limit.  We want result < limit, so clamp it one ULP.
-    result = SkNf::Min(result, nextafterf(limit, 0));
+    result = SkNf::Min(result, ulp_before(limit));
     return assert_in_tile(result, limit);
 }
 SI SkNf mirror(const SkNf& v, float l/*imit*/) {
     SkNf result = ((v - l) - ((v - l) / (2*l)).floor()*(2*l) - l).abs();
     // Same deal as repeat.
-    result = SkNf::Min(result, nextafterf(l, 0));
+    result = SkNf::Min(result, ulp_before(l));
     return assert_in_tile(result, l);
 }
 STAGE_CTX( clamp_x, const float*) { r = clamp (r, *ctx); }
@@ -992,6 +1064,26 @@ STAGE_CTX(gather_f16, const SkImageShaderContext*) {
     from_f16(&px, &r, &g, &b, &a);
 }
 
+STAGE_CTX(linear_gradient_2stops, const SkPM4f*) {
+    auto t = r;
+    SkPM4f c0 = ctx[0],
+           dc = ctx[1];
+
+    r = SkNf_fma(t, dc.r(), c0.r());
+    g = SkNf_fma(t, dc.g(), c0.g());
+    b = SkNf_fma(t, dc.b(), c0.b());
+    a = SkNf_fma(t, dc.a(), c0.a());
+}
+
+STAGE_CTX(byte_tables, const void*) {
+    struct Tables { const uint8_t *r, *g, *b, *a; };
+    auto tables = (const Tables*)ctx;
+
+    r = SkNf_from_byte(gather(tail, tables->r, SkNf_round(255.0f, r)));
+    g = SkNf_from_byte(gather(tail, tables->g, SkNf_round(255.0f, g)));
+    b = SkNf_from_byte(gather(tail, tables->b, SkNf_round(255.0f, b)));
+    a = SkNf_from_byte(gather(tail, tables->a, SkNf_round(255.0f, a)));
+}
 
 SI Fn enum_to_Fn(SkRasterPipeline::StockStage st) {
     switch (st) {
@@ -1015,22 +1107,17 @@ namespace {
         *program++ = (void*)just_return;
     }
 
-    static void run_program(void** program, size_t x, size_t y, size_t n) {
-        float dx[] = { 0,1,2,3,4,5,6,7 };
-        SkNf X = SkNf(x) + SkNf::Load(dx) + 0.5f,
-             Y = SkNf(y) + 0.5f,
-             _0 = SkNf(0),
-             _1 = SkNf(1);
+    static void run_program(void** program, size_t x, size_t n) {
+        SkNf u;  // fastest to start uninitialized.
 
         auto start = (Fn)load_and_increment(&program);
         while (n >= N) {
-            start(x*N, program, X,Y,_1,_0, _0,_0,_0,_0);
-            X += (float)N;
+            start(x*N, program, u,u,u,u, u,u,u,u);
             x += N;
             n -= N;
         }
         if (n) {
-            start(x*N+n, program, X,Y,_1,_0, _0,_0,_0,_0);
+            start(x*N+n, program, u,u,u,u, u,u,u,u);
         }
     }
 
@@ -1057,8 +1144,8 @@ namespace {
             memcpy(fProgram, o.fProgram, slots * sizeof(void*));
         }
 
-        void operator()(size_t x, size_t y, size_t n) {
-            run_program(fProgram, x, y, n);
+        void operator()(size_t x, size_t n) {
+            run_program(fProgram, x, n);
         }
 
         void** fProgram;
@@ -1067,21 +1154,21 @@ namespace {
 
 namespace SK_OPTS_NS {
 
-    SI std::function<void(size_t, size_t, size_t)>
+    SI std::function<void(size_t, size_t)>
     compile_pipeline(const SkRasterPipeline::Stage* stages, int nstages) {
         return Compiled{stages,nstages};
     }
 
-    SI void run_pipeline(size_t x, size_t y, size_t n,
+    SI void run_pipeline(size_t x, size_t n,
                          const SkRasterPipeline::Stage* stages, int nstages) {
         static const int kStackMax = 256;
         // Worst case is nstages stages with nstages context pointers, and just_return.
         if (2*nstages+1 <= kStackMax) {
             void* program[kStackMax];
             build_program(program, stages, nstages);
-            run_program(program, x,y,n);
+            run_program(program, x,n);
         } else {
-            Compiled{stages,nstages}(x,y,n);
+            Compiled{stages,nstages}(x,n);
         }
     }
 

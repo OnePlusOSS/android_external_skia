@@ -140,9 +140,7 @@ void SkDilateImageFilter::toString(SkString* str) const {
  * color.
  */
 class GrMorphologyEffect : public Gr1DKernelEffect {
-
 public:
-
     enum MorphologyType {
         kErode_MorphologyType,
         kDilate_MorphologyType,
@@ -327,9 +325,9 @@ GrMorphologyEffect::GrMorphologyEffect(GrTexture* texture,
                                        Direction direction,
                                        int radius,
                                        MorphologyType type)
-    : INHERITED(texture, direction, radius)
-    , fType(type)
-    , fUseRange(false) {
+        : INHERITED(texture, direction, radius, ModulationFlags(texture->config()))
+        , fType(type)
+        , fUseRange(false) {
     this->initClassID<GrMorphologyEffect>();
 }
 
@@ -338,9 +336,9 @@ GrMorphologyEffect::GrMorphologyEffect(GrTexture* texture,
                                        int radius,
                                        MorphologyType type,
                                        const float range[2])
-    : INHERITED(texture, direction, radius)
-    , fType(type)
-    , fUseRange(true) {
+        : INHERITED(texture, direction, radius, ModulationFlags(texture->config()))
+        , fType(type)
+        , fUseRange(true) {
     this->initClassID<GrMorphologyEffect>();
     fRange[0] = range[0];
     fRange[1] = range[1];
@@ -517,7 +515,7 @@ static sk_sp<SkSpecialImage> apply_morphology(
                                 : SK_ColorTRANSPARENT;
         dstRTContext->clear(&clearRect, clearColor, false);
 
-        srcTexture = sk_ref_sp(dstRTContext->asDeferredTexture());
+        srcTexture = dstRTContext->asTextureProxyRef();
         srcRect = dstRect;
     }
     if (radius.fHeight > 0) {
@@ -532,7 +530,7 @@ static sk_sp<SkSpecialImage> apply_morphology(
                               srcRect, dstRect, radius.fHeight, morphType,
                               Gr1DKernelEffect::kY_Direction);
 
-        srcTexture = sk_ref_sp(dstRTContext->asDeferredTexture());
+        srcTexture = dstRTContext->asTextureProxyRef();
     }
 
     return SkSpecialImage::MakeDeferredFromGpu(context,

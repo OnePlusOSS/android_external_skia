@@ -36,7 +36,6 @@ class GrPipelineBuilder;
 class GrResourceEntry;
 class GrResourceCache;
 class GrResourceProvider;
-class GrTestTarget;
 class GrTextBlobCache;
 class GrTextContext;
 class GrSamplerParams;
@@ -190,7 +189,7 @@ public:
                                                  GrPixelConfig config,
                                                  sk_sp<SkColorSpace> colorSpace,
                                                  int sampleCnt = 0,
-                                                 GrSurfaceOrigin origin = kDefault_GrSurfaceOrigin,
+                                                 GrSurfaceOrigin origin = kBottomLeft_GrSurfaceOrigin,
                                                  const SkSurfaceProps* surfaceProps = nullptr,
                                                  SkBudgeted = SkBudgeted::kYes);
 
@@ -202,7 +201,7 @@ public:
                                                  GrPixelConfig config,
                                                  sk_sp<SkColorSpace> colorSpace,
                                                  int sampleCnt = 0,
-                                                 GrSurfaceOrigin origin = kDefault_GrSurfaceOrigin,
+                                                 GrSurfaceOrigin origin = kBottomLeft_GrSurfaceOrigin,
                                                  const SkSurfaceProps* surfaceProps = nullptr,
                                                  SkBudgeted = SkBudgeted::kYes);
     /*
@@ -217,7 +216,7 @@ public:
                                                  GrPixelConfig config,
                                                  sk_sp<SkColorSpace> colorSpace,
                                                  int sampleCnt = 0,
-                                                 GrSurfaceOrigin origin = kDefault_GrSurfaceOrigin,
+                                                 GrSurfaceOrigin origin = kBottomLeft_GrSurfaceOrigin,
                                                  const SkSurfaceProps* surfaceProps = nullptr,
                                                  SkBudgeted budgeted = SkBudgeted::kYes);
 
@@ -229,7 +228,7 @@ public:
                                                  GrPixelConfig config,
                                                  sk_sp<SkColorSpace> colorSpace,
                                                  int sampleCnt = 0,
-                                                 GrSurfaceOrigin origin = kDefault_GrSurfaceOrigin,
+                                                 GrSurfaceOrigin origin = kBottomLeft_GrSurfaceOrigin,
                                                  const SkSurfaceProps* surfaceProps = nullptr,
                                                  SkBudgeted budgeted = SkBudgeted::kYes);
 
@@ -341,9 +340,6 @@ public:
     const GrResourceProvider* resourceProvider() const { return fResourceProvider; }
     GrResourceCache* getResourceCache() { return fResourceCache; }
 
-    // Called by tests that draw directly to the context via GrRenderTargetContext
-    void getTestTarget(GrTestTarget*, sk_sp<GrRenderTargetContext>);
-
     /** Reset GPU stats */
     void resetGpuStats() const ;
 
@@ -371,7 +367,7 @@ public:
     /** Get pointer to atlas texture for given mask format. Note that this wraps an
         actively mutating texture in an SkImage. This could yield unexpected results
         if it gets cached or used more generally. */
-    sk_sp<SkImage> getFontAtlasImage(GrMaskFormat format);
+    sk_sp<SkImage> getFontAtlasImage_ForTesting(GrMaskFormat format);
 
     GrAuditTrail* getAuditTrail() { return &fAuditTrail; }
 
@@ -434,10 +430,11 @@ private:
      * of effects that make a readToUPM->writeToPM->readToUPM cycle invariant. Otherwise, they
      * return NULL. They also can perform a swizzle as part of the draw.
      */
-    sk_sp<GrFragmentProcessor> createPMToUPMEffect(GrTexture*, const GrSwizzle&,
-                                                   const SkMatrix&) const;
-    sk_sp<GrFragmentProcessor> createUPMToPMEffect(GrTexture*, const GrSwizzle&,
-                                                   const SkMatrix&) const;
+    sk_sp<GrFragmentProcessor> createPMToUPMEffect(GrTexture*, const GrSwizzle&, const SkMatrix&);
+    sk_sp<GrFragmentProcessor> createPMToUPMEffect(sk_sp<GrTextureProxy>, const GrSwizzle&,
+                                                   const SkMatrix&);
+    sk_sp<GrFragmentProcessor> createUPMToPMEffect(sk_sp<GrTextureProxy>, const GrSwizzle&,
+                                                   const SkMatrix&);
     /** Called before either of the above two functions to determine the appropriate fragment
         processors for conversions. */
     void testPMConversionsIfNecessary(uint32_t flags);

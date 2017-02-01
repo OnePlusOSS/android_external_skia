@@ -195,6 +195,10 @@ public:
                   const SkPath&,
                   const GrStyle& style);
 
+    enum class ColorArrayType {
+        kPremulGrColor,
+        kSkColor,
+    };
     /**
      * Draws vertices with a paint.
      *
@@ -211,6 +215,7 @@ public:
      *                          are drawn non-indexed.
      * @param   indexCount      if indices is non-null then this is the
      *                          number of indices.
+     * @param   ColorArrayType  Determines how the color array should be interpreted.
      */
     void drawVertices(const GrClip&,
                       GrPaint&& paint,
@@ -219,9 +224,10 @@ public:
                       int vertexCount,
                       const SkPoint positions[],
                       const SkPoint texs[],
-                      const GrColor colors[],
+                      const uint32_t colors[],
                       const uint16_t indices[],
-                      int indexCount);
+                      int indexCount,
+                      ColorArrayType = ColorArrayType::kPremulGrColor);
 
     /**
      * Draws textured sprites from an atlas with a paint. This currently does not support AA for the
@@ -342,9 +348,17 @@ public:
         return fRenderTargetProxy->instantiate(fContext->textureProvider());
     }
 
-    GrSurfaceProxy* asDeferredSurface() override { return fRenderTargetProxy.get(); }
-    GrTextureProxy* asDeferredTexture() override;
-    GrRenderTargetProxy* asDeferredRenderTarget() override { return fRenderTargetProxy.get(); }
+    GrSurfaceProxy* asSurfaceProxy() override { return fRenderTargetProxy.get(); }
+    const GrSurfaceProxy* asSurfaceProxy() const override { return fRenderTargetProxy.get(); }
+    sk_sp<GrSurfaceProxy> asSurfaceProxyRef() override { return fRenderTargetProxy; }
+
+    GrTextureProxy* asTextureProxy() override;
+    sk_sp<GrTextureProxy> asTextureProxyRef() override;
+
+    GrRenderTargetProxy* asRenderTargetProxy() override { return fRenderTargetProxy.get(); }
+    sk_sp<GrRenderTargetProxy> asRenderTargetProxyRef() override { return fRenderTargetProxy; }
+
+    GrRenderTargetContext* asRenderTargetContext() override { return this; }
 
     sk_sp<GrTexture> asTexture() {
         if (!this->accessRenderTarget()) {
@@ -353,7 +367,7 @@ public:
 
         // TODO: usage of this entry point needs to be reduced and potentially eliminated
         // since it ends the deferral of the GrRenderTarget's allocation
-        // It's usage should migrate to asDeferredTexture
+        // It's usage should migrate to asTextureProxyRef
         return sk_ref_sp(this->accessRenderTarget()->asTexture());
     }
 
@@ -367,8 +381,6 @@ protected:
     GrRenderTargetContext(GrContext*, GrDrawingManager*, sk_sp<GrRenderTargetProxy>,
                           sk_sp<SkColorSpace>, const SkSurfaceProps*, GrAuditTrail*,
                           GrSingleOwner*);
-
-    GrDrawingManager* drawingManager() { return fDrawingManager; }
 
     SkDEBUGCODE(void validate() const;)
 
@@ -391,7 +403,6 @@ private:
 
     friend class GrDrawingManager; // for ctor
     friend class GrRenderTargetContextPriv;
-    friend class GrTestTarget;  // for access to getOpList
     friend class GrSWMaskHelper;                 // for access to addDrawOp
 
     // All the path renderers currently make their own ops
@@ -448,7 +459,6 @@ private:
 
     GrRenderTargetOpList* getOpList();
 
-    GrDrawingManager*                 fDrawingManager;
     sk_sp<GrRenderTargetProxy>        fRenderTargetProxy;
 
     // In MDB-mode the GrOpList can be closed by some other renderTargetContext that has picked

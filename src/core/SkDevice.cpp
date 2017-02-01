@@ -15,7 +15,6 @@
 #include "SkImageFilterCache.h"
 #include "SkImagePriv.h"
 #include "SkLatticeIter.h"
-#include "SkMetaData.h"
 #include "SkPatchUtils.h"
 #include "SkPathPriv.h"
 #include "SkPathMeasure.h"
@@ -32,29 +31,9 @@ SkBaseDevice::SkBaseDevice(const SkImageInfo& info, const SkSurfaceProps& surfac
     , fSurfaceProps(surfaceProps)
 {
     fOrigin.setZero();
-    fMetaData = nullptr;
 }
 
-SkBaseDevice::~SkBaseDevice() { delete fMetaData; }
-
-SkMetaData& SkBaseDevice::getMetaData() {
-    // metadata users are rare, so we lazily allocate it. If that changes we
-    // can decide to just make it a field in the device (rather than a ptr)
-    if (nullptr == fMetaData) {
-        fMetaData = new SkMetaData;
-    }
-    return *fMetaData;
-}
-
-#ifdef SK_SUPPORT_LEGACY_ACCESSBITMAP
-const SkBitmap& SkBaseDevice::accessBitmap(bool changePixels) {
-    const SkBitmap& bitmap = this->onAccessBitmap();
-    if (changePixels) {
-        bitmap.notifyPixelsChanged();
-    }
-    return bitmap;
-}
-#endif
+SkBaseDevice::~SkBaseDevice() {}
 
 SkPixelGeometry SkBaseDevice::CreateInfo::AdjustGeometry(const SkImageInfo& info,
                                                          TileUsage tileUsage,
@@ -340,31 +319,11 @@ sk_sp<SkSpecialImage> SkBaseDevice::snapSpecial() { return nullptr; }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool SkBaseDevice::readPixels(const SkImageInfo& info, void* dstP, size_t rowBytes, int x, int y) {
-#ifdef SK_DEBUG
-    SkASSERT(info.width() > 0 && info.height() > 0);
-    SkASSERT(dstP);
-    SkASSERT(rowBytes >= info.minRowBytes());
-    SkASSERT(x >= 0 && y >= 0);
-
-    const SkImageInfo& srcInfo = this->imageInfo();
-    SkASSERT(x + info.width() <= srcInfo.width());
-    SkASSERT(y + info.height() <= srcInfo.height());
-#endif
     return this->onReadPixels(info, dstP, rowBytes, x, y);
 }
 
 bool SkBaseDevice::writePixels(const SkImageInfo& info, const void* pixels, size_t rowBytes,
                                int x, int y) {
-#ifdef SK_DEBUG
-    SkASSERT(info.width() > 0 && info.height() > 0);
-    SkASSERT(pixels);
-    SkASSERT(rowBytes >= info.minRowBytes());
-    SkASSERT(x >= 0 && y >= 0);
-
-    const SkImageInfo& dstInfo = this->imageInfo();
-    SkASSERT(x + info.width() <= dstInfo.width());
-    SkASSERT(y + info.height() <= dstInfo.height());
-#endif
     return this->onWritePixels(info, pixels, rowBytes, x, y);
 }
 

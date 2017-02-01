@@ -526,18 +526,33 @@ public:
     */
     bool quickReject(const SkPath& path) const;
 
-    /** Return the bounds of the current clip (in local coordinates) in the
-        bounds parameter, and return true if it is non-empty. This can be useful
-        in a way similar to quickReject, in that it tells you that drawing
-        outside of these bounds will be clipped out.
-    */
-    virtual bool getClipBounds(SkRect* bounds) const;
+    /**
+     *  Return the bounds of the current clip in local coordinates. If the clip is empty,
+     *  return { 0, 0, 0, 0 }.
+     */
+    SkRect getLocalClipBounds() const { return this->onGetLocalClipBounds(); }
 
-    /** Return the bounds of the current clip, in device coordinates; returns
-        true if non-empty. Maybe faster than getting the clip explicitly and
-        then taking its bounds.
-    */
-    virtual bool getClipDeviceBounds(SkIRect* bounds) const;
+    /**
+     *  Returns true if the clip bounds are non-empty.
+     */
+    bool getLocalClipBounds(SkRect* bounds) const {
+        *bounds = this->onGetLocalClipBounds();
+        return !bounds->isEmpty();
+    }
+
+    /**
+     *  Return the bounds of the current clip in device coordinates. If the clip is empty,
+     *  return { 0, 0, 0, 0 }.
+     */
+    SkIRect getDeviceClipBounds() const { return this->onGetDeviceClipBounds(); }
+
+    /**
+     *  Returns true if the clip bounds are non-empty.
+     */
+    bool getDeviceClipBounds(SkIRect* bounds) const {
+        *bounds = this->onGetDeviceClipBounds();
+        return !bounds->isEmpty();
+    }
 
     /** Fill the entire canvas' bitmap (restricted to the current clip) with the
         specified ARGB color, using the specified mode.
@@ -1321,6 +1336,8 @@ public:
      */
     void temporary_internal_describeTopLayer(SkMatrix* matrix, SkIRect* clip_bounds);
 
+    void temporary_internal_getRgnClip(SkRegion*);
+
 protected:
 #ifdef SK_EXPERIMENTAL_SHADOWING
     /** Returns the current (cumulative) draw depth of the canvas.
@@ -1364,6 +1381,10 @@ protected:
 #ifdef SK_EXPERIMENTAL_SHADOWING
     virtual void didTranslateZ(SkScalar) {}
 #endif
+
+    virtual SkRect onGetLocalClipBounds() const;
+    virtual SkIRect onGetDeviceClipBounds() const;
+
 
     virtual void onDrawAnnotation(const SkRect&, const char key[], SkData* value);
     virtual void onDrawDRRect(const SkRRect&, const SkRRect&, const SkPaint&);
@@ -1555,7 +1576,6 @@ private:
 
     friend class SkDrawIter;        // needs setupDrawForLayerDevice()
     friend class AutoDrawLooper;
-    friend class SkLua;             // needs top layer size and offset
     friend class SkDebugCanvas;     // needs experimental fAllowSimplifyClip
     friend class SkSurface_Raster;  // needs getDevice()
     friend class SkRecorder;        // resetForNextPicture
@@ -1611,9 +1631,6 @@ private:
                                     const char text[], size_t byteLength,
                                     SkScalar x, SkScalar y);
 
-    // only for canvasutils
-    const SkRegion& internal_private_getTotalClip() const;
-
     /*
      *  Returns true if drawing the specified rect (or all if it is null) with the specified
      *  paint (or default if null) would overwrite the entire root device of the canvas
@@ -1626,9 +1643,6 @@ private:
      */
     bool canDrawBitmapAsSprite(SkScalar x, SkScalar y, int w, int h, const SkPaint&);
 
-#ifdef SK_SUPPORT_LEGACY_CANVAS_GETCLIPSTACK
-public:
-#endif
     /** Return the clip stack. The clip stack stores all the individual
      *  clips organized by the save/restore frame in which they were
      *  added.
@@ -1637,7 +1651,6 @@ public:
     const SkClipStack* getClipStack() const {
         return fClipStack.get();
     }
-private:
 
     /**
      *  Keep track of the device clip bounds and if the matrix is scale-translate.  This allows

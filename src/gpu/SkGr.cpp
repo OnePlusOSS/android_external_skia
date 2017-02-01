@@ -279,16 +279,17 @@ GrTexture* GrUploadMipMapToTexture(GrContext* ctx, const SkImageInfo& info,
 }
 
 GrTexture* GrRefCachedBitmapTexture(GrContext* ctx, const SkBitmap& bitmap,
-                                    const GrSamplerParams& params) {
+                                    const GrSamplerParams& params, SkScalar scaleAdjust[2]) {
     // Caller doesn't care about the texture's color space (they can always get it from the bitmap)
-    return GrBitmapTextureMaker(ctx, bitmap).refTextureForParams(params, nullptr, nullptr);
+    return GrBitmapTextureMaker(ctx, bitmap).refTextureForParams(params, nullptr,
+                                                                 nullptr, scaleAdjust);
 }
 
 sk_sp<GrTexture> GrMakeCachedBitmapTexture(GrContext* ctx, const SkBitmap& bitmap,
-                                           const GrSamplerParams& params) {
+                                           const GrSamplerParams& params, SkScalar scaleAdjust[2]) {
     // Caller doesn't care about the texture's color space (they can always get it from the bitmap)
     GrTexture* tex = GrBitmapTextureMaker(ctx, bitmap).refTextureForParams(params, nullptr,
-                                                                           nullptr);
+                                                                           nullptr, scaleAdjust);
     return sk_sp<GrTexture>(tex);
 }
 
@@ -645,7 +646,7 @@ bool SkPaintToGrPaintWithTexture(GrContext* context,
             sk_sp<GrFragmentProcessor> fpSeries[] = { std::move(shaderFP), std::move(fp) };
             shaderFP = GrFragmentProcessor::RunInSeries(fpSeries, 2);
         } else {
-            shaderFP = GrFragmentProcessor::MulOutputByInputUnpremulColor(fp);
+            shaderFP = GrFragmentProcessor::MakeInputPremulAndMulByOutput(fp);
         }
     } else {
         shaderFP = GrFragmentProcessor::MulOutputByInputAlpha(fp);

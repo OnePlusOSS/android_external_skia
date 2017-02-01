@@ -447,8 +447,7 @@ SkPerlinNoiseShader::PerlinNoiseShaderContext::PerlinNoiseShaderContext(
         const SkPerlinNoiseShader& shader, const ContextRec& rec)
     : INHERITED(shader, rec)
 {
-    SkMatrix newMatrix = *rec.fMatrix;
-    newMatrix.preConcat(shader.getLocalMatrix());
+    SkMatrix newMatrix = SkMatrix::Concat(*rec.fMatrix, shader.getLocalMatrix());
     if (rec.fLocalMatrix) {
         newMatrix.preConcat(*rec.fLocalMatrix);
     }
@@ -515,7 +514,6 @@ public:
     bool stitchTiles() const { return fStitchTiles; }
     const SkVector& baseFrequency() const { return fPaintingData->fBaseFrequency; }
     int numOctaves() const { return fNumOctaves; }
-    const SkMatrix& matrix() const { return fCoordTransform.getMatrix(); }
 
 private:
     GrGLSLFragmentProcessor* onCreateGLSLInstance() const override {
@@ -537,24 +535,24 @@ private:
     }
 
     void onComputeInvariantOutput(GrInvariantOutput* inout) const override {
-        inout->setToUnknown(GrInvariantOutput::kWillNot_ReadInput);
+        inout->setToUnknown();
     }
 
-    GrPerlinNoiseEffect(SkPerlinNoiseShader::Type type,
-                        int numOctaves, bool stitchTiles,
+    GrPerlinNoiseEffect(SkPerlinNoiseShader::Type type, int numOctaves, bool stitchTiles,
                         SkPerlinNoiseShader::PaintingData* paintingData,
                         GrTexture* permutationsTexture, GrTexture* noiseTexture,
                         const SkMatrix& matrix)
-      : fType(type)
-      , fNumOctaves(numOctaves)
-      , fStitchTiles(stitchTiles)
-      , fPermutationsSampler(permutationsTexture)
-      , fNoiseSampler(noiseTexture)
-      , fPaintingData(paintingData) {
+            : INHERITED(kNone_OptimizationFlags)
+            , fType(type)
+            , fCoordTransform(matrix)
+            , fNumOctaves(numOctaves)
+            , fStitchTiles(stitchTiles)
+            , fPermutationsSampler(permutationsTexture)
+            , fNoiseSampler(noiseTexture)
+            , fPaintingData(paintingData) {
         this->initClassID<GrPerlinNoiseEffect>();
         this->addTextureSampler(&fPermutationsSampler);
         this->addTextureSampler(&fNoiseSampler);
-        fCoordTransform.reset(matrix);
         this->addCoordTransform(&fCoordTransform);
     }
 
@@ -926,10 +924,10 @@ sk_sp<GrFragmentProcessor> SkPerlinNoiseShader::asFragmentProcessor(const AsFPAr
             new PaintingData(fTileSize, fSeed, fBaseFrequencyX, fBaseFrequencyY, matrix);
     sk_sp<GrTexture> permutationsTexture(
         GrRefCachedBitmapTexture(args.fContext, paintingData->getPermutationsBitmap(),
-                                 GrSamplerParams::ClampNoFilter()));
+                                 GrSamplerParams::ClampNoFilter(), nullptr));
     sk_sp<GrTexture> noiseTexture(
         GrRefCachedBitmapTexture(args.fContext, paintingData->getNoiseBitmap(),
-                                 GrSamplerParams::ClampNoFilter()));
+                                 GrSamplerParams::ClampNoFilter(), nullptr));
 
     SkMatrix m = *args.fViewMatrix;
     m.setTranslateX(-localMatrix.getTranslateX() + SK_Scalar1);

@@ -904,7 +904,6 @@ void GrGLRectBlurEffect::emitCode(EmitArgs& args) {
                                                      &profileSizeName);
 
     GrGLSLFPFragmentBuilder* fragBuilder = args.fFragBuilder;
-    const char *fragmentPos = fragBuilder->fragmentPosition();
 
     if (args.fInputColor) {
         fragBuilder->codeAppendf("vec4 src=%s;", args.fInputColor);
@@ -912,8 +911,8 @@ void GrGLRectBlurEffect::emitCode(EmitArgs& args) {
         fragBuilder->codeAppendf("vec4 src=vec4(1);");
     }
 
-    fragBuilder->codeAppendf("%s vec2 translatedPos = %s.xy - %s.xy;", precisionString.c_str(),
-                             fragmentPos, rectName);
+    fragBuilder->codeAppendf("%s vec2 translatedPos = sk_FragCoord.xy - %s.xy;",
+                             precisionString.c_str(), rectName);
     fragBuilder->codeAppendf("%s float width = %s.z - %s.x;", precisionString.c_str(), rectName,
                              rectName);
     fragBuilder->codeAppendf("%s float height = %s.w - %s.y;", precisionString.c_str(), rectName,
@@ -975,15 +974,15 @@ GrTexture* GrRectBlurEffect::CreateBlurProfileTexture(GrTextureProvider* texture
     return blurProfile;
 }
 
-GrRectBlurEffect::GrRectBlurEffect(const SkRect& rect, float sigma, GrTexture *blurProfile,
+GrRectBlurEffect::GrRectBlurEffect(const SkRect& rect, float sigma, GrTexture* blurProfile,
                                    GrSLPrecision precision)
-    : fRect(rect)
-    , fSigma(sigma)
-    , fBlurProfileSampler(blurProfile)
-    , fPrecision(precision) {
+        : INHERITED(kModulatesInput_OptimizationFlag)
+        , fRect(rect)
+        , fSigma(sigma)
+        , fBlurProfileSampler(blurProfile)
+        , fPrecision(precision) {
     this->initClassID<GrRectBlurEffect>();
     this->addTextureSampler(&fBlurProfileSampler);
-    this->setWillReadFragmentPosition();
 }
 
 void GrRectBlurEffect::onGetGLSLProcessorKey(const GrShaderCaps& caps,
@@ -1136,12 +1135,12 @@ static sk_sp<GrTexture> find_or_create_rrect_blur_mask(GrContext* context,
         rtc->drawRRect(GrNoClip(), std::move(paint), GrAA::kYes, SkMatrix::I(), rrectToDraw,
                        GrStyle::SimpleFill());
 
-        sk_sp<GrTexture> srcTexture(rtc->asTexture());
-        if (!srcTexture) {
+        sk_sp<GrTextureProxy> srcProxy(rtc->asTextureProxyRef());
+        if (!srcProxy) {
             return nullptr;
         }
         sk_sp<GrRenderTargetContext> rtc2(SkGpuBlurUtils::GaussianBlur(context,
-                                                                       srcTexture.get(),
+                                                                       std::move(srcProxy),
                                                                        nullptr,
                                                                        SkIRect::MakeWH(
                                                                                     size.fWidth,
@@ -1208,13 +1207,13 @@ void GrRRectBlurEffect::onComputeInvariantOutput(GrInvariantOutput* inout) const
     inout->mulByUnknownSingleComponent();
 }
 
-GrRRectBlurEffect::GrRRectBlurEffect(float sigma, const SkRRect& rrect, GrTexture *ninePatchTexture)
-    : fRRect(rrect),
-      fSigma(sigma),
-      fNinePatchSampler(ninePatchTexture) {
+GrRRectBlurEffect::GrRRectBlurEffect(float sigma, const SkRRect& rrect, GrTexture* ninePatchTexture)
+        : INHERITED(kModulatesInput_OptimizationFlag)
+        , fRRect(rrect)
+        , fSigma(sigma)
+        , fNinePatchSampler(ninePatchTexture) {
     this->initClassID<GrRRectBlurEffect>();
     this->addTextureSampler(&fNinePatchSampler);
-    this->setWillReadFragmentPosition();
 }
 
 bool GrRRectBlurEffect::onIsEqual(const GrFragmentProcessor& other) const {
@@ -1280,12 +1279,11 @@ void GrGLRRectBlurEffect::emitCode(EmitArgs& args) {
                                                     &blurRadiusName);
 
     GrGLSLFPFragmentBuilder* fragBuilder = args.fFragBuilder;
-    const char* fragmentPos = fragBuilder->fragmentPosition();
 
     // warp the fragment position to the appropriate part of the 9patch blur texture
 
     fragBuilder->codeAppendf("vec2 rectCenter = (%s.xy + %s.zw)/2.0;", rectName, rectName);
-    fragBuilder->codeAppendf("vec2 translatedFragPos = %s.xy - %s.xy;", fragmentPos, rectName);
+    fragBuilder->codeAppendf("vec2 translatedFragPos = sk_FragCoord.xy - %s.xy;", rectName);
     fragBuilder->codeAppendf("float threshold = %s + 2.0*%s;", cornerRadiusName, blurRadiusName);
     fragBuilder->codeAppendf("vec2 middle = %s.zw - %s.xy - 2.0*threshold;", rectName, rectName);
 
@@ -1500,16 +1498,11 @@ sk_sp<GrTextureProxy> SkBlurMaskFilterImpl::filterMaskGPU(GrContext* context,
     SkScalar xformedSigma = this->computeXformedSigma(ctm);
     SkASSERT(xformedSigma > 0);
 
-    // TODO: defer this further (i.e., push the proxy into GaussianBlur)
-    GrTexture* src = srcProxy->instantiate(context->textureProvider());
-    if (!src) {
-        return nullptr;
-    }
-
     // If we're doing a normal blur, we can clobber the pathTexture in the
     // gaussianBlur.  Otherwise, we need to save it for later compositing.
     bool isNormalBlur = (kNormal_SkBlurStyle == fBlurStyle);
-    sk_sp<GrRenderTargetContext> renderTargetContext(SkGpuBlurUtils::GaussianBlur(context, src,
+    sk_sp<GrRenderTargetContext> renderTargetContext(SkGpuBlurUtils::GaussianBlur(context,
+                                                                                  srcProxy,
                                                                                   nullptr, clipRect,
                                                                                   nullptr,
                                                                                   xformedSigma,
@@ -1520,10 +1513,9 @@ sk_sp<GrTextureProxy> SkBlurMaskFilterImpl::filterMaskGPU(GrContext* context,
 
     if (!isNormalBlur) {
         GrPaint paint;
-        SkMatrix matrix;
-        matrix.setIDiv(src->width(), src->height());
         // Blend pathTexture over blurTexture.
-        paint.addCoverageFragmentProcessor(GrSimpleTextureEffect::Make(src, nullptr, matrix));
+        paint.addCoverageFragmentProcessor(
+                GrSimpleTextureEffect::Make(context, std::move(srcProxy), nullptr, SkMatrix::I()));
         if (kInner_SkBlurStyle == fBlurStyle) {
             // inner:  dst = dst * src
             paint.setCoverageSetOpXPFactory(SkRegion::kIntersect_Op);
@@ -1543,7 +1535,7 @@ sk_sp<GrTextureProxy> SkBlurMaskFilterImpl::filterMaskGPU(GrContext* context,
                                       SkRect::Make(clipRect));
     }
 
-    return sk_ref_sp(renderTargetContext->asDeferredTexture());
+    return renderTargetContext->asTextureProxyRef();
 }
 
 #endif // SK_SUPPORT_GPU

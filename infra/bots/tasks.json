@@ -12,6 +12,18 @@
         "Build-Mac-Clang-Arm7-Release-iOS"
       ]
     },
+    "Build-Mac-Clang-arm-Debug-GN_iOS": {
+      "priority": 0.8,
+      "tasks": [
+        "Build-Mac-Clang-arm-Debug-GN_iOS"
+      ]
+    },
+    "Build-Mac-Clang-arm-Release-GN_iOS": {
+      "priority": 0.8,
+      "tasks": [
+        "Build-Mac-Clang-arm-Release-GN_iOS"
+      ]
+    },
     "Build-Mac-Clang-arm64-Debug-Android": {
       "priority": 0.8,
       "tasks": [
@@ -22,6 +34,12 @@
       "priority": 0.8,
       "tasks": [
         "Build-Mac-Clang-arm64-Debug-GN_iOS"
+      ]
+    },
+    "Build-Mac-Clang-arm64-Release-GN_iOS": {
+      "priority": 0.8,
+      "tasks": [
+        "Build-Mac-Clang-arm64-Release-GN_iOS"
       ]
     },
     "Build-Mac-Clang-x86_64-Debug": {
@@ -178,6 +196,12 @@
       "priority": 0.8,
       "tasks": [
         "Build-Ubuntu-Clang-x86_64-Release"
+      ]
+    },
+    "Build-Ubuntu-Clang-x86_64-Release-ASAN": {
+      "priority": 0.8,
+      "tasks": [
+        "Build-Ubuntu-Clang-x86_64-Release-ASAN"
       ]
     },
     "Build-Ubuntu-Clang-x86_64-Release-Fast": {
@@ -668,6 +692,12 @@
         "Upload-Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release"
       ]
     },
+    "Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-ASAN": {
+      "priority": 0.8,
+      "tasks": [
+        "Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-ASAN"
+      ]
+    },
     "Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-Fast": {
       "priority": 0.8,
       "tasks": [
@@ -678,6 +708,12 @@
       "priority": 0.8,
       "tasks": [
         "Perf-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Debug-ASAN"
+      ]
+    },
+    "Perf-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-ASAN": {
+      "priority": 0.8,
+      "tasks": [
+        "Perf-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-ASAN"
       ]
     },
     "Perf-Ubuntu-GCC-GCE-CPU-AVX2-x86-Debug": {
@@ -1124,10 +1160,22 @@
         "Upload-Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android"
       ]
     },
+    "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android_Vulkan": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android_Vulkan"
+      ]
+    },
     "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android": {
       "priority": 0.8,
       "tasks": [
         "Upload-Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android"
+      ]
+    },
+    "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android_Vulkan": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android_Vulkan"
       ]
     },
     "Test-Android-Clang-PixelC-CPU-TegraX1-arm64-Debug-Android": {
@@ -1232,6 +1280,12 @@
         "Upload-Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release"
       ]
     },
+    "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-ASAN": {
+      "priority": 0.8,
+      "tasks": [
+        "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-ASAN"
+      ]
+    },
     "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-Fast": {
       "priority": 0.8,
       "tasks": [
@@ -1248,6 +1302,12 @@
       "priority": 0.8,
       "tasks": [
         "Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Debug-ASAN"
+      ]
+    },
+    "Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-ASAN": {
+      "priority": 0.8,
+      "tasks": [
+        "Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-ASAN"
       ]
     },
     "Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-TSAN": {
@@ -1615,6 +1675,56 @@
       "isolate": "compile_skia.isolate",
       "priority": 0.8
     },
+    "Build-Mac-Clang-arm-Debug-GN_iOS": {
+      "dimensions": [
+        "gpu:none",
+        "os:Mac-10.11",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_compile",
+        "repository=<(REPO)",
+        "buildername=Build-Mac-Clang-arm-Debug-GN_iOS",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "isolate": "compile_skia.isolate",
+      "priority": 0.8
+    },
+    "Build-Mac-Clang-arm-Release-GN_iOS": {
+      "dimensions": [
+        "gpu:none",
+        "os:Mac-10.11",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_compile",
+        "repository=<(REPO)",
+        "buildername=Build-Mac-Clang-arm-Release-GN_iOS",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "isolate": "compile_skia.isolate",
+      "priority": 0.8
+    },
     "Build-Mac-Clang-arm64-Debug-Android": {
       "cipd_packages": [
         {
@@ -1659,6 +1769,31 @@
         "swarm_compile",
         "repository=<(REPO)",
         "buildername=Build-Mac-Clang-arm64-Debug-GN_iOS",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "isolate": "compile_skia.isolate",
+      "priority": 0.8
+    },
+    "Build-Mac-Clang-arm64-Release-GN_iOS": {
+      "dimensions": [
+        "gpu:none",
+        "os:Mac-10.11",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_compile",
+        "repository=<(REPO)",
+        "buildername=Build-Mac-Clang-arm64-Release-GN_iOS",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -2468,6 +2603,38 @@
         "swarm_compile",
         "repository=<(REPO)",
         "buildername=Build-Ubuntu-Clang-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "isolate": "compile_skia.isolate",
+      "priority": 0.8
+    },
+    "Build-Ubuntu-Clang-x86_64-Release-ASAN": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/clang_linux",
+          "path": "clang_linux",
+          "version": "version:4"
+        }
+      ],
+      "dimensions": [
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_compile",
+        "repository=<(REPO)",
+        "buildername=Build-Ubuntu-Clang-x86_64-Release-ASAN",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -3577,7 +3744,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -3626,7 +3793,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -3675,7 +3842,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -3724,7 +3891,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -3773,7 +3940,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -3822,7 +3989,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -3871,7 +4038,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -3920,7 +4087,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -3969,7 +4136,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4018,7 +4185,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4067,7 +4234,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4116,7 +4283,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4165,7 +4332,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4214,7 +4381,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4263,7 +4430,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4312,7 +4479,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4361,7 +4528,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4410,7 +4577,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4459,7 +4626,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4508,7 +4675,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4557,7 +4724,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4606,7 +4773,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4655,7 +4822,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4704,7 +4871,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4753,7 +4920,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4802,7 +4969,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4851,7 +5018,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4900,7 +5067,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4949,7 +5116,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -4998,7 +5165,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5047,7 +5214,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5174,7 +5341,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5222,7 +5389,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5270,7 +5437,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5319,7 +5486,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5368,7 +5535,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5416,7 +5583,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5464,7 +5631,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5512,7 +5679,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5561,7 +5728,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5615,7 +5782,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5669,7 +5836,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5713,12 +5880,66 @@
       "isolate": "perf_skia.isolate",
       "priority": 0.8
     },
+    "Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-ASAN": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:19"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:33"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/clang_linux",
+          "path": "clang_linux",
+          "version": "version:4"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Release-ASAN"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-ASAN",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "priority": 0.8
+    },
     "Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-Fast": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5767,7 +5988,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5815,12 +6036,65 @@
       "isolate": "perf_skia.isolate",
       "priority": 0.8
     },
+    "Perf-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-ASAN": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:19"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:33"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/clang_linux",
+          "path": "clang_linux",
+          "version": "version:4"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Release-ASAN"
+      ],
+      "dimensions": [
+        "gpu:10de:104a",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-ASAN",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "priority": 0.8
+    },
     "Perf-Ubuntu-GCC-GCE-CPU-AVX2-x86-Debug": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5869,7 +6143,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5918,7 +6192,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -5967,7 +6241,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6066,7 +6340,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6114,7 +6388,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6162,7 +6436,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6210,7 +6484,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6258,7 +6532,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6306,7 +6580,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6354,7 +6628,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6402,7 +6676,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6450,7 +6724,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6498,7 +6772,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6546,7 +6820,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6594,7 +6868,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6642,7 +6916,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6690,7 +6964,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6738,7 +7012,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6786,7 +7060,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6834,7 +7108,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6882,7 +7156,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6930,7 +7204,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -6978,7 +7252,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7026,7 +7300,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7074,7 +7348,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7122,7 +7396,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7170,7 +7444,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7218,7 +7492,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7266,7 +7540,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7314,7 +7588,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7362,7 +7636,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7410,7 +7684,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7458,7 +7732,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7506,7 +7780,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7554,7 +7828,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7602,7 +7876,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7650,7 +7924,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7698,7 +7972,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7746,7 +8020,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7794,7 +8068,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7843,7 +8117,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7892,7 +8166,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7941,7 +8215,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -7990,7 +8264,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8038,7 +8312,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8086,7 +8360,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8135,7 +8409,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8184,7 +8458,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8233,7 +8507,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8282,7 +8556,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8331,7 +8605,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8380,7 +8654,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8429,7 +8703,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8478,7 +8752,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8527,7 +8801,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8576,7 +8850,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8625,7 +8899,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8674,7 +8948,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8723,7 +8997,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8772,7 +9046,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8821,7 +9095,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8870,7 +9144,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8919,7 +9193,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -8968,7 +9242,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9017,7 +9291,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9066,7 +9340,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9115,7 +9389,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9164,7 +9438,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9213,7 +9487,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9262,7 +9536,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9311,7 +9585,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9355,12 +9629,61 @@
       "isolate": "test_skia.isolate",
       "priority": 0.8
     },
+    "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android_Vulkan": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:19"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:33"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86-Debug-Android_Vulkan"
+      ],
+      "dimensions": [
+        "device_os:N2G10B",
+        "device_type:fugu",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android_Vulkan",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "priority": 0.8
+    },
     "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9404,12 +9727,61 @@
       "isolate": "test_skia.isolate",
       "priority": 0.8
     },
+    "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android_Vulkan": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:19"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:33"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86-Release-Android_Vulkan"
+      ],
+      "dimensions": [
+        "device_os:N2G10B",
+        "device_type:fugu",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android_Vulkan",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "priority": 0.8
+    },
     "Test-Android-Clang-PixelC-CPU-TegraX1-arm64-Debug-Android": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9458,7 +9830,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9507,7 +9879,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9556,7 +9928,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9605,7 +9977,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9654,7 +10026,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9703,7 +10075,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9751,7 +10123,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9799,7 +10171,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9848,7 +10220,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9897,7 +10269,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9945,7 +10317,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -9993,7 +10365,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10041,7 +10413,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10090,7 +10462,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10144,7 +10516,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10198,7 +10570,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10242,12 +10614,66 @@
       "isolate": "test_skia.isolate",
       "priority": 0.8
     },
+    "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-ASAN": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:19"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:33"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/clang_linux",
+          "path": "clang_linux",
+          "version": "version:4"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Release-ASAN"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-ASAN",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "priority": 0.8
+    },
     "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-Fast": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10296,7 +10722,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10350,7 +10776,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10398,12 +10824,65 @@
       "isolate": "test_skia.isolate",
       "priority": 0.8
     },
+    "Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-ASAN": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:19"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:33"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/clang_linux",
+          "path": "clang_linux",
+          "version": "version:4"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Release-ASAN"
+      ],
+      "dimensions": [
+        "gpu:10de:104a",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-ASAN",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "priority": 0.8
+    },
     "Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-TSAN": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10456,7 +10935,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10505,7 +10984,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10629,7 +11108,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10678,7 +11157,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10727,7 +11206,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10776,7 +11255,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10824,7 +11303,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10872,7 +11351,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10920,7 +11399,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -10968,7 +11447,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11016,7 +11495,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11064,7 +11543,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11112,7 +11591,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11160,7 +11639,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11208,7 +11687,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11256,7 +11735,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11304,7 +11783,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11352,7 +11831,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11400,7 +11879,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11448,7 +11927,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11496,7 +11975,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11544,7 +12023,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11592,7 +12071,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11640,7 +12119,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11688,7 +12167,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11736,7 +12215,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11784,7 +12263,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11832,7 +12311,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11880,7 +12359,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11928,7 +12407,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -11976,7 +12455,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12024,7 +12503,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12072,7 +12551,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12120,7 +12599,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12168,7 +12647,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12216,7 +12695,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12264,7 +12743,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12312,7 +12791,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12360,7 +12839,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12408,7 +12887,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12456,7 +12935,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12505,7 +12984,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12554,7 +13033,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12603,7 +13082,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12652,7 +13131,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12701,7 +13180,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12750,7 +13229,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -12798,7 +13277,7 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:18"
+          "version": "version:19"
         },
         {
           "name": "skia/bots/skp",
@@ -14871,6 +15350,35 @@
       "isolate": "upload_dm_results.isolate",
       "priority": 0.8
     },
+    "Upload-Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android_Vulkan": {
+      "dependencies": [
+        "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android_Vulkan"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android_Vulkan",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
     "Upload-Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android": {
       "dependencies": [
         "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android"
@@ -14887,6 +15395,35 @@
         "upload_dm_results",
         "repository=<(REPO)",
         "buildername=Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android_Vulkan": {
+      "dependencies": [
+        "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android_Vulkan"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android_Vulkan",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",

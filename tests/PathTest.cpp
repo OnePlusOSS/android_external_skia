@@ -1923,6 +1923,18 @@ static void test_conservativelyContains(skiatest::Reporter* reporter) {
                                                                                SkIntToScalar(10),
                                                                                SkIntToScalar(10))));
 
+    // Same as above path and first test but with the extra moveTo making a degenerate sub-path
+    // following the non-empty sub-path. Verifies that this does not trigger assertions.
+    path.reset();
+    path.moveTo(0, 0);
+    path.lineTo(SkIntToScalar(100), 0);
+    path.lineTo(0, SkIntToScalar(100));
+    path.moveTo(100, 100);
+
+    REPORTER_ASSERT(reporter, path.conservativelyContainsRect(SkRect::MakeXYWH(SkIntToScalar(50), 0,
+                                                                               SkIntToScalar(10),
+                                                                               SkIntToScalar(10))));
+
     // Test that multiple move commands do not cause asserts and that the function
     // is not confused by the multiple moves.
     path.reset();
@@ -4489,6 +4501,18 @@ DEF_TEST(PathInterp, reporter) {
     test_interp(reporter);
 }
 
+#include "SkSurface.h"
+DEF_TEST(PathBigCubic, reporter) {
+    SkPath path;
+    path.moveTo(SkBits2Float(0x00000000), SkBits2Float(0x00000000));  // 0, 0
+    path.moveTo(SkBits2Float(0x44000000), SkBits2Float(0x373938b8));  // 512, 1.10401e-05f
+    path.cubicTo(SkBits2Float(0x00000001), SkBits2Float(0xdf000052), SkBits2Float(0x00000100), SkBits2Float(0x00000000), SkBits2Float(0x00000100), SkBits2Float(0x00000000));  // 1.4013e-45f, -9.22346e+18f, 3.58732e-43f, 0, 3.58732e-43f, 0
+    path.moveTo(0, 512);
+
+    // this call should not assert
+    SkSurface::MakeRasterN32Premul(255, 255, nullptr)->getCanvas()->drawPath(path, SkPaint());
+}
+
 DEF_TEST(PathContains, reporter) {
     test_contains(reporter);
 }
@@ -4661,4 +4685,18 @@ DEF_TEST(Paths, reporter) {
     test_skbug_3239(reporter);
     test_bounds_crbug_513799(reporter);
     test_fuzz_crbug_638223();
+}
+
+DEF_TEST(conservatively_contains_rect, reporter) {
+    SkPath path;
+
+    path.moveTo(SkBits2Float(0x44000000), SkBits2Float(0x373938b8));  // 512, 1.10401e-05f
+    // 1.4013e-45f, -9.22346e+18f, 3.58732e-43f, 0, 3.58732e-43f, 0
+    path.cubicTo(SkBits2Float(0x00000001), SkBits2Float(0xdf000052),
+                 SkBits2Float(0x00000100), SkBits2Float(0x00000000),
+                 SkBits2Float(0x00000100), SkBits2Float(0x00000000));
+    path.moveTo(0, 0);
+
+    // this guy should not assert
+    path.conservativelyContainsRect({ -211747, 12.1115f, -197893, 25.0321f });
 }

@@ -336,9 +336,8 @@ sk_sp<SkSpecialImage> SkDisplacementMapEffect::onFilterImage(SkSpecialImage* sou
             return nullptr;
         }
 
-        SkMatrix offsetMatrix = GrCoordTransform::MakeDivByTextureWHMatrix(displTexture.get());
-        offsetMatrix.preTranslate(SkIntToScalar(colorOffset.fX - displOffset.fX),
-                                  SkIntToScalar(colorOffset.fY - displOffset.fY));
+        SkMatrix offsetMatrix = SkMatrix::MakeTrans(SkIntToScalar(colorOffset.fX - displOffset.fX),
+                                                    SkIntToScalar(colorOffset.fY - displOffset.fY));
         SkColorSpace* colorSpace = ctx.outputProperties().colorSpace();
         sk_sp<GrColorSpaceXform> colorSpaceXform = GrColorSpaceXform::Make(color->getColorSpace(),
                                                                            colorSpace);
@@ -375,7 +374,7 @@ sk_sp<SkSpecialImage> SkDisplacementMapEffect::onFilterImage(SkSpecialImage* sou
                                             context,
                                             SkIRect::MakeWH(bounds.width(), bounds.height()),
                                             kNeedNewImageUniqueID_SpecialImage,
-                                            sk_ref_sp(renderTargetContext->asDeferredTexture()),
+                                            renderTargetContext->asTextureProxyRef(),
                                             renderTargetContext->refColorSpace());
     }
 #endif
@@ -488,24 +487,26 @@ void GrDisplacementMapEffect::onGetGLSLProcessorKey(const GrShaderCaps& caps,
 }
 
 GrDisplacementMapEffect::GrDisplacementMapEffect(
-                             SkDisplacementMapEffect::ChannelSelectorType xChannelSelector,
-                             SkDisplacementMapEffect::ChannelSelectorType yChannelSelector,
-                             const SkVector& scale,
-                             GrTexture* displacement,
-                             const SkMatrix& offsetMatrix,
-                             GrTexture* color,
-                             sk_sp<GrColorSpaceXform> colorSpaceXform,
-                             const SkISize& colorDimensions)
-    : fDisplacementTransform(offsetMatrix, displacement, GrSamplerParams::kNone_FilterMode)
-    , fDisplacementSampler(displacement)
-    , fColorTransform(color, GrSamplerParams::kNone_FilterMode)
-    , fDomain(color, GrTextureDomain::MakeTexelDomain(SkIRect::MakeSize(colorDimensions)),
-              GrTextureDomain::kDecal_Mode)
-    , fColorSampler(color)
-    , fColorSpaceXform(std::move(colorSpaceXform))
-    , fXChannelSelector(xChannelSelector)
-    , fYChannelSelector(yChannelSelector)
-    , fScale(scale) {
+        SkDisplacementMapEffect::ChannelSelectorType xChannelSelector,
+        SkDisplacementMapEffect::ChannelSelectorType yChannelSelector,
+        const SkVector& scale,
+        GrTexture* displacement,
+        const SkMatrix& offsetMatrix,
+        GrTexture* color,
+        sk_sp<GrColorSpaceXform> colorSpaceXform,
+        const SkISize& colorDimensions)
+        : INHERITED(GrPixelConfigIsOpaque(color->config()) ? kPreservesOpaqueInput_OptimizationFlag
+                                                           : kNone_OptimizationFlags)
+        , fDisplacementTransform(offsetMatrix, displacement, GrSamplerParams::kNone_FilterMode)
+        , fDisplacementSampler(displacement)
+        , fColorTransform(color, GrSamplerParams::kNone_FilterMode)
+        , fDomain(color, GrTextureDomain::MakeTexelDomain(SkIRect::MakeSize(colorDimensions)),
+                  GrTextureDomain::kDecal_Mode)
+        , fColorSampler(color)
+        , fColorSpaceXform(std::move(colorSpaceXform))
+        , fXChannelSelector(xChannelSelector)
+        , fYChannelSelector(yChannelSelector)
+        , fScale(scale) {
     this->initClassID<GrDisplacementMapEffect>();
     this->addCoordTransform(&fDisplacementTransform);
     this->addTextureSampler(&fDisplacementSampler);
@@ -529,7 +530,7 @@ void GrDisplacementMapEffect::onComputeInvariantOutput(GrInvariantOutput* inout)
     // and no displacement offset push any texture coordinates out of bounds OR if the constant
     // alpha is 0. Since this isn't trivial to compute at this point, let's assume the output is
     // not of constant color when a displacement effect is applied.
-    inout->setToUnknown(GrInvariantOutput::kWillNot_ReadInput);
+    inout->setToUnknown();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

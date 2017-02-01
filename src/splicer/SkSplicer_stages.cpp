@@ -12,6 +12,9 @@
     #error This file is not like the rest of Skia.  It must be compiled with clang.
 #endif
 
+// It's tricky to relocate code referencing ordinary constants, so we read them from this struct.
+using K = const SkSplicer_constants;
+
 #if defined(__aarch64__)
     #include <arm_neon.h>
 
@@ -87,15 +90,9 @@ static T unaligned_load(const P* p) {
 
 // We'll be compiling this file to an object file, then extracting parts of it into
 // SkSplicer_generated.h.  It's easier to do if the function names are not C++ mangled.
-// On ARMv7, use aapcs-vfp calling convention to pass as much data in registers as possible.
-#if defined(__ARM_NEON__)
-    #define C extern "C" __attribute__((pcs("aapcs-vfp")))
-#else
-    #define C extern "C"
-#endif
+#define C extern "C"
 
 // Stages all fit a common interface that allows SkSplicer to splice them together.
-using K = const SkSplicer_constants;
 using Stage = void(size_t x, size_t limit, void* ctx, K* k, F,F,F,F, F,F,F,F);
 
 // Stage's arguments act as the working set of registers within the final spliced function.
@@ -119,14 +116,14 @@ C void done(size_t, size_t, void*, K*, F,F,F,F, F,F,F,F);
 // This should feel familiar to anyone who's read SkRasterPipeline_opts.h.
 // It's just a convenience to make a valid, spliceable Stage, nothing magic.
 #define STAGE(name)                                                           \
-    static void name##_k(size_t x, size_t limit, void* ctx, K* k,             \
+    static void name##_k(size_t& x, size_t limit, void* ctx, K* k,            \
                          F& r, F& g, F& b, F& a, F& dr, F& dg, F& db, F& da); \
     C void name(size_t x, size_t limit, void* ctx, K* k,                      \
                 F r, F g, F b, F a, F dr, F dg, F db, F da) {                 \
         name##_k(x,limit,ctx,k, r,g,b,a, dr,dg,db,da);                        \
         done    (x,limit,ctx,k, r,g,b,a, dr,dg,db,da);                        \
     }                                                                         \
-    static void name##_k(size_t x, size_t limit, void* ctx, K* k,             \
+    static void name##_k(size_t& x, size_t limit, void* ctx, K* k,            \
                          F& r, F& g, F& b, F& a, F& dr, F& dg, F& db, F& da)
 
 // We can now define Stages!
@@ -144,11 +141,15 @@ C void done(size_t, size_t, void*, K*, F,F,F,F, F,F,F,F);
 //   - lambdas;
 //   - memcpy() with a compile-time constant size argument.
 
+STAGE(inc_x) {
+    x += sizeof(F) / sizeof(float);
+}
+
 STAGE(clear) {
     r = g = b = a = 0;
 }
 
-STAGE(plus) {
+STAGE(plus_) {
     r = r + dr;
     g = g + dg;
     b = b + db;

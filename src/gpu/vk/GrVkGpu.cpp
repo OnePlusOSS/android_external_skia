@@ -168,12 +168,13 @@ GrVkGpu::~GrVkGpu() {
     // destroying the command buffers. Currently this ony seems to happen on windows, so we add a
     // sleep to make sure the fence signals.
 #ifdef SK_DEBUG
+    if (this->vkCaps().mustSleepOnTearDown()) {
 #if defined(SK_BUILD_FOR_WIN)
-    Sleep(10); // In milliseconds
+        Sleep(10); // In milliseconds
 #else
-    // Uncomment if above bug happens on non windows build.
-    // sleep(1);        // In seconds
+        sleep(1);  // In seconds
 #endif
+    }
 #endif
 
 #ifdef SK_DEBUG
@@ -476,13 +477,8 @@ bool GrVkGpu::uploadTexDataLinear(GrVkTexture* tex,
             dstRow -= layout.rowPitch;
         }
     } else {
-        // If there is no padding on the src (rowBytes) or dst (layout.rowPitch) we can memcpy
-        if (trimRowBytes == rowBytes && trimRowBytes == layout.rowPitch) {
-            memcpy(mapPtr, data, trimRowBytes * height);
-        } else {
-            SkRectMemcpy(mapPtr, static_cast<size_t>(layout.rowPitch), data, rowBytes, trimRowBytes,
-                         height);
-        }
+        SkRectMemcpy(mapPtr, static_cast<size_t>(layout.rowPitch), data, rowBytes, trimRowBytes,
+                     height);
     }
 
     GrVkMemory::FlushMappedAlloc(this, alloc);
@@ -579,8 +575,6 @@ bool GrVkGpu::uploadTexDataOptimal(GrVkTexture* tex,
                 src -= rowBytes;
                 dst += trimRowBytes;
             }
-        } else if (trimRowBytes == rowBytes) {
-            memcpy(dst, src, trimRowBytes * currentHeight);
         } else {
             SkRectMemcpy(dst, trimRowBytes, src, rowBytes, trimRowBytes, currentHeight);
         }
@@ -965,12 +959,7 @@ bool copy_testing_data(GrVkGpu* gpu, void* srcData, const GrVkAlloc& alloc,
 
     // If there is no padding on dst we can do a single memcopy.
     // This assumes the srcData comes in with no padding.
-    if (srcRowBytes == dstRowBytes) {
-        memcpy(mapPtr, srcData, srcRowBytes * h);
-    } else {
-        SkRectMemcpy(mapPtr, static_cast<size_t>(dstRowBytes), srcData, srcRowBytes,
-                     srcRowBytes, h);
-    }
+    SkRectMemcpy(mapPtr, static_cast<size_t>(dstRowBytes), srcData, srcRowBytes, srcRowBytes, h);
     GrVkMemory::FlushMappedAlloc(gpu, alloc);
     GR_VK_CALL(gpu->vkInterface(), UnmapMemory(gpu->device(), alloc.fMemory));
     return true;
@@ -1755,12 +1744,7 @@ bool GrVkGpu::onReadPixels(GrSurface* surface,
             dstRow -= rowBytes;
         }
     } else {
-        if (transBufferRowBytes == rowBytes) {
-            memcpy(buffer, mappedMemory, rowBytes*height);
-        } else {
-            SkRectMemcpy(buffer, rowBytes, mappedMemory, transBufferRowBytes, tightRowBytes,
-                         height);
-        }
+        SkRectMemcpy(buffer, rowBytes, mappedMemory, transBufferRowBytes, tightRowBytes, height);
     }
 
     transferBuffer->unmap();
@@ -1837,10 +1821,7 @@ void GrVkGpu::submitSecondaryCommandBuffer(GrVkSecondaryCommandBuffer* buffer,
         pBounds = &adjustedBounds;
     }
 
-    // Currently it is fine for us to always pass in 1 for the clear count even if no attachment
-    // uses it. In the current state, we also only use the LOAD_OP_CLEAR for the color attachment
-    // which is always at the first attachment.
-    fCurrentCmdBuffer->beginRenderPass(this, renderPass, 1, colorClear, *target, *pBounds, true);
+    fCurrentCmdBuffer->beginRenderPass(this, renderPass, colorClear, *target, *pBounds, true);
     fCurrentCmdBuffer->executeCommands(this, buffer);
     fCurrentCmdBuffer->endRenderPass(this);
 

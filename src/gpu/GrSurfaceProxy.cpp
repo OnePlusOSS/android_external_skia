@@ -113,6 +113,10 @@ GrTextureOpList* GrSurfaceProxy::getLastTextureOpList() {
 }
 
 sk_sp<GrSurfaceProxy> GrSurfaceProxy::MakeWrapped(sk_sp<GrSurface> surf) {
+    if (!surf) {
+        return nullptr;
+    }
+
     if (surf->asTexture()) {
         if (surf->asRenderTarget()) {
             return sk_sp<GrSurfaceProxy>(new GrTextureRenderTargetProxy(std::move(surf)));
@@ -131,6 +135,10 @@ sk_sp<GrSurfaceProxy> GrSurfaceProxy::MakeDeferred(const GrCaps& caps,
                                                    const GrSurfaceDesc& desc,
                                                    SkBackingFit fit,
                                                    SkBudgeted budgeted) {
+    if (desc.fWidth > caps.maxTextureSize() || desc.fHeight > caps.maxTextureSize()) {
+        return nullptr;
+    }
+
     if (kRenderTarget_GrSurfaceFlag & desc.fFlags) {
         // We know anything we instantiate later from this deferred path will be
         // both texturable and renderable
@@ -153,6 +161,13 @@ sk_sp<GrSurfaceProxy> GrSurfaceProxy::MakeDeferred(const GrCaps& caps,
     }
 
     return GrSurfaceProxy::MakeDeferred(caps, desc, SkBackingFit::kExact, budgeted);
+}
+
+sk_sp<GrSurfaceProxy> GrSurfaceProxy::MakeWrappedBackend(GrContext* context,
+                                                         GrBackendTextureDesc& desc,
+                                                         GrWrapOwnership ownership) {
+    sk_sp<GrTexture> tex(context->textureProvider()->wrapBackendTexture(desc, ownership));
+    return GrSurfaceProxy::MakeWrapped(std::move(tex));
 }
 
 #ifdef SK_DEBUG
@@ -189,28 +204,23 @@ sk_sp<GrSurfaceProxy> GrSurfaceProxy::Copy(GrContext* context,
         return nullptr;
     }
 
-    return sk_ref_sp(dstContext->asDeferredSurface());
+    return dstContext->asSurfaceProxyRef();
 }
 
-sk_sp<GrSurfaceProxy> GrSurfaceProxy::TestCopy(GrContext* context, const GrSurfaceDesc& dstDesc,
-                                               GrTexture* srcTexture, SkBudgeted budgeted) {
+sk_sp<GrSurfaceContext> GrSurfaceProxy::TestCopy(GrContext* context, const GrSurfaceDesc& dstDesc,
+                                                 GrSurfaceProxy* srcProxy) {
 
     sk_sp<GrSurfaceContext> dstContext(context->contextPriv().makeDeferredSurfaceContext(
                                                                             dstDesc,
                                                                             SkBackingFit::kExact,
-                                                                            budgeted));
+                                                                            SkBudgeted::kYes));
     if (!dstContext) {
         return nullptr;
     }
 
-    sk_sp<GrSurfaceProxy> srcProxy(GrSurfaceProxy::MakeWrapped(sk_ref_sp(srcTexture)));
-    if (!srcProxy) {
+    if (!dstContext->copy(srcProxy)) {
         return nullptr;
     }
 
-    if (!dstContext->copy(srcProxy.get())) {
-        return nullptr;
-    }
-
-    return sk_ref_sp(dstContext->asDeferredSurface());
+    return dstContext;
 }

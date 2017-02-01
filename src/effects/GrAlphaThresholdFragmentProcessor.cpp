@@ -32,10 +32,12 @@ sk_sp<GrFragmentProcessor> GrAlphaThresholdFragmentProcessor::Make(
                                                                 bounds));
 }
 
-static SkMatrix make_div_and_translate_matrix(GrTexture* texture, int x, int y) {
-    SkMatrix matrix = GrCoordTransform::MakeDivByTextureWHMatrix(texture);
-    matrix.preTranslate(SkIntToScalar(x), SkIntToScalar(y));
-    return matrix;
+inline GrFragmentProcessor::OptimizationFlags GrAlphaThresholdFragmentProcessor::OptFlags(float outerThreshold) {
+    if (outerThreshold >= 1.f) {
+        return kPreservesOpaqueInput_OptimizationFlag | kModulatesInput_OptimizationFlag;
+    } else {
+        return kModulatesInput_OptimizationFlag;
+    }
 }
 
 GrAlphaThresholdFragmentProcessor::GrAlphaThresholdFragmentProcessor(
@@ -45,16 +47,17 @@ GrAlphaThresholdFragmentProcessor::GrAlphaThresholdFragmentProcessor(
                                                            float innerThreshold,
                                                            float outerThreshold,
                                                            const SkIRect& bounds)
-    : fInnerThreshold(innerThreshold)
-    , fOuterThreshold(outerThreshold)
-    , fImageCoordTransform(GrCoordTransform::MakeDivByTextureWHMatrix(texture), texture,
-                           GrSamplerParams::kNone_FilterMode)
-    , fImageTextureSampler(texture)
-    , fColorSpaceXform(std::move(colorSpaceXform))
-    , fMaskCoordTransform(make_div_and_translate_matrix(maskTexture, -bounds.x(), -bounds.y()),
-                          maskTexture,
-                          GrSamplerParams::kNone_FilterMode)
-    , fMaskTextureSampler(maskTexture) {
+        : INHERITED(OptFlags(outerThreshold))
+        , fInnerThreshold(innerThreshold)
+        , fOuterThreshold(outerThreshold)
+        , fImageCoordTransform(SkMatrix::I(), texture, GrSamplerParams::kNone_FilterMode)
+        , fImageTextureSampler(texture)
+        , fColorSpaceXform(std::move(colorSpaceXform))
+        , fMaskCoordTransform(
+                  SkMatrix::MakeTrans(SkIntToScalar(-bounds.x()), SkIntToScalar(-bounds.y())),
+                  maskTexture,
+                  GrSamplerParams::kNone_FilterMode)
+        , fMaskTextureSampler(maskTexture) {
     this->initClassID<GrAlphaThresholdFragmentProcessor>();
     this->addCoordTransform(&fImageCoordTransform);
     this->addTextureSampler(&fImageTextureSampler);

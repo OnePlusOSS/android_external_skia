@@ -64,13 +64,14 @@
     M(set_rgb) M(swap_rb)                                        \
     M(from_srgb) M(to_srgb)                                      \
     M(from_2dot2) M(to_2dot2)                                    \
-    M(constant_color) M(store_f32)                               \
+    M(constant_color) M(seed_shader) M(store_f32)                \
     M(load_a8)   M(store_a8)                                     \
     M(load_565)  M(store_565)                                    \
     M(load_f16)  M(store_f16)                                    \
     M(load_8888) M(store_8888)                                   \
-    M(load_u16_be)                                               \
-    M(load_tables) M(load_tables_u16_be) M(store_tables)         \
+    M(load_u16_be) M(load_rgb_u16_be) M(store_u16_be)            \
+    M(load_tables_u16_be) M(load_tables_rgb_u16_be)              \
+    M(load_tables) M(store_tables)                               \
     M(scale_u8) M(scale_1_float)                                 \
     M(lerp_u8) M(lerp_565) M(lerp_1_float)                       \
     M(dstatop) M(dstin) M(dstout) M(dstover)                     \
@@ -92,7 +93,9 @@
     M(bilinear_nx) M(bilinear_px) M(bilinear_ny) M(bilinear_py)  \
     M(bicubic_n3x) M(bicubic_n1x) M(bicubic_p1x) M(bicubic_p3x)  \
     M(bicubic_n3y) M(bicubic_n1y) M(bicubic_p1y) M(bicubic_p3y)  \
-    M(save_xy) M(accumulate)
+    M(save_xy) M(accumulate)                                     \
+    M(linear_gradient_2stops)                                    \
+    M(byte_tables)
 
 class SkRasterPipeline {
 public:
@@ -109,11 +112,11 @@ public:
     // Append all stages to this pipeline.
     void extend(const SkRasterPipeline&);
 
-    // Runs the pipeline walking x through [x,x+n), holding y constant.
-    void run(size_t x, size_t y, size_t n) const;
+    // Runs the pipeline walking x through [x,x+n).
+    void run(size_t x, size_t n) const;
 
     // If you're going to run() the pipeline more than once, it's best to compile it.
-    std::function<void(size_t x, size_t y, size_t n)> compile() const;
+    std::function<void(size_t x, size_t n)> compile() const;
 
     void dump() const;
 
@@ -127,7 +130,7 @@ public:
     void append_from_srgb(SkAlphaType);
 
 private:
-    std::function<void(size_t, size_t, size_t)> jit() const;
+    std::function<void(size_t, size_t)> jit() const;
 
     std::vector<Stage> fStages;
 };

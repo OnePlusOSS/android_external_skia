@@ -345,9 +345,10 @@ public:
 
         typedef GrGLSLFragmentProcessor INHERITED;
     };
-
 private:
-    ColorMatrixEffect(const SkScalar matrix[20]) {
+    // We could implement the constant input->constant output optimization but haven't. Other
+    // optimizations would be matrix-dependent.
+    ColorMatrixEffect(const SkScalar matrix[20]) : INHERITED(kNone_OptimizationFlags) {
         memcpy(fMatrix, matrix, sizeof(SkScalar) * 20);
         this->initClassID<ColorMatrixEffect>();
     }
@@ -393,7 +394,7 @@ private:
             // then we can't know the final result.
             if (0 != fMatrix[kAlphaRowStartIdx + i]) {
                 if (!(inout->validFlags() & kRGBAFlags[i])) {
-                    inout->setToUnknown(GrInvariantOutput::kWill_ReadInput);
+                    inout->setToUnknown();
                     return;
                 } else {
                     uint32_t component = (inout->color() >> kShifts[i]) & 0xFF;
@@ -407,8 +408,7 @@ private:
         // underflow this may deviate from the actual result. Maybe the effect should pin its
         // result if the matrix could over/underflow for any component?
         inout->setToOther(kA_GrColorComponentFlag,
-                          static_cast<uint8_t>(SkScalarPin(outputA, 0, 255)) << GrColor_SHIFT_A,
-                          GrInvariantOutput::kWill_ReadInput);
+                          static_cast<uint8_t>(SkScalarPin(outputA, 0, 255)) << GrColor_SHIFT_A);
     }
 
     SkScalar fMatrix[20];

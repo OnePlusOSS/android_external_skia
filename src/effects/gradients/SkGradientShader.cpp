@@ -1572,7 +1572,13 @@ void GrGradientEffect::GLSLProcessor::emitColor(GrGLSLFPFragmentBuilder* fragBui
 
 /////////////////////////////////////////////////////////////////////
 
-GrGradientEffect::GrGradientEffect(const CreateArgs& args) {
+inline GrFragmentProcessor::OptimizationFlags GrGradientEffect::OptFlags(bool isOpaque) {
+    return isOpaque ? kPreservesOpaqueInput_OptimizationFlag | kModulatesInput_OptimizationFlag
+                    : kModulatesInput_OptimizationFlag;
+}
+
+GrGradientEffect::GrGradientEffect(const CreateArgs& args, bool isOpaque)
+        : INHERITED(OptFlags(isOpaque)) {
     const SkGradientShaderBase& shader(*args.fShader);
 
     fIsOpaque = shader.isOpaque();
@@ -1659,14 +1665,18 @@ GrGradientEffect::GrGradientEffect(const CreateArgs& args) {
             fRow = fAtlas->lockRow(bitmap);
             if (-1 != fRow) {
                 fYCoord = fAtlas->getYOffset(fRow)+SK_ScalarHalf*fAtlas->getNormalizedTexelHeight();
-                fCoordTransform.reset(*args.fMatrix, fAtlas->getTexture(), params.filterMode());
+                // This is 1/2 places where auto-normalization is disabled
+                fCoordTransform.reset(*args.fMatrix, fAtlas->getTexture(),
+                                      params.filterMode(), false);
                 fTextureSampler.reset(fAtlas->getTexture(), params);
             } else {
-                sk_sp<GrTexture> texture(GrRefCachedBitmapTexture(args.fContext, bitmap, params));
+                sk_sp<GrTexture> texture(GrRefCachedBitmapTexture(args.fContext, bitmap,
+                                                                  params, nullptr));
                 if (!texture) {
                     return;
                 }
-                fCoordTransform.reset(*args.fMatrix, texture.get(), params.filterMode());
+                // This is 2/2 places where auto-normalization is disabled
+                fCoordTransform.reset(*args.fMatrix, texture.get(), params.filterMode(), false);
                 fTextureSampler.reset(texture.get(), params);
                 fYCoord = SK_ScalarHalf;
             }

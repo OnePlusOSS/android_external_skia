@@ -26,7 +26,7 @@
 class NormalMapFP : public GrFragmentProcessor {
 public:
     NormalMapFP(sk_sp<GrFragmentProcessor> mapFP, const SkMatrix& invCTM)
-        : fInvCTM(invCTM) {
+            : INHERITED(kNone_OptimizationFlags), fInvCTM(invCTM) {
         this->registerChildProcessor(mapFP);
 
         this->initClassID<NormalMapFP>();
@@ -103,7 +103,7 @@ public:
     const char* name() const override { return "NormalMapFP"; }
 
     void onComputeInvariantOutput(GrInvariantOutput* inout) const override {
-        inout->setToUnknown(GrInvariantOutput::ReadInput::kWillNot_ReadInput);
+        inout->setToUnknown();
     }
 
     const SkMatrix& invCTM() const { return fInvCTM; }
@@ -117,6 +117,8 @@ private:
     }
 
     SkMatrix fInvCTM;
+
+    typedef GrFragmentProcessor INHERITED;
 };
 
 sk_sp<GrFragmentProcessor> SkNormalMapSourceImpl::asFragmentProcessor(
@@ -174,15 +176,12 @@ size_t SkNormalMapSourceImpl::providerSize(const SkShader::ContextRec& rec) cons
 
 bool SkNormalMapSourceImpl::computeNormTotalInverse(const SkShader::ContextRec& rec,
                                                     SkMatrix* normTotalInverse) const {
-    SkMatrix total;
-    total.setConcat(*rec.fMatrix, fMapShader->getLocalMatrix());
-
-    const SkMatrix* m = &total;
+    SkMatrix total = SkMatrix::Concat(*rec.fMatrix, fMapShader->getLocalMatrix());
     if (rec.fLocalMatrix) {
-        total.setConcat(*m, *rec.fLocalMatrix);
-        m = &total;
+        total.preConcat(*rec.fLocalMatrix);
     }
-    return m->invert(normTotalInverse);
+
+    return total.invert(normTotalInverse);
 }
 
 #define BUFFER_MAX 16

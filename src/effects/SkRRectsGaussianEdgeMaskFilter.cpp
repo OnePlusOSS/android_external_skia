@@ -207,11 +207,8 @@ public:
     };
 
     RRectsGaussianEdgeFP(const SkRRect& first, const SkRRect& second, SkScalar radius)
-        : fFirst(first)
-        , fSecond(second)
-        , fRadius(radius) {
+            : INHERITED(kNone_OptimizationFlags), fFirst(first), fSecond(second), fRadius(radius) {
         this->initClassID<RRectsGaussianEdgeFP>();
-        this->setWillReadFragmentPosition();
 
         fFirstMode = ComputeMode(fFirst);
         fSecondMode = ComputeMode(fSecond);
@@ -235,8 +232,8 @@ public:
 
             // Positive distance is towards the center of the circle.
             // Map all the cases to the lower right quadrant.
-            fragBuilder->codeAppendf("vec2 delta = abs(%s.xy - %s.%s);",
-                                     fragBuilder->fragmentPosition(), posName, indices);
+            fragBuilder->codeAppendf("vec2 delta = abs(sk_FragCoord.xy - %s.%s);",
+                                     posName, indices);
 
             switch (mode) {
                 case kCircle_Mode:
@@ -457,7 +454,7 @@ public:
     const char* name() const override { return "RRectsGaussianEdgeFP"; }
 
     void onComputeInvariantOutput(GrInvariantOutput* inout) const override {
-        inout->setToUnknown(GrInvariantOutput::kWill_ReadInput);
+        inout->setToUnknown();
     }
 
     const SkRRect& first() const { return fFirst; }

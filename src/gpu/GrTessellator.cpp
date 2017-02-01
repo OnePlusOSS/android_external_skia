@@ -365,7 +365,7 @@ struct Edge {
     void recompute() {
         fLine = Line(fTop, fBottom);
     }
-    bool intersect(const Edge& other, SkPoint* p) {
+    bool intersect(const Edge& other, SkPoint* p, uint8_t* alpha = nullptr) {
         LOG("intersecting %g -> %g with %g -> %g\n",
                fTop->fID, fBottom->fID,
                other.fTop->fID, other.fBottom->fID);
@@ -390,6 +390,15 @@ struct Edge {
         SkASSERT(s >= 0.0 && s <= 1.0);
         p->fX = SkDoubleToScalar(fTop->fPoint.fX - s * fLine.fB);
         p->fY = SkDoubleToScalar(fTop->fPoint.fY + s * fLine.fA);
+        if (alpha) {
+            if (fType == Type::kInner || other.fType == Type::kInner) {
+                *alpha = 255;
+            } else if (fType == Type::kOuter && other.fType == Type::kOuter) {
+                *alpha = 0;
+            } else {
+                *alpha = (1.0 - s) * fTop->fAlpha + s * fBottom->fAlpha;
+            }
+        }
         return true;
     }
 };
@@ -1066,7 +1075,7 @@ void merge_vertices(Vertex* src, Vertex* dst, VertexList* mesh, Comparator& c,
 }
 
 uint8_t max_edge_alpha(Edge* a, Edge* b) {
-    if (a->fType == Edge::Type::kInner && b->fType == Edge::Type::kInner) {
+    if (a->fType == Edge::Type::kInner || b->fType == Edge::Type::kInner) {
         return 255;
     } else if (a->fType == Edge::Type::kOuter && b->fType == Edge::Type::kOuter) {
         return 0;
@@ -1078,11 +1087,12 @@ uint8_t max_edge_alpha(Edge* a, Edge* b) {
 
 Vertex* check_for_intersection(Edge* edge, Edge* other, EdgeList* activeEdges, Comparator& c,
                                SkChunkAlloc& alloc) {
-    SkPoint p;
     if (!edge || !other) {
         return nullptr;
     }
-    if (edge->intersect(*other, &p)) {
+    SkPoint p;
+    uint8_t alpha;
+    if (edge->intersect(*other, &p, &alpha)) {
         Vertex* v;
         LOG("found intersection, pt is %g, %g\n", p.fX, p.fY);
         if (p == edge->fTop->fPoint || c.sweep_lt(p, edge->fTop->fPoint)) {
@@ -1111,7 +1121,6 @@ Vertex* check_for_intersection(Edge* edge, Edge* other, EdgeList* activeEdges, C
             } else if (coincident(nextV->fPoint, p)) {
                 v = nextV;
             } else {
-                uint8_t alpha = max_edge_alpha(edge, other);
                 v = ALLOC_NEW(Vertex, (p, alpha), alloc);
                 LOG("inserting between %g (%g, %g) and %g (%g, %g)\n",
                     prevV->fID, prevV->fPoint.fX, prevV->fPoint.fY,
@@ -1502,7 +1511,6 @@ void simplify_boundary(EdgeList* boundary, Comparator& c, SkChunkAlloc& alloc) {
 // new antialiased mesh from those vertices.
 
 void boundary_to_aa_mesh(EdgeList* boundary, VertexList* mesh, Comparator& c, SkChunkAlloc& alloc) {
-    EdgeList outerContour;
     Edge* prevEdge = boundary->fTail;
     float radius = 0.5f;
     double offset = radius * sqrt(prevEdge->fLine.magSq()) * prevEdge->fWinding;
@@ -1512,7 +1520,8 @@ void boundary_to_aa_mesh(EdgeList* boundary, VertexList* mesh, Comparator& c, Sk
     prevOuter.fC += offset;
     VertexList innerVertices;
     VertexList outerVertices;
-    SkScalar innerCount = SK_Scalar1, outerCount = SK_Scalar1;
+    SkVector prevNormal;
+    get_edge_normal(prevEdge, &prevNormal);
     for (Edge* e = boundary->fHead; e != nullptr; e = e->fRight) {
         double offset = radius * sqrt(e->fLine.magSq()) * e->fWinding;
         Line inner(e->fTop, e->fBottom);
@@ -1520,50 +1529,35 @@ void boundary_to_aa_mesh(EdgeList* boundary, VertexList* mesh, Comparator& c, Sk
         Line outer(e->fTop, e->fBottom);
         outer.fC += offset;
         SkPoint innerPoint, outerPoint;
+        SkVector normal;
+        get_edge_normal(e, &normal);
         if (prevInner.intersect(inner, &innerPoint) &&
             prevOuter.intersect(outer, &outerPoint)) {
-            Vertex* innerVertex = ALLOC_NEW(Vertex, (innerPoint, 255), alloc);
-            Vertex* outerVertex = ALLOC_NEW(Vertex, (outerPoint, 0), alloc);
-            if (innerVertices.fTail && outerVertices.fTail) {
-                Edge innerEdge(innerVertices.fTail, innerVertex, 1, Edge::Type::kInner);
-                Edge outerEdge(outerVertices.fTail, outerVertex, 1, Edge::Type::kInner);
-                SkVector innerNormal;
-                get_edge_normal(&innerEdge, &innerNormal);
-                SkVector outerNormal;
-                get_edge_normal(&outerEdge, &outerNormal);
-                SkVector normal;
-                get_edge_normal(prevEdge, &normal);
-                if (normal.dot(innerNormal) < 0) {
-                    innerPoint += innerVertices.fTail->fPoint * innerCount;
-                    innerCount++;
-                    innerPoint *= SkScalarInvert(innerCount);
-                    innerVertices.fTail->fPoint = innerVertex->fPoint = innerPoint;
-                } else {
-                    innerCount = SK_Scalar1;
-                }
-                if (normal.dot(outerNormal) < 0) {
-                    outerPoint += outerVertices.fTail->fPoint * outerCount;
-                    outerCount++;
-                    outerPoint *= SkScalarInvert(outerCount);
-                    outerVertices.fTail->fPoint = outerVertex->fPoint = outerPoint;
-                } else {
-                    outerCount = SK_Scalar1;
-                }
+            // cos(theta) < -0.999 implies a miter angle of ~2.5 degrees,
+            // below which we'll bevel the outer edges.
+            if (prevNormal.dot(normal) < -0.999) {
+                SkPoint p = e->fWinding > 0 ? e->fTop->fPoint : e->fBottom->fPoint;
+                SkPoint outerPoint1 = p - prevNormal * radius;
+                SkPoint outerPoint2 = p - normal * radius;
+                innerVertices.append(ALLOC_NEW(Vertex, (innerPoint, 255), alloc));
+                innerVertices.append(ALLOC_NEW(Vertex, (innerPoint, 255), alloc));
+                outerVertices.append(ALLOC_NEW(Vertex, (outerPoint1, 0), alloc));
+                outerVertices.append(ALLOC_NEW(Vertex, (outerPoint2, 0), alloc));
+            } else {
+                innerVertices.append(ALLOC_NEW(Vertex, (innerPoint, 255), alloc));
+                outerVertices.append(ALLOC_NEW(Vertex, (outerPoint, 0), alloc));
             }
-            innerVertices.append(innerVertex);
-            outerVertices.append(outerVertex);
-            prevEdge = e;
         }
         prevInner = inner;
         prevOuter = outer;
+        prevEdge = e;
+        prevNormal = normal;
     }
     innerVertices.close();
     outerVertices.close();
 
     Vertex* innerVertex = innerVertices.fHead;
     Vertex* outerVertex = outerVertices.fHead;
-    // Alternate clockwise and counterclockwise polys, so the tesselator
-    // doesn't cancel out the interior edges.
     if (!innerVertex || !outerVertex) {
         return;
     }

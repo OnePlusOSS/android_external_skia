@@ -656,10 +656,11 @@ GR_DEFINE_GEOMETRY_PROCESSOR_TEST(QuadEdgeEffect);
 
 sk_sp<GrGeometryProcessor> QuadEdgeEffect::TestCreate(GrProcessorTestData* d) {
     // Doesn't work without derivative instructions.
-    return d->fCaps->shaderCaps()->shaderDerivativeSupport() ?
-           QuadEdgeEffect::Make(GrRandomColor(d->fRandom),
-                                GrTest::TestMatrix(d->fRandom),
-                                d->fRandom->nextBool()) : nullptr;
+    return d->fContext->caps()->shaderCaps()->shaderDerivativeSupport()
+                   ? QuadEdgeEffect::Make(GrRandomColor(d->fRandom),
+                                          GrTest::TestMatrix(d->fRandom),
+                                          d->fRandom->nextBool())
+                   : nullptr;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -716,7 +717,8 @@ static sk_sp<GrGeometryProcessor> create_fill_gp(bool tweakAlphaForCoverage,
     }
     LocalCoords::Type localCoordsType =
             usesLocalCoords ? LocalCoords::kUsePosition_Type : LocalCoords::kUnused_Type;
-    return MakeForDeviceSpace(Color::kAttribute_Type, coverageType, localCoordsType, viewMatrix);
+    return MakeForDeviceSpace(Color::kPremulGrColorAttribute_Type, coverageType, localCoordsType,
+                              viewMatrix);
 }
 
 class AAConvexPathOp final : public GrMeshDrawOp {
