@@ -23,6 +23,7 @@
 #include "SKPAnimationBench.h"
 #include "SKPBench.h"
 #include "Stats.h"
+#include "ios_utils.h"
 
 #include "SkAndroidCodec.h"
 #include "SkAutoMalloc.h"
@@ -1094,8 +1095,11 @@ static void start_keepalive() {
     intentionallyLeaked->start();
 }
 
-int nanobench_main();
-int nanobench_main() {
+int main(int argc, char** argv) {
+    SkCommandLineFlags::Parse(argc, argv);
+#if defined(SK_BUILD_FOR_IOS)
+    cd_Documents();
+#endif
     SetupCrashHandler();
     SkAutoGraphics ag;
     SkTaskGroup::Enabler enabled(FLAGS_threads);
@@ -1360,10 +1364,3 @@ int nanobench_main() {
 
     return 0;
 }
-
-#if !defined(SK_BUILD_FOR_IOS) || defined(NANOBENCH_DEFINE_MAIN)
-int main(int argc, char** argv) {
-    SkCommandLineFlags::Parse(argc, argv);
-    return nanobench_main();
-}
-#endif

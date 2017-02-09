@@ -30,9 +30,10 @@
 #include "SkGeometry.h"
 #include "SkGlyphCache.h"
 #include "SkHRESULT.h"
+#include "SkIStream.h"
 #include "SkImage.h"
 #include "SkImageEncoder.h"
-#include "SkIStream.h"
+#include "SkImagePriv.h"
 #include "SkMaskFilter.h"
 #include "SkPaint.h"
 #include "SkPathEffect.h"
@@ -110,42 +111,18 @@ HRESULT SkXPSDevice::createId(wchar_t* buffer, size_t bufferSize, wchar_t sep) {
     return S_OK;
 }
 
-static SkBitmap make_fake_bitmap(int width, int height) {
-    SkBitmap bitmap;
-    bitmap.setInfo(SkImageInfo::MakeUnknown(width, height));
-    return bitmap;
-}
+SkXPSDevice::SkXPSDevice(SkISize s)
+    : INHERITED(SkImageInfo::MakeUnknown(s.width(), s.height()),
+                SkSurfaceProps(0, kUnknown_SkPixelGeometry))
+    , fCurrentPage(0) {}
 
-// TODO: should inherit from SkBaseDevice instead of SkBitmapDevice...
-SkXPSDevice::SkXPSDevice()
-    : INHERITED(make_fake_bitmap(10000, 10000), SkSurfaceProps(0, kUnknown_SkPixelGeometry))
-    , fCurrentPage(0) {
-}
-
-SkXPSDevice::SkXPSDevice(IXpsOMObjectFactory* xpsFactory)
-    : INHERITED(make_fake_bitmap(10000, 10000), SkSurfaceProps(0, kUnknown_SkPixelGeometry))
-    , fCurrentPage(0) {
-
-    HRVM(CoCreateInstance(
-             CLSID_XpsOMObjectFactory,
-             nullptr,
-             CLSCTX_INPROC_SERVER,
-             IID_PPV_ARGS(&this->fXpsFactory)),
-         "Could not create factory for layer.");
-
-    HRVM(this->fXpsFactory->CreateCanvas(&this->fCurrentXpsCanvas),
-         "Could not create canvas for layer.");
-}
-
-SkXPSDevice::~SkXPSDevice() {
-}
+SkXPSDevice::~SkXPSDevice() {}
 
 SkXPSDevice::TypefaceUse::TypefaceUse()
     : typefaceId(0xffffffff)
     , fontData(nullptr)
     , xpsFont(nullptr)
-    , glyphsUsed(nullptr) {
-}
+    , glyphsUsed(nullptr) {}
 
 SkXPSDevice::TypefaceUse::~TypefaceUse() {
     //xpsFont owns fontData ref
@@ -153,20 +130,10 @@ SkXPSDevice::TypefaceUse::~TypefaceUse() {
     delete this->glyphsUsed;
 }
 
-bool SkXPSDevice::beginPortfolio(SkWStream* outputStream) {
-    if (!this->fAutoCo.succeeded()) return false;
-
-    //Create XPS Factory.
-    HRBM(CoCreateInstance(
-             CLSID_XpsOMObjectFactory,
-             nullptr,
-             CLSCTX_INPROC_SERVER,
-             IID_PPV_ARGS(&this->fXpsFactory)),
-         "Could not create XPS factory.");
-
-    HRBM(SkWIStream::CreateFromSkWStream(outputStream, &this->fOutputStream),
-         "Could not convert SkStream to IStream.");
-
+bool SkXPSDevice::beginPortfolio(SkWStream* outputStream, IXpsOMObjectFactory* factory) {
+    SkASSERT(factory);
+    fXpsFactory.reset(SkRefComPtr(factory));
+    HRB(SkWIStream::CreateFromSkWStream(outputStream, &this->fOutputStream));
     return true;
 }
 
@@ -185,11 +152,13 @@ bool SkXPSDevice::beginSheet(
     this->fCurrentCanvasSize = trimSize;
     this->fCurrentUnitsPerMeter = unitsPerMeter;
     this->fCurrentPixelsPerMeter = pixelsPerMeter;
+    return this->createCanvasForLayer();
+}
 
-    this->fCurrentXpsCanvas.reset();
-    HRBM(this->fXpsFactory->CreateCanvas(&this->fCurrentXpsCanvas),
-         "Could not create base canvas.");
-
+bool SkXPSDevice::createCanvasForLayer() {
+    SkASSERT(fXpsFactory);
+    fCurrentXpsCanvas.reset();
+    HRB(fXpsFactory->CreateCanvas(&fCurrentXpsCanvas));
     return true;
 }
 
@@ -2281,7 +2250,36 @@ SkBaseDevice* SkXPSDevice::onCreateDevice(const CreateInfo& info, const SkPaint*
         //return dev;
     }
 #endif
-    return new SkXPSDevice(this->fXpsFactory.get());
+    SkXPSDevice* dev = new SkXPSDevice(info.fInfo.dimensions());
+    // TODO(halcanary) implement copy constructor on SkTScopedCOmPtr
+    dev->fXpsFactory.reset(SkRefComPtr(fXpsFactory.get()));
+    SkAssertResult(dev->createCanvasForLayer());
+    return dev;
 }
 
+void SkXPSDevice::drawOval(const SkDraw& d, const SkRect& o, const SkPaint& p) {
+    SkPath path;
+    path.addOval(o);
+    this->drawPath(d, path, p, nullptr, true);
+}
+
+void SkXPSDevice::drawBitmapRect(const SkDraw& draw,
+                                  const SkBitmap& bitmap,
+                                  const SkRect* src,
+                                  const SkRect& dst,
+                                  const SkPaint& paint,
+                                  SkCanvas::SrcRectConstraint constraint) {
+    SkRect srcBounds = src ? *src : SkRect::Make(bitmap.bounds());
+    SkMatrix matrix = SkMatrix::MakeRectToRect(srcBounds, dst, SkMatrix::kFill_ScaleToFit);
+
+    auto bitmapShader = SkMakeBitmapShader(bitmap, SkShader::kClamp_TileMode,
+                                           SkShader::kClamp_TileMode, &matrix,
+                                           kNever_SkCopyPixelsMode, nullptr);
+    SkASSERT(bitmapShader);
+    if (!bitmapShader) { return; }
+    SkPaint paintWithShader(paint);
+    paintWithShader.setStyle(SkPaint::kFill_Style);
+    paintWithShader.setShader(std::move(bitmapShader));
+    this->drawRect(draw, dst, paintWithShader);
+}
 #endif//defined(SK_BUILD_FOR_WIN32)

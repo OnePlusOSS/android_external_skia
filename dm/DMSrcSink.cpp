@@ -45,6 +45,9 @@
 
 #if defined(SK_BUILD_FOR_WIN)
     #include "SkAutoCoInitialize.h"
+    #include "SkHRESULT.h"
+    #include "SkTScopedComPtr.h"
+    #include <XpsObjectModel.h>
 #endif
 
 #if defined(SK_XML)
@@ -364,6 +367,18 @@ static bool get_decode_info(SkImageInfo* decodeInfo, SkColorType canvasColorType
                     kOpaque_SkAlphaType != decodeInfo->alphaType()) {
                 return false;
             }
+
+            if (kRGBA_F16_SkColorType == canvasColorType) {
+                if (kUnpremul_SkAlphaType == dstAlphaType) {
+                    // Testing kPremul is enough for adequate coverage of F16 decoding.
+                    return false;
+                }
+
+                sk_sp<SkColorSpace> linearSpace =
+                        as_CSB(decodeInfo->colorSpace())->makeLinearGamma();
+                *decodeInfo = decodeInfo->makeColorSpace(std::move(linearSpace));
+            }
+
             *decodeInfo = decodeInfo->makeColorType(canvasColorType);
             break;
     }
@@ -397,7 +412,7 @@ Error CodecSrc::draw(SkCanvas* canvas) const {
     SkImageInfo decodeInfo = codec->getInfo();
     if (!get_decode_info(&decodeInfo, canvas->imageInfo().colorType(), fDstColorType,
                          fDstAlphaType)) {
-        return Error::Nonfatal("Testing non-565 to 565 is uninteresting.");
+        return Error::Nonfatal("Skipping uninteresting test.");
     }
 
     // Try to scale the image if it is desired
@@ -792,7 +807,7 @@ Error AndroidCodecSrc::draw(SkCanvas* canvas) const {
     SkImageInfo decodeInfo = codec->getInfo();
     if (!get_decode_info(&decodeInfo, canvas->imageInfo().colorType(), fDstColorType,
                          fDstAlphaType)) {
-        return Error::Nonfatal("Testing non-565 to 565 is uninteresting.");
+        return Error::Nonfatal("Skipping uninteresting test.");
     }
 
     // Scale the image if it is desired.
@@ -1320,13 +1335,36 @@ Error PDFSink::draw(const Src& src, SkBitmap*, SkWStream* dst, SkString*) const 
 
 XPSSink::XPSSink() {}
 
+#ifdef SK_BUILD_FOR_WIN
+static SkTScopedComPtr<IXpsOMObjectFactory> make_xps_factory() {
+    IXpsOMObjectFactory* factory;
+    HRN(CoCreateInstance(CLSID_XpsOMObjectFactory,
+                         nullptr,
+                         CLSCTX_INPROC_SERVER,
+                         IID_PPV_ARGS(&factory)));
+    return SkTScopedComPtr<IXpsOMObjectFactory>(factory);
+}
+
 Error XPSSink::draw(const Src& src, SkBitmap*, SkWStream* dst, SkString*) const {
-    sk_sp<SkDocument> doc(SkDocument::MakeXPS(dst));
+    SkAutoCoInitialize com;
+    if (!com.succeeded()) {
+        return "Could not initialize COM.";
+    }
+    SkTScopedComPtr<IXpsOMObjectFactory> factory = make_xps_factory();
+    if (!factory) {
+        return "Failed to create XPS Factory.";
+    }
+    sk_sp<SkDocument> doc(SkDocument::MakeXPS(dst, factory.get()));
     if (!doc) {
         return "SkDocument::MakeXPS() returned nullptr";
     }
     return draw_skdocument(src, doc.get(), dst);
 }
+#else
+Error XPSSink::draw(const Src& src, SkBitmap*, SkWStream* dst, SkString*) const {
+    return "XPS not supported on this platform.";
+}
+#endif
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 

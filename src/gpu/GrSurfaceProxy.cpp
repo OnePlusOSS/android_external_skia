@@ -135,17 +135,54 @@ sk_sp<GrSurfaceProxy> GrSurfaceProxy::MakeDeferred(const GrCaps& caps,
                                                    const GrSurfaceDesc& desc,
                                                    SkBackingFit fit,
                                                    SkBudgeted budgeted) {
-    if (desc.fWidth > caps.maxTextureSize() || desc.fHeight > caps.maxTextureSize()) {
+    // TODO: share this testing code with check_texture_creation_params
+    if (GrPixelConfigIsCompressed(desc.fConfig)) {
+        if (SkBackingFit::kApprox == fit || kBottomLeft_GrSurfaceOrigin == desc.fOrigin) {
+            // We don't allow scratch compressed textures and, apparently can't Y-flip compressed
+            // textures
+            return nullptr;
+        }
+
+        if (!caps.npotTextureTileSupport() && (!SkIsPow2(desc.fWidth) || !SkIsPow2(desc.fHeight))) {
+            return nullptr;
+        }
+    }
+
+    if (!caps.isConfigTexturable(desc.fConfig)) {
         return nullptr;
     }
 
-    if (kRenderTarget_GrSurfaceFlag & desc.fFlags) {
-        // We know anything we instantiate later from this deferred path will be
-        // both texturable and renderable
-        return sk_sp<GrSurfaceProxy>(new GrTextureRenderTargetProxy(caps, desc, fit, budgeted));
+    bool willBeRT = SkToBool(desc.fFlags & kRenderTarget_GrSurfaceFlag);
+    if (willBeRT && !caps.isConfigRenderable(desc.fConfig, desc.fSampleCnt > 0)) {
+        return nullptr;
     }
 
-    return sk_sp<GrSurfaceProxy>(new GrTextureProxy(desc, fit, budgeted, nullptr, 0));
+    // We currently do not support multisampled textures
+    if (!willBeRT && desc.fSampleCnt > 0) {
+        return nullptr;
+    }
+
+    int maxSize;
+    if (willBeRT) {
+        maxSize = caps.maxRenderTargetSize();
+    } else {
+        maxSize = caps.maxTextureSize();
+    }
+
+    if (desc.fWidth > maxSize || desc.fHeight > maxSize) {
+        return nullptr;
+    }
+
+    GrSurfaceDesc copyDesc = desc;
+    copyDesc.fSampleCnt = SkTMin(desc.fSampleCnt, caps.maxSampleCount());
+
+    if (willBeRT) {
+        // We know anything we instantiate later from this deferred path will be
+        // both texturable and renderable
+        return sk_sp<GrSurfaceProxy>(new GrTextureRenderTargetProxy(caps, copyDesc, fit, budgeted));
+    }
+
+    return sk_sp<GrSurfaceProxy>(new GrTextureProxy(copyDesc, fit, budgeted, nullptr, 0));
 }
 
 sk_sp<GrSurfaceProxy> GrSurfaceProxy::MakeDeferred(const GrCaps& caps,

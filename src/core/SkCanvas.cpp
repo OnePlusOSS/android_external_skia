@@ -49,6 +49,7 @@
 
 #endif
 #include "SkClipOpPriv.h"
+#include "SkVertices.h"
 
 #define RETURN_ON_NULL(ptr)     do { if (nullptr == (ptr)) return; } while (0)
 
@@ -1857,8 +1858,14 @@ void SkCanvas::drawPoints(PointMode mode, size_t count, const SkPoint pts[], con
 void SkCanvas::drawVertices(VertexMode vmode, int vertexCount, const SkPoint vertices[],
                             const SkPoint texs[], const SkColor colors[], SkBlendMode bmode,
                             const uint16_t indices[], int indexCount, const SkPaint& paint) {
-    this->onDrawVertices(vmode, vertexCount, vertices, texs, colors, bmode,
-                         indices, indexCount, paint);
+    this->onDrawVertices(vmode, vertexCount, std::move(vertices), texs, colors, bmode, indices,
+                         indexCount, paint);
+}
+
+void SkCanvas::drawVertices(sk_sp<SkVertices> vertices, SkBlendMode mode, const SkPaint& paint,
+                            uint32_t flags) {
+    RETURN_ON_NULL(vertices);
+    this->onDrawVerticesObject(std::move(vertices), mode, paint, flags);
 }
 
 void SkCanvas::drawPath(const SkPath& path, const SkPaint& paint) {
@@ -2588,7 +2595,7 @@ void SkCanvas::DrawRect(const SkDraw& draw, const SkPaint& paint,
         draw.fDevice->drawRect(draw, r, paint);
     } else {
         SkPaint p(paint);
-        p.setStrokeWidth(SkScalarMul(textSize, paint.getStrokeWidth()));
+        p.setStrokeWidth(textSize * paint.getStrokeWidth());
         draw.fDevice->drawRect(draw, r, p);
     }
 }
@@ -2631,22 +2638,20 @@ void SkCanvas::DrawTextDecorations(const SkDraw& draw, const SkPaint& paint,
     if (flags & (SkPaint::kUnderlineText_Flag |
                  SkPaint::kStrikeThruText_Flag)) {
         SkScalar textSize = paint.getTextSize();
-        SkScalar height = SkScalarMul(textSize, kStdUnderline_Thickness);
+        SkScalar height = textSize * kStdUnderline_Thickness;
         SkRect   r;
 
         r.fLeft = start.fX;
         r.fRight = start.fX + width;
 
         if (flags & SkPaint::kUnderlineText_Flag) {
-            SkScalar offset = SkScalarMulAdd(textSize, kStdUnderline_Offset,
-                                             start.fY);
+            SkScalar offset = textSize * kStdUnderline_Offset + start.fY;
             r.fTop = offset;
             r.fBottom = offset + height;
             DrawRect(draw, paint, r, 1);
         }
         if (flags & SkPaint::kStrikeThruText_Flag) {
-            SkScalar offset = SkScalarMulAdd(textSize, kStdStrikeThru_Offset,
-                                             start.fY);
+            SkScalar offset = textSize * kStdStrikeThru_Offset + start.fY;
             r.fTop = offset;
             r.fBottom = offset + height;
             DrawRect(draw, paint, r, 1);
@@ -2815,6 +2820,28 @@ void SkCanvas::onDrawVertices(VertexMode vmode, int vertexCount,
     }
 
     LOOPER_END
+}
+
+void SkCanvas::onDrawVerticesObject(sk_sp<SkVertices> vertices, SkBlendMode bmode,
+                                    const SkPaint& paint, uint32_t flags) {
+    TRACE_EVENT0("disabled-by-default-skia", "SkCanvas::drawVertices()");
+    LOOPER_BEGIN(paint, SkDrawFilter::kPath_Type, nullptr)
+
+    while (iter.next()) {
+        // In the common case of one iteration we could std::move vertices here.
+        iter.fDevice->drawVerticesObject(iter, vertices, bmode, looper.paint(), flags);
+    }
+
+    LOOPER_END
+}
+
+void SkCanvas::onDrawVerticesObjectFallback(sk_sp<SkVertices> vertices, SkBlendMode mode,
+                                            const SkPaint& paint, uint32_t flags) {
+    const SkPoint* texs =
+            (flags & SkCanvas::kIgnoreTexCoords_VerticesFlag) ? nullptr : vertices->texCoords();
+    const SkColor* colors = (flags & kIgnoreColors_VerticesFlag) ? nullptr : vertices->colors();
+    this->onDrawVertices(vertices->mode(), vertices->vertexCount(), vertices->positions(), texs,
+                         colors, mode, vertices->indices(), vertices->indexCount(), paint);
 }
 
 void SkCanvas::drawPatch(const SkPoint cubics[12], const SkColor colors[4],
