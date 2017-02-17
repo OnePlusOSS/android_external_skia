@@ -14,9 +14,10 @@
 #include "SkDither.h"
 #include "SkImageInfoPriv.h"
 #include "SkMathPriv.h"
+#include "SkOpts.h"
 #include "SkPM4fPriv.h"
 #include "SkRasterPipeline.h"
-#include "SkUnPreMultiply.h"
+#include "SkUnPreMultiplyPriv.h"
 
 // Fast Path 1: The memcpy() case.
 static inline bool can_memcpy(const SkImageInfo& dstInfo, const SkImageInfo& srcInfo) {
@@ -32,59 +33,91 @@ static inline bool can_memcpy(const SkImageInfo& dstInfo, const SkImageInfo& src
         return false;
     }
 
-    return !dstInfo.colorSpace() || !srcInfo.colorSpace() ||
+    return !dstInfo.colorSpace() ||
            SkColorSpace::Equals(dstInfo.colorSpace(), srcInfo.colorSpace());
 }
 
-// For now disable 565 in the pipeline. Its (higher) quality is so different its too much to
-// rebase (for now)
-//
-//#define PIPELINE_HANDLES_565
+enum AlphaVerb {
+    kNothing_AlphaVerb,
+    kPremul_AlphaVerb,
+    kUnpremul_AlphaVerb,
+};
 
-static bool is_srgb(const SkImageInfo& info) {
-    return info.colorSpace() && info.colorSpace()->gammaCloseToSRGB();
+template <bool kSwapRB>
+static void wrap_unpremultiply(uint32_t* dst, const void* src, int count) {
+    SkUnpremultiplyRow<kSwapRB>(dst, (const uint32_t*) src, count);
 }
 
-static bool copy_pipeline_pixels(const SkImageInfo& dstInfo, void* dstRow, size_t dstRB,
-                                 const SkImageInfo& srcInfo, const void* srcRow, size_t srcRB,
-                                 SkColorTable* ctable) {
-    SkASSERT(srcInfo.width() == dstInfo.width());
-    SkASSERT(srcInfo.height() == dstInfo.height());
-
-    bool src_srgb = is_srgb(srcInfo);
-    const bool dst_srgb = is_srgb(dstInfo);
-    if (!dstInfo.colorSpace()) {
-        src_srgb = false;   // untagged dst means ignore tags on src
+// Fast Path 2: Simple swizzles and premuls.
+void swizzle_and_multiply(const SkImageInfo& dstInfo, void* dstPixels, size_t dstRB,
+                          const SkImageInfo& srcInfo, const void* srcPixels, size_t srcRB) {
+    void (*proc)(uint32_t* dst, const void* src, int count);
+    const bool swapRB = dstInfo.colorType() != srcInfo.colorType();
+    AlphaVerb alphaVerb = kNothing_AlphaVerb;
+    if (kPremul_SkAlphaType == dstInfo.alphaType() &&
+        kUnpremul_SkAlphaType == srcInfo.alphaType())
+    {
+        alphaVerb = kPremul_AlphaVerb;
+    } else if (kUnpremul_SkAlphaType == dstInfo.alphaType() &&
+               kPremul_SkAlphaType == srcInfo.alphaType()) {
+        alphaVerb = kUnpremul_AlphaVerb;
     }
 
-    SkRasterPipeline pipeline;
+    switch (alphaVerb) {
+        case kNothing_AlphaVerb:
+            // If we do not need to swap or multiply, we should hit the memcpy case.
+            SkASSERT(swapRB);
+            proc = SkOpts::RGBA_to_BGRA;
+            break;
+        case kPremul_AlphaVerb:
+            proc = swapRB ? SkOpts::RGBA_to_bgrA : SkOpts::RGBA_to_rgbA;
+            break;
+        case kUnpremul_AlphaVerb:
+            proc = swapRB ? wrap_unpremultiply<true> : wrap_unpremultiply<false>;
+            break;
+    }
 
+    for (int y = 0; y < dstInfo.height(); y++) {
+        proc((uint32_t*) dstPixels, srcPixels, dstInfo.width());
+        dstPixels = SkTAddOffset<void>(dstPixels, dstRB);
+        srcPixels = SkTAddOffset<const void>(srcPixels, srcRB);
+    }
+}
+
+// Default: Use the pipeline.
+static bool copy_pipeline_pixels(const SkImageInfo& dstInfo, void* dstRow, size_t dstRB,
+                                 const SkImageInfo& srcInfo, const void* srcRow, size_t srcRB,
+                                 bool isColorAware) {
+    SkRasterPipeline pipeline;
     switch (srcInfo.colorType()) {
         case kRGBA_8888_SkColorType:
+            pipeline.append(SkRasterPipeline::load_8888, &srcRow);
+            break;
         case kBGRA_8888_SkColorType:
             pipeline.append(SkRasterPipeline::load_8888, &srcRow);
-            if (src_srgb) {
-                pipeline.append_from_srgb(srcInfo.alphaType());
-            }
-            if (kBGRA_8888_SkColorType == srcInfo.colorType()) {
-                pipeline.append(SkRasterPipeline::swap_rb);
-            }
+            pipeline.append(SkRasterPipeline::swap_rb);
             break;
-#ifdef PIPELINE_HANDLES_565
         case kRGB_565_SkColorType:
             pipeline.append(SkRasterPipeline::load_565, &srcRow);
             break;
-#endif
         case kRGBA_F16_SkColorType:
             pipeline.append(SkRasterPipeline::load_f16, &srcRow);
             break;
+        case kGray_8_SkColorType:
+            pipeline.append(SkRasterPipeline::load_g8, &srcRow);
+            break;
         default:
-            return false;   // src colortype unsupported
+            return false;
+    }
+
+    if (isColorAware && srcInfo.gammaCloseToSRGB()) {
+        pipeline.append_from_srgb(srcInfo.alphaType());
     }
 
     float matrix[12];
-    if (!append_gamut_transform(&pipeline, matrix, srcInfo.colorSpace(), dstInfo.colorSpace())) {
-        return false;
+    if (isColorAware) {
+        SkAssertResult(append_gamut_transform(&pipeline, matrix, srcInfo.colorSpace(),
+                                              dstInfo.colorSpace()));
     }
 
     SkAlphaType sat = srcInfo.alphaType();
@@ -95,27 +128,26 @@ static bool copy_pipeline_pixels(const SkImageInfo& dstInfo, void* dstRow, size_
         pipeline.append(SkRasterPipeline::premul);
     }
 
+    if (isColorAware && dstInfo.gammaCloseToSRGB()) {
+        pipeline.append(SkRasterPipeline::to_srgb);
+    }
+
     switch (dstInfo.colorType()) {
         case kRGBA_8888_SkColorType:
-        case kBGRA_8888_SkColorType:
-            if (kBGRA_8888_SkColorType == dstInfo.colorType()) {
-                pipeline.append(SkRasterPipeline::swap_rb);
-            }
-            if (dst_srgb) {
-                pipeline.append(SkRasterPipeline::to_srgb);
-            }
             pipeline.append(SkRasterPipeline::store_8888, &dstRow);
             break;
-#ifdef PIPELINE_HANDLES_565
+        case kBGRA_8888_SkColorType:
+            pipeline.append(SkRasterPipeline::swap_rb);
+            pipeline.append(SkRasterPipeline::store_8888, &dstRow);
+            break;
         case kRGB_565_SkColorType:
             pipeline.append(SkRasterPipeline::store_565, &dstRow);
             break;
-#endif
         case kRGBA_F16_SkColorType:
             pipeline.append(SkRasterPipeline::store_f16, &dstRow);
             break;
         default:
-            return false;   // dst colortype unsupported
+            return false;
     }
 
     auto p = pipeline.compile();
@@ -124,124 +156,10 @@ static bool copy_pipeline_pixels(const SkImageInfo& dstInfo, void* dstRow, size_
         p(0,srcInfo.width());
         // The pipeline has pointers to srcRow and dstRow, so we just need to update them in the
         // loop to move between rows of src/dst.
-        srcRow = (const char*)srcRow + srcRB;
-        dstRow = (char*)dstRow + dstRB;
+        dstRow = SkTAddOffset<void>(dstRow, dstRB);
+        srcRow = SkTAddOffset<const void>(srcRow, srcRB);
     }
     return true;
-}
-
-enum AlphaVerb {
-    kNothing_AlphaVerb,
-    kPremul_AlphaVerb,
-    kUnpremul_AlphaVerb,
-};
-
-template <bool doSwapRB, AlphaVerb doAlpha> uint32_t convert32(uint32_t c) {
-    if (doSwapRB) {
-        c = SkSwizzle_RB(c);
-    }
-
-    // Lucky for us, in both RGBA and BGRA, the alpha component is always in the same place, so
-    // we can perform premul or unpremul the same way without knowing the swizzles for RGB.
-    switch (doAlpha) {
-        case kNothing_AlphaVerb:
-            // no change
-            break;
-        case kPremul_AlphaVerb:
-            c = SkPreMultiplyARGB(SkGetPackedA32(c), SkGetPackedR32(c),
-                                  SkGetPackedG32(c), SkGetPackedB32(c));
-            break;
-        case kUnpremul_AlphaVerb:
-            c = SkUnPreMultiply::UnPreMultiplyPreservingByteOrder(c);
-            break;
-    }
-    return c;
-}
-
-template <bool doSwapRB, AlphaVerb doAlpha>
-void convert32_row(uint32_t* dst, const uint32_t* src, int count) {
-    // This has to be correct if src == dst (but not partial overlap)
-    for (int i = 0; i < count; ++i) {
-        dst[i] = convert32<doSwapRB, doAlpha>(src[i]);
-    }
-}
-
-static bool is_32bit_colortype(SkColorType ct) {
-    return kRGBA_8888_SkColorType == ct || kBGRA_8888_SkColorType == ct;
-}
-
-static AlphaVerb compute_AlphaVerb(SkAlphaType src, SkAlphaType dst) {
-    SkASSERT(kUnknown_SkAlphaType != src);
-    SkASSERT(kUnknown_SkAlphaType != dst);
-
-    if (kOpaque_SkAlphaType == src || kOpaque_SkAlphaType == dst || src == dst) {
-        return kNothing_AlphaVerb;
-    }
-    if (kPremul_SkAlphaType == dst) {
-        SkASSERT(kUnpremul_SkAlphaType == src);
-        return kPremul_AlphaVerb;
-    } else {
-        SkASSERT(kPremul_SkAlphaType == src);
-        SkASSERT(kUnpremul_SkAlphaType == dst);
-        return kUnpremul_AlphaVerb;
-    }
-}
-
-bool SkSrcPixelInfo::convertPixelsTo(SkDstPixelInfo* dst, int width, int height) const {
-    SkASSERT(width > 0 && height > 0);
-
-    if (!is_32bit_colortype(fColorType) || !is_32bit_colortype(dst->fColorType)) {
-        return false;
-    }
-
-    void (*proc)(uint32_t* dst, const uint32_t* src, int count);
-    AlphaVerb doAlpha = compute_AlphaVerb(fAlphaType, dst->fAlphaType);
-    bool doSwapRB = fColorType != dst->fColorType;
-
-    switch (doAlpha) {
-        case kNothing_AlphaVerb:
-            SkASSERT(doSwapRB);
-            proc = convert32_row<true, kNothing_AlphaVerb>;
-            break;
-        case kPremul_AlphaVerb:
-            if (doSwapRB) {
-                proc = convert32_row<true, kPremul_AlphaVerb>;
-            } else {
-                proc = convert32_row<false, kPremul_AlphaVerb>;
-            }
-            break;
-        case kUnpremul_AlphaVerb:
-            if (doSwapRB) {
-                proc = convert32_row<true, kUnpremul_AlphaVerb>;
-            } else {
-                proc = convert32_row<false, kUnpremul_AlphaVerb>;
-            }
-            break;
-    }
-
-    uint32_t* dstP = static_cast<uint32_t*>(dst->fPixels);
-    const uint32_t* srcP = static_cast<const uint32_t*>(fPixels);
-    size_t srcInc = fRowBytes >> 2;
-    size_t dstInc = dst->fRowBytes >> 2;
-    for (int y = 0; y < height; ++y) {
-        proc(dstP, srcP, width);
-        dstP += dstInc;
-        srcP += srcInc;
-    }
-    return true;
-}
-
-static void copy_g8_to_32(void* dst, size_t dstRB, const void* src, size_t srcRB, int w, int h) {
-    uint32_t* dst32 = (uint32_t*)dst;
-    const uint8_t* src8 = (const uint8_t*)src;
-
-    for (int y = 0; y < h; ++y) {
-        for (int x = 0; x < w; ++x) {
-            dst32[x] = SkPackARGB32(0xFF, src8[x], src8[x], src8[x]);
-        }
-        dst32 = (uint32_t*)((char*)dst32 + dstRB);
-        src8 += srcRB;
-    }
 }
 
 static bool extract_alpha(void* dst, size_t dstRB, const void* src, size_t srcRB,
@@ -384,23 +302,13 @@ bool SkPixelInfo::CopyPixels(const SkImageInfo& dstInfo, void* dstPixels, size_t
         return true;
     }
 
-    const bool isColorAware = srcInfo.colorSpace() && dstInfo.colorSpace();
+    const bool isColorAware = dstInfo.colorSpace();
+    SkASSERT(srcInfo.colorSpace() || !isColorAware);
 
-    // Handle fancy alpha swizzling if both are ARGB32
+    // Fast Path 2: Simple swizzles and premuls.
     if (4 == srcInfo.bytesPerPixel() && 4 == dstInfo.bytesPerPixel() && !isColorAware) {
-        SkDstPixelInfo dstPI;
-        dstPI.fColorType = dstInfo.colorType();
-        dstPI.fAlphaType = dstInfo.alphaType();
-        dstPI.fPixels = dstPixels;
-        dstPI.fRowBytes = dstRB;
-
-        SkSrcPixelInfo srcPI;
-        srcPI.fColorType = srcInfo.colorType();
-        srcPI.fAlphaType = srcInfo.alphaType();
-        srcPI.fPixels = srcPixels;
-        srcPI.fRowBytes = srcRB;
-
-        return srcPI.convertPixelsTo(&dstPI, width, height);
+        swizzle_and_multiply(dstInfo, dstPixels, dstRB, srcInfo, srcPixels, srcRB);
+        return true;
     }
 
     if (isColorAware && optimized_color_xform(dstInfo, srcInfo)) {
@@ -413,11 +321,6 @@ bool SkPixelInfo::CopyPixels(const SkImageInfo& dstInfo, void* dstPixels, size_t
      *  are supported.
      */
 
-    if (kGray_8_SkColorType == srcInfo.colorType() && 4 == dstInfo.bytesPerPixel()) {
-        copy_g8_to_32(dstPixels, dstRB, srcPixels, srcRB, width, height);
-        return true;
-    }
-
     if (kAlpha_8_SkColorType == dstInfo.colorType() &&
         extract_alpha(dstPixels, dstRB, srcPixels, srcRB, srcInfo, ctable)) {
         return true;
@@ -425,7 +328,7 @@ bool SkPixelInfo::CopyPixels(const SkImageInfo& dstInfo, void* dstPixels, size_t
 
     //  Try the pipeline
     //
-    if (copy_pipeline_pixels(dstInfo, dstPixels, dstRB, srcInfo, srcPixels, srcRB, ctable)) {
+    if (copy_pipeline_pixels(dstInfo, dstPixels, dstRB, srcInfo, srcPixels, srcRB, isColorAware)) {
         return true;
     }
 

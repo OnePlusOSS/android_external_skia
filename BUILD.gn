@@ -28,6 +28,7 @@ declare_args() {
   skia_android_serial = ""
   skia_enable_android_framework_defines = false
   skia_enable_discrete_gpu = true
+  skia_enable_effects = true
   skia_enable_gpu = true
   skia_enable_pdf = true
   skia_enable_splicer = is_skia_standalone && sanitize != "MSAN" && !is_ios
@@ -322,6 +323,13 @@ template("optional") {
   }
 }
 
+optional("effects") {
+  enabled = skia_enable_effects
+  sources =
+      skia_effects_sources + [ "src/ports/SkGlobalInitialization_default.cpp" ]
+  sources_when_disabled = [ "src/ports/SkGlobalInitialization_none.cpp" ]
+}
+
 optional("fontmgr_android") {
   enabled = fontmgr_android_enabled
 
@@ -344,7 +352,11 @@ optional("fontmgr_custom") {
   ]
   sources = [
     "src/ports/SkFontMgr_custom.cpp",
+    "src/ports/SkFontMgr_custom.h",
+    "src/ports/SkFontMgr_custom_directory.cpp",
     "src/ports/SkFontMgr_custom_directory_factory.cpp",
+    "src/ports/SkFontMgr_custom_embedded.cpp",
+    "src/ports/SkFontMgr_custom_empty.cpp",
   ]
 }
 
@@ -373,6 +385,7 @@ optional("fontmgr_fuchsia") {
   ]
   sources = [
     "src/ports/SkFontMgr_custom.cpp",
+    "src/ports/SkFontMgr_custom_empty.cpp",
     "src/ports/SkFontMgr_custom_empty_factory.cpp",
   ]
 }
@@ -381,7 +394,8 @@ optional("gpu") {
   enabled = skia_enable_gpu
   public_defines = []
 
-  sources = skia_gpu_sources + [ "src/gpu/gl/GrGLDefaultInterface_native.cpp" ]
+  sources = skia_gpu_sources + skia_sksl_sources +
+            [ "src/gpu/gl/GrGLDefaultInterface_native.cpp" ]
 
   # These paths need to be absolute to match the ones produced by shared_sources.gni.
   sources -= get_path_info([
@@ -523,6 +537,8 @@ optional("xml") {
     "//third_party/expat",
   ]
   sources = [
+    "src/svg/SkSVGCanvas.cpp",
+    "src/svg/SkSVGDevice.cpp",
     "src/xml/SkDOM.cpp",
     "src/xml/SkXMLParser.cpp",
     "src/xml/SkXMLWriter.cpp",
@@ -538,6 +554,7 @@ component("skia") {
     ":armv7",
     ":avx",
     ":crc32",
+    ":effects",
     ":fontmgr_android",
     ":fontmgr_custom",
     ":fontmgr_fontconfig",
@@ -566,8 +583,6 @@ component("skia") {
 
   sources = []
   sources += skia_core_sources
-  sources += skia_effects_sources
-  sources += skia_sksl_sources
   sources += skia_utils_sources
   sources += skia_xps_sources
   sources += [
@@ -590,14 +605,11 @@ component("skia") {
     "src/codec/SkWbmpCodec.cpp",
     "src/images/SkImageEncoder.cpp",
     "src/ports/SkDiscardableMemory_none.cpp",
-    "src/ports/SkGlobalInitialization_default.cpp",
     "src/ports/SkImageGenerator_skia.cpp",
     "src/ports/SkMemory_malloc.cpp",
     "src/ports/SkOSFile_stdio.cpp",
     "src/sfnt/SkOTTable_name.cpp",
     "src/sfnt/SkOTUtils.cpp",
-    "src/svg/SkSVGCanvas.cpp",
-    "src/svg/SkSVGDevice.cpp",
     "src/utils/mac/SkStream_mac.cpp",
     "third_party/etc1/etc1.cpp",
     "third_party/gif/SkGifImageReader.cpp",
@@ -1360,7 +1372,6 @@ if (skia_enable_tools) {
         "tools/viewer/sk_app/CommandSet.cpp",
         "tools/viewer/sk_app/GLWindowContext.cpp",
         "tools/viewer/sk_app/Window.cpp",
-        "tools/viewer/sk_app/WindowContext.cpp",
       ]
       libs = []
 
@@ -1372,6 +1383,7 @@ if (skia_enable_tools) {
           "tools/viewer/sk_app/android/main_android.cpp",
           "tools/viewer/sk_app/android/surface_glue_android.cpp",
         ]
+        libs += [ "android" ]
       } else if (is_linux) {
         sources += [
           "tools/viewer/sk_app/unix/GLWindowContext_unix.cpp",
@@ -1400,7 +1412,6 @@ if (skia_enable_tools) {
         if (is_android) {
           sources +=
               [ "tools/viewer/sk_app/android/VulkanWindowContext_android.cpp" ]
-          libs += [ "android" ]
         } else if (is_linux) {
           sources += [ "tools/viewer/sk_app/unix/VulkanWindowContext_unix.cpp" ]
           libs += [ "X11-xcb" ]
@@ -1418,6 +1429,7 @@ if (skia_enable_tools) {
         ":skia",
         ":tool_utils",
         ":views",
+        "//third_party/imgui",
         "//third_party/jsoncpp",
       ]
       if (is_android) {

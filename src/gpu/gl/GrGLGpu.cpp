@@ -942,10 +942,14 @@ static inline GrGLint config_alignment(GrPixelConfig config) {
         case kSBGRA_8888_GrPixelConfig:
         case kRGBA_8888_sint_GrPixelConfig:
         case kRGBA_float_GrPixelConfig:
+        case kRG_float_GrPixelConfig:
             return 4;
-        default:
+        case kUnknown_GrPixelConfig:
+        case kETC1_GrPixelConfig:
             return 0;
     }
+    SkFAIL("Invalid pixel config");
+    return 0;
 }
 
 static inline GrGLenum check_alloc_error(const GrSurfaceDesc& desc,

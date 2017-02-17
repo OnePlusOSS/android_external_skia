@@ -932,8 +932,9 @@ bool GrGLCaps::readPixelsSupported(GrPixelConfig surfaceConfig,
         // The manual does not seem to fully match the spec as the spec allows integer formats
         // when the bound color buffer is an integer buffer. It doesn't specify which integer
         // formats are allowed, so perhaps all of them are. We only use GL_RGBA_INTEGER currently.
-        if (readFormat != GR_GL_RED && readFormat != GR_GL_RGB && readFormat != GR_GL_RGBA &&
-            readFormat != GR_GL_BGRA && readFormat != GR_GL_RGBA_INTEGER) {
+        if (readFormat != GR_GL_RED && readFormat != GR_GL_RG && readFormat != GR_GL_RGB &&
+            readFormat != GR_GL_RGBA && readFormat != GR_GL_BGRA &&
+            readFormat != GR_GL_RGBA_INTEGER) {
             return false;
         }
         // There is also a set of allowed types, but all the types we use are in the set:
@@ -1819,39 +1820,32 @@ void GrGLCaps::initConfigTable(const GrContextOptions& contextOptions,
         }
     }
 
-    fConfigTable[kRGBA_float_GrPixelConfig].fFormats.fBaseInternalFormat = GR_GL_RGBA;
-    fConfigTable[kRGBA_float_GrPixelConfig].fFormats.fSizedInternalFormat = GR_GL_RGBA32F;
-    fConfigTable[kRGBA_float_GrPixelConfig].fFormats.fExternalFormat[kOther_ExternalFormatUsage] =
-        GR_GL_RGBA;
-    fConfigTable[kRGBA_float_GrPixelConfig].fFormats.fExternalType = GR_GL_FLOAT;
-    fConfigTable[kRGBA_float_GrPixelConfig].fFormatType = kFloat_FormatType;
-    if (hasFPTextures) {
-        fConfigTable[kRGBA_float_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
-        // For now we only enable rendering to float on desktop, because on ES we'd have to solve
-        // many precision issues and no clients actually want this yet.
-        if (kGL_GrGLStandard == standard /* || version >= GR_GL_VER(3,2) ||
-            ctxInfo.hasExtension("GL_EXT_color_buffer_float")*/) {
-            fConfigTable[kRGBA_float_GrPixelConfig].fFlags |= fpRenderFlags;
+    for (auto fpconfig : {kRGBA_float_GrPixelConfig, kRG_float_GrPixelConfig}) {
+        const GrGLenum format = kRGBA_float_GrPixelConfig == fpconfig ? GR_GL_RGBA : GR_GL_RG;
+        fConfigTable[fpconfig].fFormats.fBaseInternalFormat = format;
+        fConfigTable[fpconfig].fFormats.fSizedInternalFormat =
+            kRGBA_float_GrPixelConfig == fpconfig ? GR_GL_RGBA32F : GR_GL_RG32F;
+        fConfigTable[fpconfig].fFormats.fExternalFormat[kOther_ExternalFormatUsage] = format;
+        fConfigTable[fpconfig].fFormats.fExternalType = GR_GL_FLOAT;
+        fConfigTable[fpconfig].fFormatType = kFloat_FormatType;
+        if (hasFPTextures) {
+            fConfigTable[fpconfig].fFlags = ConfigInfo::kTextureable_Flag;
+            // For now we only enable rendering to float on desktop, because on ES we'd have to
+            // solve many precision issues and no clients actually want this yet.
+            if (kGL_GrGLStandard == standard /* || version >= GR_GL_VER(3,2) ||
+                ctxInfo.hasExtension("GL_EXT_color_buffer_float")*/) {
+                fConfigTable[fpconfig].fFlags |= fpRenderFlags;
+            }
         }
+        if (texStorageSupported) {
+            fConfigTable[fpconfig].fFlags |= ConfigInfo::kCanUseTexStorage_Flag;
+        }
+        if (texelBufferSupport) {
+            fConfigTable[fpconfig].fFlags |= ConfigInfo::kCanUseWithTexelBuffer_Flag;
+        }
+        fConfigTable[fpconfig].fSwizzle = GrSwizzle::RGBA();
     }
-    if (texStorageSupported) {
-        fConfigTable[kRGBA_float_GrPixelConfig].fFlags |= ConfigInfo::kCanUseTexStorage_Flag;
-    }
-    if (texelBufferSupport) {
-        fConfigTable[kRGBA_float_GrPixelConfig].fFlags |= ConfigInfo::kCanUseWithTexelBuffer_Flag;
-    }
-    fConfigTable[kRGBA_float_GrPixelConfig].fSwizzle = GrSwizzle::RGBA();
 
-    if (hasHalfFPTextures) {
-        fConfigTable[kAlpha_half_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
-        // ES requires either 3.2 or the combination of EXT_color_buffer_half_float and support for
-        // GL_RED internal format.
-        if (kGL_GrGLStandard == standard || version >= GR_GL_VER(3, 2) ||
-            (this->textureRedSupport() &&
-             ctxInfo.hasExtension("GL_EXT_color_buffer_half_float"))) {
-            fConfigTable[kAlpha_half_GrPixelConfig].fFlags |= fpRenderFlags;
-        }
-    }
     if (this->textureRedSupport()) {
         fConfigTable[kAlpha_half_GrPixelConfig].fFormats.fBaseInternalFormat = GR_GL_RED;
         fConfigTable[kAlpha_half_GrPixelConfig].fFormats.fSizedInternalFormat = GR_GL_R16F;
@@ -1881,6 +1875,16 @@ void GrGLCaps::initConfigTable(const GrContextOptions& contextOptions,
     fConfigTable[kAlpha_half_GrPixelConfig].fFormatType = kFloat_FormatType;
     if (texStorageSupported) {
         fConfigTable[kAlpha_half_GrPixelConfig].fFlags |= ConfigInfo::kCanUseTexStorage_Flag;
+    }
+    if (hasHalfFPTextures) {
+        fConfigTable[kAlpha_half_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
+        // ES requires either 3.2 or the combination of EXT_color_buffer_half_float and support for
+        // GL_RED internal format.
+        if (kGL_GrGLStandard == standard || version >= GR_GL_VER(3, 2) ||
+            (this->textureRedSupport() &&
+             ctxInfo.hasExtension("GL_EXT_color_buffer_half_float"))) {
+            fConfigTable[kAlpha_half_GrPixelConfig].fFlags |= fpRenderFlags;
+        }
     }
 
     fConfigTable[kRGBA_half_GrPixelConfig].fFormats.fBaseInternalFormat = GR_GL_RGBA;
@@ -1921,82 +1925,28 @@ void GrGLCaps::initConfigTable(const GrContextOptions& contextOptions,
 
     // No sized/unsized internal format distinction for compressed formats, no external format.
     // Below we set the external formats and types to 0.
-
-    // May change the internal format based on extensions.
-    fConfigTable[kLATC_GrPixelConfig].fFormats.fBaseInternalFormat =
-        GR_GL_COMPRESSED_LUMINANCE_LATC1;
-    fConfigTable[kLATC_GrPixelConfig].fFormats.fSizedInternalFormat =
-        GR_GL_COMPRESSED_LUMINANCE_LATC1;
-    if (ctxInfo.hasExtension("GL_EXT_texture_compression_latc") ||
-        ctxInfo.hasExtension("GL_NV_texture_compression_latc")) {
-        fConfigTable[kLATC_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
-    } else if ((kGL_GrGLStandard == standard && version >= GR_GL_VER(3, 0)) ||
-               ctxInfo.hasExtension("GL_EXT_texture_compression_rgtc") ||
-               ctxInfo.hasExtension("GL_ARB_texture_compression_rgtc")) {
-        // RGTC is identical and available on OpenGL 3.0+ as well as with extensions
-        fConfigTable[kLATC_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
-        fConfigTable[kLATC_GrPixelConfig].fFormats.fBaseInternalFormat =
-            GR_GL_COMPRESSED_RED_RGTC1;
-        fConfigTable[kLATC_GrPixelConfig].fFormats.fSizedInternalFormat =
-            GR_GL_COMPRESSED_RED_RGTC1;
-    } else if (ctxInfo.hasExtension("GL_AMD_compressed_3DC_texture")) {
-        fConfigTable[kLATC_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
-        fConfigTable[kLATC_GrPixelConfig].fFormats.fBaseInternalFormat = GR_GL_COMPRESSED_3DC_X;
-        fConfigTable[kLATC_GrPixelConfig].fFormats.fSizedInternalFormat =
-            GR_GL_COMPRESSED_3DC_X;
-
-    }
-    fConfigTable[kLATC_GrPixelConfig].fFormats.fExternalFormat[kOther_ExternalFormatUsage] = 0;
-    fConfigTable[kLATC_GrPixelConfig].fFormats.fExternalType = 0;
-    fConfigTable[kLATC_GrPixelConfig].fFormatType = kNormalizedFixedPoint_FormatType;
-    fConfigTable[kLATC_GrPixelConfig].fSwizzle = GrSwizzle::RRRR();
-
-    fConfigTable[kETC1_GrPixelConfig].fFormats.fBaseInternalFormat = GR_GL_COMPRESSED_ETC1_RGB8;
-    fConfigTable[kETC1_GrPixelConfig].fFormats.fSizedInternalFormat = GR_GL_COMPRESSED_ETC1_RGB8;
-    fConfigTable[kETC1_GrPixelConfig].fFormats.fExternalFormat[kOther_ExternalFormatUsage] = 0;
-    fConfigTable[kETC1_GrPixelConfig].fFormats.fExternalType = 0;
-    fConfigTable[kETC1_GrPixelConfig].fFormatType = kNormalizedFixedPoint_FormatType;
-    if (kGL_GrGLStandard == standard) {
-        if (version >= GR_GL_VER(4, 3) || ctxInfo.hasExtension("GL_ARB_ES3_compatibility")) {
-            fConfigTable[kETC1_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
+    {
+        fConfigTable[kETC1_GrPixelConfig].fFormats.fBaseInternalFormat = GR_GL_COMPRESSED_ETC1_RGB8;
+        fConfigTable[kETC1_GrPixelConfig].fFormats.fSizedInternalFormat =
+                                                                         GR_GL_COMPRESSED_ETC1_RGB8;
+        fConfigTable[kETC1_GrPixelConfig].fFormats.fExternalFormat[kOther_ExternalFormatUsage] = 0;
+        fConfigTable[kETC1_GrPixelConfig].fFormats.fExternalType = 0;
+        fConfigTable[kETC1_GrPixelConfig].fFormatType = kNormalizedFixedPoint_FormatType;
+        if (kGL_GrGLStandard == standard) {
+            if (version >= GR_GL_VER(4, 3) || ctxInfo.hasExtension("GL_ARB_ES3_compatibility")) {
+                fConfigTable[kETC1_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
+            }
+        } else {
+            if (version >= GR_GL_VER(3, 0) ||
+                ctxInfo.hasExtension("GL_OES_compressed_ETC1_RGB8_texture") ||
+                // ETC2 is a superset of ETC1, so we can just check for that, too.
+                (ctxInfo.hasExtension("GL_OES_compressed_ETC2_RGB8_texture") &&
+                 ctxInfo.hasExtension("GL_OES_compressed_ETC2_RGBA8_texture"))) {
+                fConfigTable[kETC1_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
+            }
         }
-    } else {
-        if (version >= GR_GL_VER(3, 0) ||
-            ctxInfo.hasExtension("GL_OES_compressed_ETC1_RGB8_texture") ||
-            // ETC2 is a superset of ETC1, so we can just check for that, too.
-            (ctxInfo.hasExtension("GL_OES_compressed_ETC2_RGB8_texture") &&
-             ctxInfo.hasExtension("GL_OES_compressed_ETC2_RGBA8_texture"))) {
-            fConfigTable[kETC1_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
-        }
+        fConfigTable[kETC1_GrPixelConfig].fSwizzle = GrSwizzle::RGBA();
     }
-    fConfigTable[kETC1_GrPixelConfig].fSwizzle = GrSwizzle::RGBA();
-
-    fConfigTable[kR11_EAC_GrPixelConfig].fFormats.fBaseInternalFormat = GR_GL_COMPRESSED_R11_EAC;
-    fConfigTable[kR11_EAC_GrPixelConfig].fFormats.fSizedInternalFormat = GR_GL_COMPRESSED_R11_EAC;
-    fConfigTable[kR11_EAC_GrPixelConfig].fFormats.fExternalFormat[kOther_ExternalFormatUsage] = 0;
-    fConfigTable[kR11_EAC_GrPixelConfig].fFormats.fExternalType = 0;
-    fConfigTable[kR11_EAC_GrPixelConfig].fFormatType = kNormalizedFixedPoint_FormatType;
-    // Check for R11_EAC. We don't support R11_EAC on desktop, as most cards default to
-    // decompressing the textures in the driver, and is generally slower.
-    if (kGLES_GrGLStandard == standard && version >= GR_GL_VER(3,0)) {
-        fConfigTable[kR11_EAC_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
-    }
-    fConfigTable[kR11_EAC_GrPixelConfig].fSwizzle = GrSwizzle::RRRR();
-
-    fConfigTable[kASTC_12x12_GrPixelConfig].fFormats.fBaseInternalFormat =
-        GR_GL_COMPRESSED_RGBA_ASTC_12x12;
-    fConfigTable[kASTC_12x12_GrPixelConfig].fFormats.fSizedInternalFormat =
-        GR_GL_COMPRESSED_RGBA_ASTC_12x12;
-    fConfigTable[kASTC_12x12_GrPixelConfig].fFormats.fExternalFormat[kOther_ExternalFormatUsage] =
-        0;
-    fConfigTable[kASTC_12x12_GrPixelConfig].fFormats.fExternalType = 0;
-    fConfigTable[kASTC_12x12_GrPixelConfig].fFormatType = kNormalizedFixedPoint_FormatType;
-    if (ctxInfo.hasExtension("GL_KHR_texture_compression_astc_hdr") ||
-        ctxInfo.hasExtension("GL_KHR_texture_compression_astc_ldr") ||
-        ctxInfo.hasExtension("GL_OES_texture_compression_astc")) {
-        fConfigTable[kASTC_12x12_GrPixelConfig].fFlags = ConfigInfo::kTextureable_Flag;
-    }
-    fConfigTable[kASTC_12x12_GrPixelConfig].fSwizzle = GrSwizzle::RGBA();
 
     // Bulk populate the texture internal/external formats here and then deal with exceptions below.
 

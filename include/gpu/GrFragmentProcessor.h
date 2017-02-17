@@ -100,8 +100,8 @@ public:
 
     /**
      * True if the processor's output is a modulation of its input color or alpha with a computed
-     * color or alpha in the 0..1 range. If true and the blend mode allows it we may fold coverage
-     * into the first color fragment processor's input.
+     * premultiplied color or alpha in the 0..1 range. If true and the blend mode allows it we may
+     * fold coverage into the first color fragment processor's input.
      */
     bool modulatesInput() const { return SkToBool(fFlags & kModulatesInput_OptimizationFlag); }
 
@@ -136,18 +136,6 @@ public:
         generate the same shader code. To test for identical code generation use getGLSLProcessorKey
      */
     bool isEqual(const GrFragmentProcessor& that) const;
-
-    /**
-     * This function is used to perform optimizations. When called the invarientOuput param
-     * indicate whether the input components to this processor in the FS will have known values.
-     * In inout the validFlags member is a bitfield of GrColorComponentFlags. The isSingleComponent
-     * member indicates whether the input will be 1 or 4 bytes. The function updates the members of
-     * inout to indicate known values of its output. A component of the color member only has
-     * meaning if the corresponding bit in validFlags is set.
-     */
-    void computeInvariantOutput(GrInvariantOutput* inout) const {
-        this->onComputeInvariantOutput(inout);
-    }
 
     /**
      * Pre-order traversal of a FP hierarchy, or of the forest of FPs in a GrPipeline. In the latter
@@ -276,14 +264,6 @@ protected:
      * texture accesses and mangle their uniform and output color names.
      */
     int registerChildProcessor(sk_sp<GrFragmentProcessor> child);
-
-    /**
-     * Subclass implements this to support getConstantColorComponents(...).
-     *
-     * Note: it's up to the subclass implementation to do any recursive call to compute the child
-     * procs' output invariants; computeInvariantOutput will not be recursive.
-     */
-    virtual void onComputeInvariantOutput(GrInvariantOutput* inout) const = 0;
 
     /**
      * Sub-classes should call this in their constructors if they need access to a distance

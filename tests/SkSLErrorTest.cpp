@@ -134,7 +134,10 @@ DEF_TEST(SkSLConstructorArgumentCount, r) {
                  "void main() { vec3 x = vec3(1.0, 2.0); }",
                  "error: 1: invalid arguments to 'vec3' constructor (expected 3 scalars, but "
                  "found 2)\n1 error\n");
-    test_success(r, "void main() { vec3 x = vec3(1.0, 2.0, 3.0, 4.0); }");
+    test_failure(r,
+                 "void main() { vec3 x = vec3(1.0, 2.0, 3.0, 4.0); }",
+                 "error: 1: invalid arguments to 'vec3' constructor (expected 3 scalars, but found "
+                 "4)\n1 error\n");
 }
 
 DEF_TEST(SkSLSwizzleScalar, r) {
@@ -416,6 +419,15 @@ DEF_TEST(SkSLDivByZero, r) {
     test_failure(r,
                  "float x = -67.0 / (3.0 - 3);",
                  "error: 1: division by zero\n1 error\n");
+}
+
+DEF_TEST(SkSLUnsupportedGLSLIdentifiers, r) {
+    test_failure(r,
+                 "void main() { float x = gl_FragCoord.x; };",
+                 "error: 1: unknown identifier 'gl_FragCoord'\n1 error\n");
+    test_failure(r,
+                 "void main() { float r = gl_FragColor.r; };",
+                 "error: 1: unknown identifier 'gl_FragColor'\n1 error\n");
 }
 
 #endif

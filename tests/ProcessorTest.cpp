@@ -11,11 +11,13 @@
 #if SK_SUPPORT_GPU
 #include "GrContext.h"
 #include "GrGpuResource.h"
+#include "GrPipelineBuilder.h"
 #include "GrRenderTargetContext.h"
 #include "GrRenderTargetContextPriv.h"
 #include "GrResourceProvider.h"
 #include "glsl/GrGLSLFragmentProcessor.h"
 #include "glsl/GrGLSLFragmentShaderBuilder.h"
+#include "ops/GrNonAAFillRectOp.h"
 #include "ops/GrTestMeshDrawOp.h"
 
 namespace {
@@ -60,11 +62,6 @@ public:
         // We don't really care about reusing these.
         static int32_t gKey = 0;
         b->add32(sk_atomic_inc(&gKey));
-    }
-
-    void onComputeInvariantOutput(GrInvariantOutput* inout) const override {
-        // We don't care about optimizing these processors.
-        inout->setToUnknown();
     }
 
 private:
@@ -244,13 +241,21 @@ static GrColor texel_color(int i, int j) {
 
 static GrColor4f texel_color4f(int i, int j) { return GrColor4f::FromGrColor(texel_color(i, j)); }
 
+void test_draw_op(GrRenderTargetContext* rtc, sk_sp<GrFragmentProcessor> fp,
+                  GrTexture* inputDataTexture) {
+    GrPaint paint;
+    paint.addColorTextureProcessor(inputDataTexture, nullptr, SkMatrix::I());
+    paint.addColorFragmentProcessor(std::move(fp));
+    paint.setPorterDuffXPFactory(SkBlendMode::kSrc);
+    GrPipelineBuilder pb(std::move(paint), GrAAType::kNone);
+    auto op =
+            GrNonAAFillRectOp::Make(GrColor_WHITE, SkMatrix::I(),
+                                    SkRect::MakeWH(rtc->width(), rtc->height()), nullptr, nullptr);
+    rtc->addDrawOp(pb, GrNoClip(), std::move(op));
+}
+
 #if GR_TEST_UTILS
-DEF_GPUTEST_FOR_RENDERING_CONTEXTS(ProcessorOptimizationValidationTest, reporter, ctxInfo) {
-    // This tests code under development but not used in skia lib. Leaving this disabled until
-    // some platform-specific issues are addressed.
-    if (1) {
-        return;
-    }
+DEF_GPUTEST_FOR_GL_RENDERING_CONTEXTS(ProcessorOptimizationValidationTest, reporter, ctxInfo) {
     GrContext* context = ctxInfo.grContext();
     using FPFactory = GrProcessorTestFactory<GrFragmentProcessor>;
     SkRandom random;
@@ -261,21 +266,41 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(ProcessorOptimizationValidationTest, reporter
     desc.fHeight = 256;
     desc.fFlags = kRenderTarget_GrSurfaceFlag;
     desc.fConfig = kRGBA_8888_GrPixelConfig;
-    sk_sp<GrTexture> tex0(context->textureProvider()->createTexture(desc, SkBudgeted::kYes));
+
+    // Put premul data into the RGBA texture that the test FPs can optionally use.
+    std::unique_ptr<GrColor[]> rgbaData(new GrColor[256 * 256]);
+    for (int y = 0; y < 256; ++y) {
+        for (int x = 0; x < 256; ++x) {
+            rgbaData.get()[256 * y + x] =
+                    texel_color(random.nextULessThan(256), random.nextULessThan(256));
+        }
+    }
+    sk_sp<GrTexture> tex0(context->textureProvider()->createTexture(
+            desc, SkBudgeted::kYes, rgbaData.get(), 256 * sizeof(GrColor)));
+
+    // Put random values into the alpha texture that the test FPs can optionally use.
     desc.fConfig = kAlpha_8_GrPixelConfig;
-    sk_sp<GrTexture> tex1(context->textureProvider()->createTexture(desc, SkBudgeted::kYes));
+    std::unique_ptr<uint8_t[]> alphaData(new uint8_t[256 * 256]);
+    for (int y = 0; y < 256; ++y) {
+        for (int x = 0; x < 256; ++x) {
+            alphaData.get()[256 * y + x] = random.nextULessThan(256);
+        }
+    }
+    sk_sp<GrTexture> tex1(context->textureProvider()->createTexture(desc, SkBudgeted::kYes,
+                                                                    alphaData.get(), 256));
     GrTexture* textures[] = {tex0.get(), tex1.get()};
     GrProcessorTestData testData(&random, context, rtc.get(), textures);
 
-    std::unique_ptr<GrColor> data(new GrColor[256 * 256]);
+    // Use a different array of premul colors for the output of the fragment processor that preceeds
+    // the fragment processor under test.
     for (int y = 0; y < 256; ++y) {
         for (int x = 0; x < 256; ++x) {
-            data.get()[256 * y + x] = texel_color(x, y);
+            rgbaData.get()[256 * y + x] = texel_color(x, y);
         }
     }
     desc.fConfig = kRGBA_8888_GrPixelConfig;
     sk_sp<GrTexture> dataTexture(context->textureProvider()->createTexture(
-            desc, SkBudgeted::kYes, data.get(), 256 * sizeof(GrColor)));
+            desc, SkBudgeted::kYes, rgbaData.get(), 256 * sizeof(GrColor)));
 
     // Because processors factories configure themselves in random ways, this is not exhaustive.
     for (int i = 0; i < FPFactory::Count(); ++i) {
@@ -294,16 +319,11 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(ProcessorOptimizationValidationTest, reporter
                 !fp->modulatesInput()) {
                 continue;
             }
-            GrPaint paint;
-            paint.addColorTextureProcessor(dataTexture.get(), nullptr, SkMatrix::I());
-            paint.addColorFragmentProcessor(fp);
-            paint.setPorterDuffXPFactory(SkBlendMode::kSrc);
-            rtc->drawRect(GrNoClip(), std::move(paint), GrAA::kNo, SkMatrix::I(),
-                          SkRect::MakeWH(256.f, 256.f));
-            memset(data.get(), 0x0, sizeof(GrColor) * 256 * 256);
+            test_draw_op(rtc.get(), fp, dataTexture.get());
+            memset(rgbaData.get(), 0x0, sizeof(GrColor) * 256 * 256);
             rtc->readPixels(
                     SkImageInfo::Make(256, 256, kRGBA_8888_SkColorType, kPremul_SkAlphaType),
-                    data.get(), 0, 0, 0);
+                    rgbaData.get(), 0, 0, 0);
             bool passing = true;
             if (0) {  // Useful to see what FPs are being tested.
                 SkString children;
@@ -319,7 +339,7 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(ProcessorOptimizationValidationTest, reporter
             for (int y = 0; y < 256 && passing; ++y) {
                 for (int x = 0; x < 256 && passing; ++x) {
                     GrColor input = texel_color(x, y);
-                    GrColor output = data.get()[y * 256 + x];
+                    GrColor output = rgbaData.get()[y * 256 + x];
                     if (fp->modulatesInput()) {
                         // A modulating processor is allowed to modulate either the input color or
                         // just the input alpha.
@@ -349,12 +369,17 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(ProcessorOptimizationValidationTest, reporter
                         float gDiff = fabsf(output4f.fRGBA[1] - expected4f.fRGBA[1]);
                         float bDiff = fabsf(output4f.fRGBA[2] - expected4f.fRGBA[2]);
                         float aDiff = fabsf(output4f.fRGBA[3] - expected4f.fRGBA[3]);
-                        static constexpr float kTol = 3 / 255.f;
+                        static constexpr float kTol = 4 / 255.f;
                         if (rDiff > kTol || gDiff > kTol || bDiff > kTol || aDiff > kTol) {
                             ERRORF(reporter,
                                    "Processor %s claimed output for const input doesn't match "
-                                   "actual output.",
-                                   fp->name());
+                                   "actual output. Error: %f, Tolerance: %f, input: (%f, %f, %f, "
+                                   "%f), actual: (%f, %f, %f, %f), expected(%f, %f, %f, %f)",
+                                   fp->name(), SkTMax(rDiff, SkTMax(gDiff, SkTMax(bDiff, aDiff))),
+                                   kTol, input4f.fRGBA[0], input4f.fRGBA[1], input4f.fRGBA[2],
+                                   input4f.fRGBA[3], output4f.fRGBA[0], output4f.fRGBA[1],
+                                   output4f.fRGBA[2], output4f.fRGBA[3], expected4f.fRGBA[0],
+                                   expected4f.fRGBA[1], expected4f.fRGBA[2], expected4f.fRGBA[3]);
                             passing = false;
                         }
                     }

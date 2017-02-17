@@ -21,12 +21,13 @@
 class SkRasterPipelineBlitter : public SkBlitter {
 public:
     static SkBlitter* Create(const SkPixmap&, const SkPaint&, const SkMatrix& ctm,
-                             SkTBlitterAllocator*);
+                             SkArenaAlloc*, bool blendCorrectly);
 
-    SkRasterPipelineBlitter(SkPixmap dst, SkBlendMode blend, SkPM4f paintColor)
+    SkRasterPipelineBlitter(SkPixmap dst, SkBlendMode blend, SkPM4f paintColor, bool blendCorrectly)
         : fDst(dst)
         , fBlend(blend)
         , fPaintColor(paintColor)
+        , fBlendCorrectly(blendCorrectly)
     {}
 
     void blitH    (int x, int y, int w)                            override;
@@ -47,6 +48,7 @@ private:
     SkBlendMode      fBlend;
     SkPM4f           fPaintColor;
     SkRasterPipeline fShader;
+    bool             fBlendCorrectly;
 
     // These functions are compiled lazily when first used.
     std::function<void(size_t, size_t)> fBlitH         = nullptr,
@@ -61,18 +63,15 @@ private:
     float       fCurrentCoverage = 0.0f;
     int         fCurrentY        = 0;
 
-    // Scratch space for shaders and color filters to use.
-    char            fScratch[64];
-    SkArenaAlloc    fArena{fScratch, sizeof(fScratch), 128};
-
     typedef SkBlitter INHERITED;
 };
 
 SkBlitter* SkCreateRasterPipelineBlitter(const SkPixmap& dst,
                                          const SkPaint& paint,
                                          const SkMatrix& ctm,
-                                         SkTBlitterAllocator* alloc) {
-    return SkRasterPipelineBlitter::Create(dst, paint, ctm, alloc);
+                                         SkArenaAlloc* alloc,
+                                         bool blendCorrectly) {
+    return SkRasterPipelineBlitter::Create(dst, paint, ctm, alloc, blendCorrectly);
 }
 
 static bool supported(const SkImageInfo& info) {
@@ -88,16 +87,14 @@ static bool supported(const SkImageInfo& info) {
 SkBlitter* SkRasterPipelineBlitter::Create(const SkPixmap& dst,
                                            const SkPaint& paint,
                                            const SkMatrix& ctm,
-                                           SkTBlitterAllocator* alloc) {
-    auto blitter = alloc->createT<SkRasterPipelineBlitter>(
+                                           SkArenaAlloc* alloc,
+                                           bool blendCorrectly) {
+    auto blitter = alloc->make<SkRasterPipelineBlitter>(
             dst,
             paint.getBlendMode(),
-            SkPM4f_from_SkColor(paint.getColor(), dst.colorSpace()));
+            SkPM4f_from_SkColor(paint.getColor(), dst.colorSpace()),
+            blendCorrectly);
 
-    auto earlyOut = [&] {
-        alloc->deleteLast();
-        return nullptr;
-    };
 
     SkBlendMode*      blend       = &blitter->fBlend;
     SkPM4f*           paintColor  = &blitter->fPaintColor;
@@ -108,16 +105,15 @@ SkBlitter* SkRasterPipelineBlitter::Create(const SkPixmap& dst,
 
     // TODO: all temporary
     if (!supported(dst.info()) || !SkBlendMode_AppendStages(*blend)) {
-        return earlyOut();
+        return nullptr;
     }
 
     bool is_opaque   = paintColor->a() == 1.0f,
          is_constant = true;
     if (shader) {
         pipeline->append(SkRasterPipeline::seed_shader, &blitter->fCurrentY);
-        if (!shader->appendStages(pipeline, dst.colorSpace(), &blitter->fArena,
-                                  ctm, paint)) {
-            return earlyOut();
+        if (!shader->appendStages(pipeline, dst.colorSpace(), alloc, ctm, paint)) {
+            return nullptr;
         }
         if (!is_opaque) {
             pipeline->append(SkRasterPipeline::scale_1_float,
@@ -130,10 +126,14 @@ SkBlitter* SkRasterPipelineBlitter::Create(const SkPixmap& dst,
         pipeline->append(SkRasterPipeline::constant_color, paintColor);
     }
 
+    // Some people want the rest of the pipeline to operate on sRGB encoded color channels...
+    if (!blendCorrectly && dst.info().gammaCloseToSRGB()) {
+        pipeline->append(SkRasterPipeline::to_srgb);
+    }
+
     if (colorFilter) {
-        if (!colorFilter->appendStages(pipeline, dst.colorSpace(), &blitter->fArena,
-                                       is_opaque)) {
-            return earlyOut();
+        if (!colorFilter->appendStages(pipeline, dst.colorSpace(), alloc, is_opaque)) {
+            return nullptr;
         }
         is_opaque = is_opaque && (colorFilter->getFlags() & SkColorFilter::kAlphaUnchanged_Flag);
     }
@@ -205,7 +205,7 @@ void SkRasterPipelineBlitter::append_load_d(SkRasterPipeline* p) const {
 }
 
 void SkRasterPipelineBlitter::append_store(SkRasterPipeline* p) const {
-    if (fDst.info().gammaCloseToSRGB()) {
+    if (fBlendCorrectly && fDst.info().gammaCloseToSRGB()) {
         p->append(SkRasterPipeline::to_srgb);
     }
     if (fDst.info().colorType() == kBGRA_8888_SkColorType) {

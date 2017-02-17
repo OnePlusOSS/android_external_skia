@@ -7,6 +7,7 @@
 
 #include "SkNormalFlatSource.h"
 
+#include "SkArenaAlloc.h"
 #include "SkNormalSource.h"
 #include "SkNormalSourcePriv.h"
 #include "SkPoint3.h"
@@ -14,7 +15,6 @@
 #include "SkWriteBuffer.h"
 
 #if SK_SUPPORT_GPU
-#include "GrInvariantOutput.h"
 #include "glsl/GrGLSLFragmentProcessor.h"
 #include "glsl/GrGLSLFragmentShaderBuilder.h"
 
@@ -49,9 +49,7 @@ private:
     void onGetGLSLProcessorKey(const GrShaderCaps& caps, GrProcessorKeyBuilder* b) const override {
         GLSLNormalFlatFP::GenKey(*this, caps, b);
     }
-    void onComputeInvariantOutput(GrInvariantOutput* inout) const override {
-        inout->setToUnknown();
-    }
+
     GrColor4f constantOutputForConstantInput(GrColor4f) const override {
         return GrColor4f(0, 0, 1, 0);
     }
@@ -77,12 +75,8 @@ SkNormalFlatSourceImpl::Provider::Provider() {}
 SkNormalFlatSourceImpl::Provider::~Provider() {}
 
 SkNormalSource::Provider* SkNormalFlatSourceImpl::asProvider(const SkShader::ContextRec &rec,
-                                                             void *storage) const {
-    return new (storage) Provider();
-}
-
-size_t SkNormalFlatSourceImpl::providerSize(const SkShader::ContextRec&) const {
-    return sizeof(Provider);
+                                                             SkArenaAlloc *alloc) const {
+    return alloc->make<Provider>();
 }
 
 void SkNormalFlatSourceImpl::Provider::fillScanLine(int x, int y, SkPoint3 output[],

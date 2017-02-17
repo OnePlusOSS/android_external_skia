@@ -27,16 +27,20 @@ public:
     void onIdle() override;
     bool onTouch(intptr_t owner, sk_app::Window::InputState state, float x, float y);
     void onUIStateChanged(const SkString& stateName, const SkString& stateValue);
+    bool onKey(sk_app::Window::Key key, sk_app::Window::InputState state, uint32_t modifiers);
+    bool onChar(SkUnichar c, uint32_t modifiers);
 
 private:
     void initSlides();
     void updateTitle();
+    void setColorMode(SkColorType, sk_sp<SkColorSpace>);
     void setupCurrentSlide(int previousSlide);
 
     void updateUIState();
 
-    void drawSlide(SkCanvas* canvs, bool inSplitScreen);
+    void drawSlide(SkCanvas* canvs);
     void drawStats(SkCanvas* canvas);
+    void drawImGui(SkCanvas* canvas);
 
     void changeZoomLevel(float delta);
     SkMatrix computeMatrix();
@@ -44,7 +48,9 @@ private:
     sk_app::Window*        fWindow;
 
     static const int kMeasurementCount = 64;  // should be power of 2 for fast mod
-    double fMeasurements[kMeasurementCount];
+    double fPaintTimes[kMeasurementCount];
+    double fFlushTimes[kMeasurementCount];
+    double fAnimateTimes[kMeasurementCount];
     int fCurrentMeasurement;
 
     SkAnimTimer            fAnimTimer;
@@ -54,10 +60,18 @@ private:
     bool                   fDisplayStats;
     bool                   fRefresh; // whether to continuously refresh for measuring render time
 
-    // whether to split the screen and draw two copies of the slide, one with sRGB and one without
-    bool                   fSplitScreen;
+    SkPaint                fImGuiFontPaint;
+    bool                   fShowImGuiDebugWindow;
+    bool                   fShowImGuiTestWindow;
+
+    bool                   fShowZoomWindow;
+    sk_sp<SkImage>         fLastImage;
 
     sk_app::Window::BackendType fBackendType;
+
+    // Color properties for slide rendering
+    SkColorType            fColorType;
+    sk_sp<SkColorSpace>    fColorSpace;
 
     // transform data
     SkScalar               fZoomCenterX;

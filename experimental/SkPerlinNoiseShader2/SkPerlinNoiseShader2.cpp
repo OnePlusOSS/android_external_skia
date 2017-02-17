@@ -5,8 +5,10 @@
  * found in the LICENSE file.
  */
 
-#include "SkDither.h"
 #include "SkPerlinNoiseShader2.h"
+
+#include "SkArenaAlloc.h"
+#include "SkDither.h"
 #include "SkColorFilter.h"
 #include "SkReadBuffer.h"
 #include "SkWriteBuffer.h"
@@ -17,7 +19,6 @@
 #if SK_SUPPORT_GPU
 #include "GrContext.h"
 #include "GrCoordTransform.h"
-#include "GrInvariantOutput.h"
 #include "SkGr.h"
 #include "effects/GrConstColorProcessor.h"
 #include "glsl/GrGLSLFragmentProcessor.h"
@@ -569,13 +570,9 @@ SkPMColor SkPerlinNoiseShader2::PerlinNoiseShaderContext::shade(
     return SkPreMultiplyARGB(rgba[3], rgba[0], rgba[1], rgba[2]);
 }
 
-SkShader::Context* SkPerlinNoiseShader2::onCreateContext(const ContextRec& rec,
-                                                        void* storage) const {
-    return new (storage) PerlinNoiseShaderContext(*this, rec);
-}
-
-size_t SkPerlinNoiseShader2::onContextSize(const ContextRec&) const {
-    return sizeof(PerlinNoiseShaderContext);
+SkShader::Context* SkPerlinNoiseShader2::onMakeContext(const ContextRec& rec,
+                                                       SkArenaAlloc* alloc) const {
+    return alloc->make<PerlinNoiseShaderContext>(*this, rec);
 }
 
 SkPerlinNoiseShader2::PerlinNoiseShaderContext::PerlinNoiseShaderContext(
@@ -669,10 +666,6 @@ private:
                fNumOctaves == s.fNumOctaves &&
                fStitchTiles == s.fStitchTiles &&
                fPaintingData->fStitchDataInit == s.fPaintingData->fStitchDataInit;
-    }
-
-    void onComputeInvariantOutput(GrInvariantOutput* inout) const override {
-        inout->setToUnknown();
     }
 
     GrPerlinNoise2Effect(SkPerlinNoiseShader2::Type type, int numOctaves, bool stitchTiles,
@@ -1082,10 +1075,6 @@ private:
         const GrImprovedPerlinNoiseEffect& s = sBase.cast<GrImprovedPerlinNoiseEffect>();
         return fZ == fZ &&
                fPaintingData->fBaseFrequency == s.fPaintingData->fBaseFrequency;
-    }
-
-    void onComputeInvariantOutput(GrInvariantOutput* inout) const override {
-        inout->setToUnknown();
     }
 
     GrImprovedPerlinNoiseEffect(int octaves, SkScalar z,

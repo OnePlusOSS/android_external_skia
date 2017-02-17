@@ -7,6 +7,8 @@
 #define __STDC_LIMIT_MACROS
 
 #include "SkDraw.h"
+
+#include "SkArenaAlloc.h"
 #include "SkBlendModePriv.h"
 #include "SkBlitter.h"
 #include "SkCanvas.h"
@@ -53,7 +55,7 @@ public:
     }
     SkAutoBlitterChoose(const SkPixmap& dst, const SkMatrix& matrix,
                         const SkPaint& paint, bool drawCoverage = false) {
-        fBlitter = SkBlitter::Choose(dst, matrix, paint, &fAllocator, drawCoverage);
+        fBlitter = SkBlitter::Choose(dst, matrix, paint, &fAlloc, drawCoverage);
     }
 
     SkBlitter*  operator->() { return fBlitter; }
@@ -62,13 +64,14 @@ public:
     void choose(const SkPixmap& dst, const SkMatrix& matrix,
                 const SkPaint& paint, bool drawCoverage = false) {
         SkASSERT(!fBlitter);
-        fBlitter = SkBlitter::Choose(dst, matrix, paint, &fAllocator, drawCoverage);
+        fBlitter = SkBlitter::Choose(dst, matrix, paint, &fAlloc, drawCoverage);
     }
 
 private:
-    // Owned by fAllocator, which will handle the delete.
+    // Owned by fAlloc, which will handle the delete.
     SkBlitter*          fBlitter;
-    SkTBlitterAllocator fAllocator;
+
+    SkArenaAlloc fAlloc{kSkBlitterContextSize};
 };
 #define SkAutoBlitterChoose(...) SK_REQUIRE_LOCAL_VAR(SkAutoBlitterChoose)
 
@@ -82,6 +85,8 @@ public:
     SkAutoBitmapShaderInstall(const SkBitmap& src, const SkPaint& paint,
                               const SkMatrix* localMatrix = nullptr)
             : fPaint(paint) /* makes a copy of the paint */ {
+        // TODO(herb): Move this over to SkArenaAlloc when arena alloc has a
+        // facility to return sk_sps.
         fPaint.setShader(SkMakeBitmapShader(src, SkShader::kClamp_TileMode,
                                             SkShader::kClamp_TileMode, localMatrix,
                                             kNever_SkCopyPixelsMode,
@@ -1324,7 +1329,8 @@ void SkDraw::drawBitmap(const SkBitmap& bitmap, const SkMatrix& prematrix,
         int ix = SkScalarRoundToInt(matrix.getTranslateX());
         int iy = SkScalarRoundToInt(matrix.getTranslateY());
         if (clipHandlesSprite(*fRC, ix, iy, pmap)) {
-            SkTBlitterAllocator allocator;
+            char storage[kSkBlitterContextSize];
+            SkArenaAlloc allocator{storage};
             // blitter will be owned by the allocator.
             SkBlitter* blitter = SkBlitter::ChooseSprite(fDst, *paint, pmap, ix, iy, &allocator);
             if (blitter) {
@@ -1381,8 +1387,9 @@ void SkDraw::drawSprite(const SkBitmap& bitmap, int x, int y, const SkPaint& ori
     const SkPixmap& pmap = unlocker.pixmap();
 
     if (nullptr == paint.getColorFilter() && clipHandlesSprite(*fRC, x, y, pmap)) {
-        SkTBlitterAllocator allocator;
         // blitter will be owned by the allocator.
+        char storage[kSkBlitterContextSize];
+        SkArenaAlloc allocator{storage};
         SkBlitter* blitter = SkBlitter::ChooseSprite(fDst, paint, pmap, x, y, &allocator);
         if (blitter) {
             SkScan::FillIRect(bounds, *fRC, blitter);
@@ -1769,9 +1776,8 @@ public:
     }
 
 protected:
-    size_t onContextSize(const ContextRec&) const override;
-    Context* onCreateContext(const ContextRec& rec, void* storage) const override {
-        return new (storage) TriColorShaderContext(*this, rec);
+    Context* onMakeContext(const ContextRec& rec, SkArenaAlloc* alloc) const override {
+        return alloc->make<TriColorShaderContext>(*this, rec);
     }
 
 private:
@@ -1826,10 +1832,6 @@ SkTriColorShader::TriColorShaderContext::TriColorShaderContext(const SkTriColorS
     , fSetup(false) {}
 
 SkTriColorShader::TriColorShaderContext::~TriColorShaderContext() {}
-
-size_t SkTriColorShader::onContextSize(const ContextRec&) const {
-    return sizeof(TriColorShaderContext);
-}
 
 void SkTriColorShader::TriColorShaderContext::shadeSpan(int x, int y, SkPMColor dstC[], int count) {
     SkTriColorShader* parent = static_cast<SkTriColorShader*>(const_cast<SkShader*>(&fShader));

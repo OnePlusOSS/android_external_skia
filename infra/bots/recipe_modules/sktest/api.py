@@ -176,7 +176,7 @@ def dm_flags(bot):
     blacklist('_ image gen_platf inc13.png')
     blacklist('_ image gen_platf inc14.png')
 
-  # WIC fails on questionable bmps
+  # WIC fails on questionable bmps and arithmetic jpegs
   if 'Win' in bot:
     blacklist('_ image gen_platf rle8-height-negative.bmp')
     blacklist('_ image gen_platf rle4-height-negative.bmp')
@@ -189,6 +189,7 @@ def dm_flags(bot):
     blacklist('_ image gen_platf 4bpp-pixeldata-cropped.bmp')
     blacklist('_ image gen_platf 32bpp-pixeldata-cropped.bmp')
     blacklist('_ image gen_platf 24bpp-pixeldata-cropped.bmp')
+    blacklist('_ image gen_platf testimgari.jpg')
     if 'x86_64' in bot and 'CPU' in bot:
       # This GM triggers a SkSmallAllocator assert.
       blacklist('_ gm _ composeshader_bitmap')
@@ -310,6 +311,25 @@ def dm_flags(bot):
     # skia:5876
     blacklist(['msaa4', 'gm', '_', 'encode-platform'])
 
+  if 'AndroidOne-GPU' in bot:  # skia:4697, skia:4704, skia:4694, skia:4705
+    blacklist(['_',     'gm', '_', 'bigblurs'])
+    blacklist(['_',     'gm', '_', 'bleed'])
+    blacklist(['_',     'gm', '_', 'bleed_alpha_bmp'])
+    blacklist(['_',     'gm', '_', 'bleed_alpha_bmp_shader'])
+    blacklist(['_',     'gm', '_', 'bleed_alpha_image'])
+    blacklist(['_',     'gm', '_', 'bleed_alpha_image_shader'])
+    blacklist(['_',     'gm', '_', 'bleed_image'])
+    blacklist(['_',     'gm', '_', 'dropshadowimagefilter'])
+    blacklist(['_',     'gm', '_', 'filterfastbounds'])
+    blacklist(['gpu',   'gm', '_', 'imageblurtiled'])
+    blacklist(['msaa4', 'gm', '_', 'imageblurtiled'])
+    blacklist(['msaa4', 'gm', '_', 'imagefiltersbase'])
+    blacklist(['_',     'gm', '_', 'imagefiltersclipped'])
+    blacklist(['_',     'gm', '_', 'imagefiltersscaled'])
+    blacklist(['_',     'gm', '_', 'imageresizetiled'])
+    blacklist(['_',     'gm', '_', 'matrixconvolution'])
+    blacklist(['_',     'gm', '_', 'strokedlines'])
+
   match = []
   if 'Valgrind' in bot: # skia:3021
     match.append('~Threaded')
@@ -347,7 +367,8 @@ def dm_flags(bot):
                   '~gradients_no_texture$', # skia:6132
                   '~tilemodes', # skia:6132
                   '~shadertext$', # skia:6132
-                  '~bitmapfilters']) # skia:6132
+                  '~bitmapfilters', # skia:6132
+                  '~GrContextFactory_abandon']) #skia:6209
 
   if 'Vulkan' in bot and 'GTX1070' in bot and 'Win' in bot:
     # skia:6092
@@ -355,6 +376,14 @@ def dm_flags(bot):
 
   if 'IntelIris540' in bot and 'ANGLE' in bot:
     match.append('~IntTexture') # skia:6086
+    blacklist(['_', 'gm', '_', 'discard']) # skia:6141
+    # skia:6103
+    for config in ['angle_d3d9_es2', 'angle_d3d11_es2', 'angle_gl_es2']:
+      blacklist([config, 'gm', '_', 'multipicturedraw_invpathclip_simple'])
+      blacklist([config, 'gm', '_', 'multipicturedraw_noclip_simple'])
+      blacklist([config, 'gm', '_', 'multipicturedraw_pathclip_simple'])
+      blacklist([config, 'gm', '_', 'multipicturedraw_rectclip_simple'])
+      blacklist([config, 'gm', '_', 'multipicturedraw_rrectclip_simple'])
 
   if blacklisted:
     args.append('--blacklist')

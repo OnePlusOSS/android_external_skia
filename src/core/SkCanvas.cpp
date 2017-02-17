@@ -5,6 +5,7 @@
  * found in the LICENSE file.
  */
 
+#include "SkArenaAlloc.h"
 #include "SkBitmapDevice.h"
 #include "SkCanvas.h"
 #include "SkCanvasPriv.h"
@@ -33,7 +34,6 @@
 #include "SkRRect.h"
 #include "SkShadowPaintFilterCanvas.h"
 #include "SkShadowShader.h"
-#include "SkSmallAllocator.h"
 #include "SkSpecialImage.h"
 #include "SkSurface_Base.h"
 #include "SkTextBlob.h"
@@ -387,6 +387,16 @@ private:
     typedef SkDraw INHERITED;
 };
 
+#define FOR_EACH_TOP_DEVICE( code )                 \
+    do {                                            \
+        DeviceCM* layer = fMCRec->fTopLayer;        \
+        while (layer) {                             \
+            SkBaseDevice* device = layer->fDevice;  \
+            code;                                   \
+            layer = layer->fNext;                   \
+        }                                           \
+    } while (0)
+
 /////////////////////////////////////////////////////////////////////////////
 
 static SkPaint* set_if_needed(SkLazyPaint* lazy, const SkPaint& orig) {
@@ -499,11 +509,7 @@ public:
         }
 
         if (SkDrawLooper* looper = paint.getLooper()) {
-            fLooperContext = fLooperContextAllocator.createWithIniter(
-                looper->contextSize(),
-                [&](void* buffer) {
-                    return looper->createContext(canvas, buffer);
-                });
+            fLooperContext = looper->makeContext(canvas, &fAlloc);
             fIsSimple = false;
         } else {
             fLooperContext = nullptr;
@@ -536,7 +542,7 @@ public:
     }
 
 private:
-    SkLazyPaint     fLazyPaintInit; // base paint storage in case we need to modify it
+    SkLazyPaint     fLazyPaintInit;       // base paint storage in case we need to modify it
     SkLazyPaint     fLazyPaintPerLooper;  // per-draw-looper storage, so the looper can modify it
     SkCanvas*       fCanvas;
     const SkPaint&  fOrigPaint;
@@ -547,7 +553,8 @@ private:
     bool            fDone;
     bool            fIsSimple;
     SkDrawLooper::Context* fLooperContext;
-    SkSmallAllocator<1, 32> fLooperContextAllocator;
+    char            fStorage[48];
+    SkArenaAlloc    fAlloc {fStorage};
 
     bool doNext(SkDrawFilter::Type drawType);
 };
@@ -999,6 +1006,9 @@ void SkCanvas::doSave() {
     SkASSERT(fMCRec->fDeferredSaveCount > 0);
     fMCRec->fDeferredSaveCount -= 1;
     this->internalSave();
+#ifdef SK_USE_DEVICE_CLIPPING
+    FOR_EACH_TOP_DEVICE(device->save());
+#endif
 }
 
 void SkCanvas::restore() {
@@ -1014,6 +1024,9 @@ void SkCanvas::restore() {
             fSaveCount -= 1;
             this->internalRestore();
             this->didRestore();
+#ifdef SK_USE_DEVICE_CLIPPING
+            FOR_EACH_TOP_DEVICE(device->restore(fMCRec->fMatrix));
+#endif
         }
     }
 }
@@ -1244,7 +1257,8 @@ void SkCanvas::internalSaveLayer(const SaveLayerRec& rec, SaveLayerStrategy stra
     DeviceCM* layer =
             new DeviceCM(newDevice.get(), paint, this, fConservativeRasterClip, stashedMatrix);
 
-    layer->fNext = fMCRec->fTopLayer;
+    // only have a "next" if this new layer doesn't affect the clip (rare)
+    layer->fNext = BoundsAffectsClip(saveLayerFlags) ? nullptr : fMCRec->fTopLayer;
     fMCRec->fLayer = layer;
     fMCRec->fTopLayer = layer;    // this field is NOT an owner of layer
 
@@ -1286,7 +1300,7 @@ void SkCanvas::internalRestore() {
         recorder will have already recorded the restore).
     */
     if (layer) {
-        if (layer->fNext) {
+        if (fMCRec) {
             const SkIPoint& origin = layer->fDevice->getOrigin();
             this->internalDrawDevice(layer->fDevice, origin.x(), origin.y(), layer->fPaint);
             // restore what we smashed in internalSaveLayer
@@ -1456,6 +1470,11 @@ void SkCanvas::concat(const SkMatrix& matrix) {
     fDeviceCMDirty = true;
     fMCRec->fMatrix.preConcat(matrix);
     fIsScaleTranslate = fMCRec->fMatrix.isScaleTranslate();
+
+#ifdef SK_USE_DEVICE_CLIPPING
+    FOR_EACH_TOP_DEVICE(device->setGlobalCTM(fMCRec->fMatrix));
+#endif
+
     this->didConcat(matrix);
 }
 
@@ -1505,6 +1524,11 @@ void SkCanvas::clipRect(const SkRect& rect, SkClipOp op, bool doAA) {
 
 void SkCanvas::onClipRect(const SkRect& rect, SkClipOp op, ClipEdgeStyle edgeStyle) {
     const bool isAA = kSoft_ClipEdgeStyle == edgeStyle;
+
+#ifdef SK_USE_DEVICE_CLIPPING
+    FOR_EACH_TOP_DEVICE(device->clipRect(rect, op, isAA));
+#endif
+
     AutoValidateClip avc(this);
     fClipStack->clipRect(rect, fMCRec->fMatrix, op, isAA);
     fMCRec->fRasterClip.op(rect, fMCRec->fMatrix, this->getTopLayerBounds(), (SkRegion::Op)op,
@@ -1542,6 +1566,11 @@ void SkCanvas::onClipRRect(const SkRRect& rrect, SkClipOp op, ClipEdgeStyle edge
     fDeviceCMDirty = true;
 
     bool isAA = kSoft_ClipEdgeStyle == edgeStyle;
+    
+#ifdef SK_USE_DEVICE_CLIPPING
+    FOR_EACH_TOP_DEVICE(device->clipRRect(rrect, op, isAA));
+#endif
+    
     fClipStack->clipRRect(rrect, fMCRec->fMatrix, op, isAA);
     fMCRec->fRasterClip.op(rrect, fMCRec->fMatrix, this->getTopLayerBounds(), (SkRegion::Op)op,
                            isAA);
@@ -1579,7 +1608,11 @@ void SkCanvas::onClipPath(const SkPath& path, SkClipOp op, ClipEdgeStyle edgeSty
 
     fDeviceCMDirty = true;
     bool isAA = kSoft_ClipEdgeStyle == edgeStyle;
-
+    
+#ifdef SK_USE_DEVICE_CLIPPING
+    FOR_EACH_TOP_DEVICE(device->clipPath(path, op, isAA));
+#endif
+    
     fClipStack->clipPath(path, fMCRec->fMatrix, op, isAA);
 
     const SkPath* rasterClipPath = &path;
@@ -1602,6 +1635,10 @@ void SkCanvas::clipRegion(const SkRegion& rgn, SkClipOp op) {
 }
 
 void SkCanvas::onClipRegion(const SkRegion& rgn, SkClipOp op) {
+#ifdef SK_USE_DEVICE_CLIPPING
+    FOR_EACH_TOP_DEVICE(device->clipRegion(rgn, op));
+#endif
+    
     AutoValidateClip avc(this);
 
     fDeviceCMDirty = true;

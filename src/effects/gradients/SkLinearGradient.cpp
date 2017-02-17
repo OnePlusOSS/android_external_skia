@@ -74,16 +74,12 @@ void SkLinearGradient::flatten(SkWriteBuffer& buffer) const {
     buffer.writePoint(fEnd);
 }
 
-size_t SkLinearGradient::onContextSize(const ContextRec& rec) const {
+SkShader::Context* SkLinearGradient::onMakeContext(
+    const ContextRec& rec, SkArenaAlloc* alloc) const
+{
     return use_4f_context(rec, fGradFlags)
-        ? sizeof(LinearGradient4fContext)
-        : sizeof(LinearGradientContext);
-}
-
-SkShader::Context* SkLinearGradient::onCreateContext(const ContextRec& rec, void* storage) const {
-    return use_4f_context(rec, fGradFlags)
-        ? CheckedCreateContext<LinearGradient4fContext>(storage, *this, rec)
-        : CheckedCreateContext<  LinearGradientContext>(storage, *this, rec);
+           ? CheckedMakeContext<LinearGradient4fContext>(alloc, *this, rec)
+           : CheckedMakeContext<  LinearGradientContext>(alloc, *this, rec);
 }
 
 // For now, only a 2-stop raster pipeline specialization.
@@ -363,15 +359,15 @@ void SkLinearGradient::LinearGradientContext::shadeSpan(int x, int y, SkPMColor*
     if (fDstToIndexClass != kPerspective_MatrixClass) {
         dstProc(fDstToIndex, SkIntToScalar(x) + SK_ScalarHalf,
                              SkIntToScalar(y) + SK_ScalarHalf, &srcPt);
-        SkGradFixed dx, fx = SkScalarToGradFixed(srcPt.fX);
+        SkGradFixed dx, fx = SkScalarPinToGradFixed(srcPt.fX);
 
         if (fDstToIndexClass == kFixedStepInX_MatrixClass) {
             const auto step = fDstToIndex.fixedStepInX(SkIntToScalar(y));
             // todo: do we need a real/high-precision value for dx here?
-            dx = SkScalarToGradFixed(step.fX);
+            dx = SkScalarPinToGradFixed(step.fX);
         } else {
             SkASSERT(fDstToIndexClass == kLinear_MatrixClass);
-            dx = SkScalarToGradFixed(fDstToIndex.getScaleX());
+            dx = SkScalarPinToGradFixed(fDstToIndex.getScaleX());
         }
 
         LinearShadeProc shadeProc = shadeSpan_linear_repeat;

@@ -6,6 +6,8 @@
  */
 
 #include "SkPerlinNoiseShader.h"
+
+#include "SkArenaAlloc.h"
 #include "SkColorFilter.h"
 #include "SkReadBuffer.h"
 #include "SkWriteBuffer.h"
@@ -16,7 +18,6 @@
 #if SK_SUPPORT_GPU
 #include "GrContext.h"
 #include "GrCoordTransform.h"
-#include "GrInvariantOutput.h"
 #include "SkGr.h"
 #include "effects/GrConstColorProcessor.h"
 #include "glsl/GrGLSLFragmentProcessor.h"
@@ -434,13 +435,9 @@ SkPMColor SkPerlinNoiseShader::PerlinNoiseShaderContext::shade(
     return SkPreMultiplyARGB(rgba[3], rgba[0], rgba[1], rgba[2]);
 }
 
-SkShader::Context* SkPerlinNoiseShader::onCreateContext(const ContextRec& rec,
-                                                        void* storage) const {
-    return new (storage) PerlinNoiseShaderContext(*this, rec);
-}
-
-size_t SkPerlinNoiseShader::onContextSize(const ContextRec&) const {
-    return sizeof(PerlinNoiseShaderContext);
+SkShader::Context* SkPerlinNoiseShader::onMakeContext(
+    const ContextRec& rec, SkArenaAlloc* alloc) const {
+    return alloc->make<PerlinNoiseShaderContext>(*this, rec);
 }
 
 SkPerlinNoiseShader::PerlinNoiseShaderContext::PerlinNoiseShaderContext(
@@ -532,10 +529,6 @@ private:
                fNumOctaves == s.fNumOctaves &&
                fStitchTiles == s.fStitchTiles &&
                fPaintingData->fStitchDataInit == s.fPaintingData->fStitchDataInit;
-    }
-
-    void onComputeInvariantOutput(GrInvariantOutput* inout) const override {
-        inout->setToUnknown();
     }
 
     GrPerlinNoiseEffect(SkPerlinNoiseShader::Type type, int numOctaves, bool stitchTiles,

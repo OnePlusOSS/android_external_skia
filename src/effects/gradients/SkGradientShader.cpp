@@ -217,7 +217,7 @@ SkGradientShaderBase::SkGradientShaderBase(const Descriptor& desc, const SkMatri
 
     if (!desc.fColorSpace) {
         // This happens if we were constructed from SkColors, so our colors are really sRGB
-        fColorSpace = SkColorSpace::MakeNamed(SkColorSpace::kSRGBLinear_Named);
+        fColorSpace = SkColorSpace::MakeSRGBLinear();
     } else {
         // The color space refers to the float colors, so it must be linear gamma
         SkASSERT(desc.fColorSpace->gammaIsLinear());
@@ -740,12 +740,12 @@ void SkGradientShaderBase::getGradientTableBitmap(SkBitmap* bitmap,
                 case GradientBitmapType::kSRGB:
                     info = SkImageInfo::Make(kCache32Count, 1, kRGBA_8888_SkColorType,
                                              kPremul_SkAlphaType,
-                                             SkColorSpace::MakeNamed(SkColorSpace::kSRGB_Named));
+                                             SkColorSpace::MakeSRGB());
                     break;
                 case GradientBitmapType::kHalfFloat:
                     info = SkImageInfo::Make(
                         kCache32Count, 1, kRGBA_F16_SkColorType, kPremul_SkAlphaType,
-                        SkColorSpace::MakeNamed(SkColorSpace::kSRGBLinear_Named));
+                        SkColorSpace::MakeSRGBLinear());
                     break;
                 default:
                     SkFAIL("Unexpected bitmap type");
@@ -1121,7 +1121,6 @@ SK_DEFINE_FLATTENABLE_REGISTRAR_GROUP_END
 #if SK_SUPPORT_GPU
 
 #include "GrContext.h"
-#include "GrInvariantOutput.h"
 #include "GrShaderCaps.h"
 #include "GrTextureStripAtlas.h"
 #include "gl/GrGLContext.h"
@@ -1744,17 +1743,11 @@ bool GrGradientEffect::onIsEqual(const GrFragmentProcessor& processor) const {
     return GrColorSpaceXform::Equals(this->fColorSpaceXform.get(), ge.fColorSpaceXform.get());
 }
 
-void GrGradientEffect::onComputeInvariantOutput(GrInvariantOutput* inout) const {
-    if (fIsOpaque) {
-        inout->mulByUnknownOpaqueFourComponents();
-    } else {
-        inout->mulByUnknownFourComponents();
-    }
-}
-
 #if GR_TEST_UTILS
 GrGradientEffect::RandomGradientParams::RandomGradientParams(SkRandom* random) {
-    fColorCount = random->nextRangeU(1, kMaxRandomGradientColors);
+    // Set color count to min of 2 so that we don't trigger the const color optimization and make
+    // a non-gradient processor.
+    fColorCount = random->nextRangeU(2, kMaxRandomGradientColors);
     fUseColors4f = random->nextBool();
 
     // if one color, omit stops, otherwise randomly decide whether or not to

@@ -11,6 +11,7 @@
 #include "SkGradientBitmapCache.h"
 #include "SkGradientShader.h"
 
+#include "SkArenaAlloc.h"
 #include "SkAutoMalloc.h"
 #include "SkClampRange.h"
 #include "SkColorPriv.h"
@@ -237,10 +238,9 @@ protected:
                                    int count);
 
     template <typename T, typename... Args>
-    static Context* CheckedCreateContext(void* storage, Args&&... args) {
-        auto* ctx = new (storage) T(std::forward<Args>(args)...);
+    static Context* CheckedMakeContext(SkArenaAlloc* alloc, Args&&... args) {
+        auto* ctx = alloc->make<T>(std::forward<Args>(args)...);
         if (!ctx->isValid()) {
-            ctx->~T();
             return nullptr;
         }
         return ctx;
@@ -410,7 +410,7 @@ protected:
         the gradient factory. (The constructor may decide not to use stops, in which case fStops
         will be nullptr). */
     struct RandomGradientParams {
-        static const int kMaxRandomGradientColors = 4;
+        static const int kMaxRandomGradientColors = 5;
 
         RandomGradientParams(SkRandom* r);
 
@@ -426,8 +426,6 @@ protected:
     #endif
 
     bool onIsEqual(const GrFragmentProcessor&) const override;
-
-    void onComputeInvariantOutput(GrInvariantOutput* inout) const override;
 
     const GrCoordTransform& getCoordTransform() const { return fCoordTransform; }
 

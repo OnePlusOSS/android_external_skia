@@ -38,11 +38,10 @@ struct SkSplicer_constants {
     float    _0689206;     //  0.689206f
     float   n_00988;       // -0.0988f
     float    _00043;       //  0.0043f
-};
 
-struct SkSplicer_constants_lowp {
-    uint16_t _1;           // 0x8000 == 32768 == 1.0
-    uint16_t _0x8081;      // 0x8081 == 32897, closest value to 32768 * (256/255).
+    // fp16 <-> fp32
+    uint32_t _0x77800000;
+    uint32_t _0x07800000;
 };
 
 #endif//SkSplicer_shared_DEFINED

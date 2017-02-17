@@ -10,7 +10,6 @@
 #include "GrCoordTransform.h"
 #include "GrContext.h"
 #include "GrFragmentProcessor.h"
-#include "GrInvariantOutput.h"
 #include "GrPipeline.h"
 #include "GrProcessor.h"
 #include "GrShaderCaps.h"
@@ -301,7 +300,7 @@ GrXferProcessor::OptFlags CustomXP::onGetOptimizations(const GrPipelineAnalysis&
      */
 
     OptFlags flags = kNone_OptFlags;
-    if (analysis.fColorPOI.allStagesMultiplyInput()) {
+    if (analysis.fColorPOI.allProcessorsModulateByPremul()) {
         flags |= kCanTweakAlphaForCoverage_OptFlag;
     }
     return flags;

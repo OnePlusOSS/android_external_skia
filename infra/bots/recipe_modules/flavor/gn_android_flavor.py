@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from recipe_engine import recipe_api
+
 import default_flavor
 import subprocess
 
@@ -42,6 +44,42 @@ class GNAndroidFlavorUtils(default_flavor.DefaultFlavorUtils):
     if 'infra_step' not in kwargs:
       kwargs['infra_step'] = True
     return self._run(title, 'adb', *cmd, **kwargs)
+
+  # Waits for an android device to be available
+  def _wait_for_device(self):
+    self.m.run(self.m.python.inline, 'wait for device', program="""
+      import subprocess
+      import sys
+      import time
+
+      kicks = 0
+      while True:
+
+        times = 0
+        while times < 30:
+          print 'Waiting for the device to be connected and ready.'
+          try:
+            times += 1
+            output = subprocess.check_output(['adb', 'shell',
+                                              'getprop', 'sys.boot_completed'])
+            if '1' in output:
+              print 'Connected'
+              sys.exit(0)
+          except subprocess.CalledProcessError:
+            # no device connected/authorized yet
+            pass
+          time.sleep(5)
+        if kicks >= 3:
+          break
+        print 'Giving the device a "kick" by trying to reboot it.'
+        kicks += 1
+        print subprocess.check_output(['adb', 'reboot'])
+
+      print 'Timed out waiting for device'
+      sys.exit(1)
+      """,
+      infra_step=True)
+
 
   def compile(self, unused_target, **kwargs):
     compiler      = self.m.vars.builder_cfg.get('compiler')
@@ -89,12 +127,16 @@ class GNAndroidFlavorUtils(default_flavor.DefaultFlavorUtils):
     self._run('ninja', ninja, '-C', self.out_dir)
 
   def install(self):
+    if 'NexusPlayer' == self.m.vars.builder_cfg.get('model'):
+      self._adb('rebooting device', 'reboot')
+      self._wait_for_device()
     self._adb('mkdir ' + self.device_dirs.resource_dir,
               'shell', 'mkdir', '-p', self.device_dirs.resource_dir)
 
+
   def cleanup_steps(self):
     if self._ever_ran_adb:
-      self.m.python.inline('dump log', """
+      self.m.run(self.m.python.inline, 'dump log', program="""
       import os
       import subprocess
       import sys
@@ -112,6 +154,13 @@ class GNAndroidFlavorUtils(default_flavor.DefaultFlavorUtils):
       """,
       args=[self.m.vars.skia_out.join(self.m.vars.configuration)],
       infra_step=True)
+
+    for f in self.m.run.failed_steps:
+      if isinstance(f, recipe_api.InfraFailure):
+        self._adb('shut down device to quarantine bot', 'shell', 'reboot', '-p')
+        break
+
+    if self._ever_ran_adb:
       self._adb('kill adb server', 'kill-server')
 
   def step(self, name, cmd, env=None, **kwargs):
@@ -147,7 +196,8 @@ class GNAndroidFlavorUtils(default_flavor.DefaultFlavorUtils):
 
   def copy_directory_contents_to_device(self, host, device):
     # Copy the tree, avoiding hidden directories and resolving symlinks.
-    self.m.python.inline('push %s/* %s' % (host, device), """
+    self.m.run(self.m.python.inline, 'push %s/* %s' % (host, device),
+               program="""
     import os
     import subprocess
     import sys

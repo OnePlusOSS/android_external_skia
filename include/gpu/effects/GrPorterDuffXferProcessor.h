@@ -33,25 +33,16 @@ public:
                                                        const GrPipelineAnalysis&,
                                                        bool hasMixedSamples,
                                                        const GrXferProcessor::DstTexture*);
+
+    /** Returns a simple non-LCD porter duff blend XP with no optimizations or coverage. */
+    static sk_sp<GrXferProcessor> CreateNoCoverageXP(SkBlendMode);
+
     /** This XP implements non-LCD src-over using hw blend with no optimizations. It is returned
         by reference because it is global and its ref-cnting methods are not thread safe. */
     static const GrXferProcessor& SimpleSrcOverXP();
 
-    static inline void SrcOverInvariantBlendedColor(
-                                                GrColor inputColor,
-                                                GrColorComponentFlags validColorFlags,
-                                                bool isOpaque,
-                                                GrXPFactory::InvariantBlendedColor* blendedColor) {
-        if (!isOpaque) {
-            blendedColor->fWillBlendWithDst = true;
-            blendedColor->fKnownColorFlags = kNone_GrColorComponentFlags;
-            return;
-        }
-        blendedColor->fWillBlendWithDst = false;
-
-        blendedColor->fKnownColor = inputColor;
-        blendedColor->fKnownColorFlags = validColorFlags;
-    }
+    static void SrcOverInvariantBlendedColor(const GrProcOptInfo&,
+                                             GrXPFactory::InvariantBlendedColor*);
 
     static bool SrcOverWillNeedDstTexture(const GrCaps&, const GrPipelineAnalysis&);
 

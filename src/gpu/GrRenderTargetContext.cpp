@@ -89,7 +89,7 @@ GrRenderTargetContext::GrRenderTargetContext(GrContext* context,
     , fSurfaceProps(SkSurfacePropsCopyOrDefault(surfaceProps)) {
     if (fColorSpace) {
         // sRGB sources are very common (SkColor, etc...), so we cache that gamut transformation
-        auto srgbColorSpace = SkColorSpace::MakeNamed(SkColorSpace::kSRGB_Named);
+        auto srgbColorSpace = SkColorSpace::MakeSRGB();
         fColorXformFromSRGB = GrColorSpaceXform::Make(srgbColorSpace.get(), fColorSpace.get());
     }
     SkDEBUGCODE(this->validate();)
@@ -1255,6 +1255,13 @@ void GrRenderTargetContext::drawArc(const GrClip& clip,
                                     SkScalar sweepAngle,
                                     bool useCenter,
                                     const GrStyle& style) {
+    ASSERT_SINGLE_OWNER
+    RETURN_IF_ABANDONED
+    SkDEBUGCODE(this->validate();)
+    GR_AUDIT_TRAIL_AUTO_FRAME(fAuditTrail, "GrRenderTargetContext::drawArc");
+
+    AutoCheckFlush acf(this->drawingManager());
+
     GrAAType aaType = this->decideAAType(aa);
     if (GrAAType::kCoverage == aaType) {
         const GrShaderCaps* shaderCaps = fContext->caps()->shaderCaps();

@@ -12,12 +12,11 @@
 #if SK_SUPPORT_GPU
 
 static void test(skiatest::Reporter* r, const char* src, const SkSL::Program::Settings& settings,
-                 const char* expected, SkSL::Program::Inputs* inputs) {
+                 const char* expected, SkSL::Program::Inputs* inputs,
+                 SkSL::Program::Kind kind = SkSL::Program::kFragment_Kind) {
     SkSL::Compiler compiler;
     SkString output;
-    std::unique_ptr<SkSL::Program> program = compiler.convertProgram(SkSL::Program::kFragment_Kind,
-                                                                     SkString(src),
-                                                                     settings);
+    std::unique_ptr<SkSL::Program> program = compiler.convertProgram(kind, SkString(src), settings);
     if (!program) {
         SkDebugf("Unexpected error compiling %s\n%s", src, compiler.errorText().c_str());
     }
@@ -35,11 +34,11 @@ static void test(skiatest::Reporter* r, const char* src, const SkSL::Program::Se
 }
 
 static void test(skiatest::Reporter* r, const char* src, const GrShaderCaps& caps,
-                 const char* expected) {
+                 const char* expected, SkSL::Program::Kind kind = SkSL::Program::kFragment_Kind) {
     SkSL::Program::Settings settings;
     settings.fCaps = &caps;
     SkSL::Program::Inputs inputs;
-    test(r, src, settings, expected, &inputs);
+    test(r, src, settings, expected, &inputs, kind);
 }
 
 DEF_TEST(SkSLHelloWorld, r) {
@@ -374,24 +373,20 @@ DEF_TEST(SkSLVectorConstructors, r) {
          "vec2 v1 = vec2(1);"
          "vec2 v2 = vec2(1, 2);"
          "vec2 v3 = vec2(vec2(1));"
-         "vec2 v4 = vec2(vec3(1));"
-         "vec3 v5 = vec3(vec2(1), 1.0);"
-         "vec3 v6 = vec3(vec4(1, 2, 3, 4));"
-         "ivec2 v7 = ivec2(1);"
-         "ivec2 v8 = ivec2(vec2(1, 2));"
-         "vec2 v9 = vec2(ivec2(1, 2));",
+         "vec3 v4 = vec3(vec2(1), 1.0);"
+         "ivec2 v5 = ivec2(1);"
+         "ivec2 v6 = ivec2(vec2(1, 2));"
+         "vec2 v7 = vec2(ivec2(1, 2));",
          *SkSL::ShaderCapsFactory::Default(),
          "#version 400\n"
          "out vec4 sk_FragColor;\n"
          "vec2 v1 = vec2(1.0);\n"
          "vec2 v2 = vec2(1.0, 2.0);\n"
          "vec2 v3 = vec2(1.0);\n"
-         "vec2 v4 = vec2(vec3(1.0));\n"
-         "vec3 v5 = vec3(vec2(1.0), 1.0);\n"
-         "vec3 v6 = vec3(vec4(1.0, 2.0, 3.0, 4.0));\n"
-         "ivec2 v7 = ivec2(1);\n"
-         "ivec2 v8 = ivec2(vec2(1.0, 2.0));\n"
-         "vec2 v9 = vec2(ivec2(1, 2));\n");
+         "vec3 v4 = vec3(vec2(1.0), 1.0);\n"
+         "ivec2 v5 = ivec2(1);\n"
+         "ivec2 v6 = ivec2(vec2(1.0, 2.0));\n"
+         "vec2 v7 = vec2(ivec2(1, 2));\n");
 }
 
 DEF_TEST(SkSLArrayConstructors, r) {
@@ -677,4 +672,34 @@ DEF_TEST(SkSLFragCoord, r) {
     REPORTER_ASSERT(r, !inputs.fRTHeight);
 }
 
+DEF_TEST(SkSLVertexID, r) {
+    test(r,
+         "out int id; void main() { id = sk_VertexID; }",
+         *SkSL::ShaderCapsFactory::Default(),
+         "#version 400\n"
+         "out int id;\n"
+         "void main() {\n"
+         "    id = gl_VertexID;\n"
+         "}\n",
+         SkSL::Program::kVertex_Kind);
+}
+
+DEF_TEST(SkSLClipDistance, r) {
+    test(r,
+         "void main() { sk_ClipDistance[0] = 0; }",
+         *SkSL::ShaderCapsFactory::Default(),
+         "#version 400\n"
+         "void main() {\n"
+         "    gl_ClipDistance[0] = 0.0;\n"
+         "}\n",
+         SkSL::Program::kVertex_Kind);
+    test(r,
+         "void main() { sk_FragColor = vec4(sk_ClipDistance[0]); }",
+         *SkSL::ShaderCapsFactory::Default(),
+         "#version 400\n"
+         "out vec4 sk_FragColor;\n"
+         "void main() {\n"
+         "    sk_FragColor = vec4(gl_ClipDistance[0]);\n"
+         "}\n");
+}
 #endif
