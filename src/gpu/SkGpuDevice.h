@@ -11,7 +11,7 @@
 #include "SkGr.h"
 #include "SkGrPriv.h"
 #include "SkBitmap.h"
-#include "SkDevice.h"
+#include "SkClipStackDevice.h"
 #include "SkPicture.h"
 #include "SkRegion.h"
 #include "SkSurface.h"
@@ -31,7 +31,7 @@ class SkSpecialImage;
  *  Subclass of SkBaseDevice, which directs all drawing to the GrGpu owned by the
  *  canvas.
  */
-class SK_API SkGpuDevice : public SkBaseDevice {
+class SK_API SkGpuDevice : public SkClipStackDevice {
 public:
     enum InitContents {
         kClear_InitContents,
@@ -246,7 +246,7 @@ private:
 
     friend class GrAtlasTextContext;
     friend class SkSurface_Gpu;      // for access to surfaceProps
-    typedef SkBaseDevice INHERITED;
+    typedef SkClipStackDevice INHERITED;
 };
 
 #endif

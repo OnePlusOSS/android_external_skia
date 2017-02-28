@@ -178,12 +178,15 @@ public:
      */
     virtual sk_sp<SkColorSpace> makeSRGBGamma() = 0;
 
+    sk_sp<SkColorSpace> makeWithoutFlags();
+
     enum class Type : uint8_t {
         kXYZ,
         kA2B
     };
 
     virtual Type type() const = 0;
+    bool nonLinearBlending() const { return SkToBool(fFlags & kNonLinearBlending_ColorSpaceFlag); }
 
     typedef uint8_t ICCTypeFlag;
     static constexpr ICCTypeFlag kRGB_ICCTypeFlag  = 1 << 0;
@@ -192,21 +195,26 @@ public:
 
     static sk_sp<SkColorSpace> MakeICC(const void* input, size_t len, ICCTypeFlag type);
 
-    static sk_sp<SkColorSpace> MakeRGB(SkGammaNamed gammaNamed, const SkMatrix44& toXYZD50);
+    static sk_sp<SkColorSpace> MakeRGB(SkGammaNamed gammaNamed, const SkMatrix44& toXYZD50,
+                                       uint32_t flags);
 
     enum Named : uint8_t {
         kSRGB_Named,
         kAdobeRGB_Named,
         kSRGBLinear_Named,
+        kSRGB_NonLinearBlending_Named,
     };
 
     static sk_sp<SkColorSpace> MakeNamed(Named);
 
+    static bool EqualsIgnoreFlags(SkColorSpace* src, SkColorSpace* dst);
+
 protected:
-    SkColorSpace_Base(sk_sp<SkData> profileData);
+    SkColorSpace_Base(sk_sp<SkData> profileData, uint32_t flags);
 
 private:
     sk_sp<SkData> fProfileData;
+    uint32_t fFlags;
 
     friend class SkColorSpace;
     friend class SkColorSpace_XYZ;

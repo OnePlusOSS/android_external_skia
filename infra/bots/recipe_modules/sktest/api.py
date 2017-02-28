@@ -309,7 +309,7 @@ def dm_flags(bot):
 
   if 'Nexus5' in bot:
     # skia:5876
-    blacklist(['msaa4', 'gm', '_', 'encode-platform'])
+    blacklist(['_', 'gm', '_', 'encode-platform'])
 
   if 'AndroidOne-GPU' in bot:  # skia:4697, skia:4704, skia:4694, skia:4705
     blacklist(['_',     'gm', '_', 'bigblurs'])
@@ -374,6 +374,10 @@ def dm_flags(bot):
     # skia:6092
     match.append('~GPUMemorySize')
 
+  if 'Vulkan' in bot and 'IntelIris540' in bot and 'Ubuntu' in bot:
+    # skia:6245
+    match.append('~VkHeapTests')
+
   if 'IntelIris540' in bot and 'ANGLE' in bot:
     match.append('~IntTexture') # skia:6086
     blacklist(['_', 'gm', '_', 'discard']) # skia:6141
@@ -384,6 +388,10 @@ def dm_flags(bot):
       blacklist([config, 'gm', '_', 'multipicturedraw_pathclip_simple'])
       blacklist([config, 'gm', '_', 'multipicturedraw_rectclip_simple'])
       blacklist([config, 'gm', '_', 'multipicturedraw_rrectclip_simple'])
+
+  if 'Vivante' in bot:
+    # This causes the bot to spin for >3.5 hours.
+    blacklist(['_', 'gm', '_', 'scaled_tilemodes_npot'])
 
   if blacklisted:
     args.append('--blacklist')
@@ -539,20 +547,34 @@ def test_steps(api):
 
   env = {}
   env.update(api.vars.default_env)
-  if 'Ubuntu' in api.vars.builder_name and 'Vulkan' in api.vars.builder_name:
-    sdk_path = api.vars.slave_dir.join('linux_vulkan_sdk', 'bin')
-    lib_path = api.vars.slave_dir.join('linux_vulkan_sdk', 'lib')
+  if 'Ubuntu16' in api.vars.builder_name:
+    # The vulkan in this asset name simply means that the graphics driver
+    # supports Vulkan. It is also the driver used for GL code.
     dri_path = api.vars.slave_dir.join('linux_vulkan_intel_driver_release')
     if 'Debug' in api.vars.builder_name:
       dri_path = api.vars.slave_dir.join('linux_vulkan_intel_driver_debug')
 
+    if 'Vulkan' in api.vars.builder_name:
+      sdk_path = api.vars.slave_dir.join('linux_vulkan_sdk', 'bin')
+      lib_path = api.vars.slave_dir.join('linux_vulkan_sdk', 'lib')
+      env.update({
+        'PATH':'%%(PATH)s:%s' % sdk_path,
+        'LD_LIBRARY_PATH': '%s:%s' % (lib_path, dri_path),
+        'LIBGL_DRIVERS_PATH': dri_path,
+        'VK_ICD_FILENAMES':'%s' % dri_path.join('intel_icd.x86_64.json'),
+      })
+    else:
+      # Even the non-vulkan NUC jobs could benefit from the newer drivers.
+      env.update({
+        'LD_LIBRARY_PATH': dri_path,
+        'LIBGL_DRIVERS_PATH': dri_path,
+      })
 
-    env.update({
-      'PATH':'%%(PATH)s:%s' % sdk_path,
-      'LD_LIBRARY_PATH': lib_path,
-      'LIBGL_DRIVERS_PATH':'%s' % dri_path,
-      'VK_ICD_FILENAMES':'%s' % dri_path.join('intel_icd.x86_64.json'),
-    })
+  # See skia:2789.
+  if '_AbandonGpuContext' in api.vars.builder_cfg.get('extra_config', ''):
+    args.append('--abandonGpuContext')
+  if '_PreAbandonGpuContext' in api.vars.builder_cfg.get('extra_config', ''):
+    args.append('--preAbandonGpuContext')
 
   api.run(api.flavor.step, 'dm', cmd=args,
           abort_on_failure=False,
@@ -562,19 +584,6 @@ def test_steps(api):
     # Copy images and JSON to host machine if needed.
     api.flavor.copy_directory_contents_to_host(
         api.flavor.device_dirs.dm_dir, api.vars.dm_dir)
-
-  # See skia:2789.
-  if ('Valgrind' in api.vars.builder_name and
-      api.vars.builder_cfg.get('cpu_or_gpu') == 'GPU'):
-    abandonGpuContext = list(args)
-    abandonGpuContext.append('--abandonGpuContext')
-    api.run(api.flavor.step, 'dm --abandonGpuContext',
-                  cmd=abandonGpuContext, abort_on_failure=False)
-    preAbandonGpuContext = list(args)
-    preAbandonGpuContext.append('--preAbandonGpuContext')
-    api.run(api.flavor.step, 'dm --preAbandonGpuContext',
-                  cmd=preAbandonGpuContext, abort_on_failure=False,
-                  env=api.vars.default_env)
 
 
 class TestApi(recipe_api.RecipeApi):

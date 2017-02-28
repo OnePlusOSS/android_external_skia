@@ -843,14 +843,14 @@ static Sink* create_sink(const SkCommandLineConfig* config) {
     if (gpu_supported()) {
         if (const SkCommandLineConfigGpu* gpuConfig = config->asConfigGpu()) {
             GrContextFactory::ContextType contextType = gpuConfig->getContextType();
-            GrContextFactory::ContextOptions contextOptions = gpuConfig->getContextOptions();
+            GrContextFactory::ContextOverrides contextOverrides = gpuConfig->getContextOverrides();
             GrContextFactory testFactory;
-            if (!testFactory.get(contextType, contextOptions)) {
+            if (!testFactory.get(contextType, contextOverrides)) {
                 info("WARNING: can not create GPU context for config '%s'. "
                      "GM tests will be skipped.\n", gpuConfig->getTag().c_str());
                 return nullptr;
             }
-            return new GPUSink(contextType, contextOptions, gpuConfig->getSamples(),
+            return new GPUSink(contextType, contextOverrides, gpuConfig->getSamples(),
                                gpuConfig->getUseDIText(), gpuConfig->getColorType(),
                                sk_ref_sp(gpuConfig->getColorSpace()), FLAGS_gpu_threading);
         }
@@ -885,6 +885,9 @@ static Sink* create_via(const SkString& tag, Sink* wrapped) {
     VIA("lite",      ViaLite,              wrapped);
     VIA("pipe",      ViaPipe,              wrapped);
     VIA("twice",     ViaTwice,             wrapped);
+#ifdef TEST_VIA_SVG
+    VIA("svg",       ViaSVG,               wrapped);
+#endif
     VIA("serialize", ViaSerialization,     wrapped);
     VIA("pic",       ViaPicture,           wrapped);
     VIA("2ndpic",    ViaSecondPicture,     wrapped);
@@ -1459,7 +1462,8 @@ void RunWithGPUTestContexts(GrContextTestFn* test, GrContextTypeFilterFn* contex
                 continue;
             }
         }
-        ContextInfo ctxInfo = factory->getContextInfo(contextType);
+        ContextInfo ctxInfo = factory->getContextInfo(contextType,
+                                                  GrContextFactory::ContextOverrides::kDisableNVPR);
         if (contextTypeFilter && !(*contextTypeFilter)(contextType)) {
             continue;
         }
@@ -1468,7 +1472,7 @@ void RunWithGPUTestContexts(GrContextTestFn* test, GrContextTypeFilterFn* contex
             (*test)(reporter, ctxInfo);
         }
         ctxInfo = factory->getContextInfo(contextType,
-                                          GrContextFactory::ContextOptions::kEnableNVPR);
+                                          GrContextFactory::ContextOverrides::kRequireNVPRSupport);
         if (ctxInfo.grContext()) {
             (*test)(reporter, ctxInfo);
         }

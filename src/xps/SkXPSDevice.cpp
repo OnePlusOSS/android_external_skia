@@ -496,8 +496,8 @@ static void transform_offsets(SkScalar* stopOffsets, const int numOffsets,
 
     for (int i = 0; i < numOffsets; ++i) {
         SkPoint stop;
-        stop.fX = SkScalarMul(end.fX - start.fX, stopOffsets[i]);
-        stop.fY = SkScalarMul(end.fY - start.fY, stopOffsets[i]);
+        stop.fX = (end.fX - start.fX) * stopOffsets[i];
+        stop.fY = (end.fY - start.fY) * stopOffsets[i];
 
         SkPoint stopTransformed;
         transform.mapXY(stop.fX, stop.fY, &stopTransformed);
@@ -1143,7 +1143,7 @@ void SkXPSDevice::drawPoints(const SkDraw& d, SkCanvas::PointMode mode,
                              size_t count, const SkPoint points[],
                              const SkPaint& paint) {
     //This will call back into the device to do the drawing.
-    d.drawPoints(mode, count, points, paint, true);
+    d.drawPoints(mode, count, points, paint, this);
 }
 
 void SkXPSDevice::drawVertices(const SkDraw&, SkCanvas::VertexMode,
@@ -1387,11 +1387,10 @@ void SkXPSDevice::convertToPpm(const SkMaskFilter* filter,
     matrix->postScale(ppuScale->fX, ppuScale->fY);
 
     const SkIRect& irect = clip;
-    SkRect clipRect = SkRect::MakeLTRB(
-        SkScalarMul(SkIntToScalar(irect.fLeft), ppuScale->fX),
-        SkScalarMul(SkIntToScalar(irect.fTop), ppuScale->fY),
-        SkScalarMul(SkIntToScalar(irect.fRight), ppuScale->fX),
-        SkScalarMul(SkIntToScalar(irect.fBottom), ppuScale->fY));
+    SkRect clipRect = SkRect::MakeLTRB(SkIntToScalar(irect.fLeft) * ppuScale->fX,
+                                       SkIntToScalar(irect.fTop) * ppuScale->fY,
+                                       SkIntToScalar(irect.fRight) * ppuScale->fX,
+                                       SkIntToScalar(irect.fBottom) * ppuScale->fY);
     clipRect.roundOut(clipIRect);
 }
 
@@ -2274,7 +2273,7 @@ void SkXPSDevice::drawBitmapRect(const SkDraw& draw,
 
     auto bitmapShader = SkMakeBitmapShader(bitmap, SkShader::kClamp_TileMode,
                                            SkShader::kClamp_TileMode, &matrix,
-                                           kNever_SkCopyPixelsMode, nullptr);
+                                           kNever_SkCopyPixelsMode);
     SkASSERT(bitmapShader);
     if (!bitmapShader) { return; }
     SkPaint paintWithShader(paint);

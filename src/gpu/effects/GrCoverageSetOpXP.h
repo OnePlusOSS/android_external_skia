@@ -29,18 +29,21 @@ class GrCoverageSetOpXPFactory : public GrXPFactory {
 public:
     static const GrXPFactory* Get(SkRegion::Op regionOp, bool invertCoverage = false);
 
-    void getInvariantBlendedColor(const GrProcOptInfo& colorPOI,
-                                  GrXPFactory::InvariantBlendedColor*) const override;
-
 private:
     constexpr GrCoverageSetOpXPFactory(SkRegion::Op regionOp, bool invertCoverage);
 
+    bool willReadsDst(const FragmentProcessorAnalysis&) const override {
+        return fRegionOp != SkRegion::kReplace_Op;
+    }
+
     GrXferProcessor* onCreateXferProcessor(const GrCaps&,
-                                           const GrPipelineAnalysis&,
+                                           const FragmentProcessorAnalysis&,
                                            bool hasMixedSamples,
                                            const DstTexture*) const override;
 
-    bool willReadDstColor(const GrCaps&, ColorType, CoverageType) const override { return false; }
+    bool onWillReadDstInShader(const GrCaps&, const FragmentProcessorAnalysis&) const override {
+        return false;
+    }
 
     GR_DECLARE_XP_FACTORY_TEST;
 

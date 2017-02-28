@@ -538,6 +538,17 @@ STAGE_CTX(store_565, uint16_t**) {
                                    | SkNf_round(b, SK_B16_MASK) << SK_B16_SHIFT), ptr);
 }
 
+STAGE_CTX(load_4444, const uint16_t**) {
+    auto ptr = *ctx + x;
+    from_4444(load(tail, ptr), &r,&g,&b,&a);
+}
+STAGE_CTX(store_4444, uint16_t**) {
+    auto ptr = *ctx + x;
+    store(tail, SkNx_cast<uint16_t>( SkNf_round(r, 0xF) << SK_R4444_SHIFT
+                                   | SkNf_round(g, 0xF) << SK_G4444_SHIFT
+                                   | SkNf_round(b, 0xF) << SK_B4444_SHIFT
+                                   | SkNf_round(a, 0xF) << SK_A4444_SHIFT), ptr);
+}
 
 STAGE_CTX(load_f16, const uint64_t**) {
     auto ptr = *ctx + x;
@@ -693,20 +704,6 @@ STAGE_CTX(load_tables_rgb_u16_be, const LoadTablesContext*) {
     a = 1.0f;
 }
 
-STAGE_CTX(store_tables, const StoreTablesContext*) {
-    auto ptr = ctx->fDst + x;
-
-    float scale = ctx->fCount - 1;
-    SkNi ri = SkNf_round(scale, r);
-    SkNi gi = SkNf_round(scale, g);
-    SkNi bi = SkNf_round(scale, b);
-
-    store(tail, ( SkNx_cast<int>(gather(tail, ctx->fR, ri)) << 0
-                | SkNx_cast<int>(gather(tail, ctx->fG, gi)) << 8
-                | SkNx_cast<int>(gather(tail, ctx->fB, bi)) << 16
-                | SkNf_round(255.0f, a)                     << 24), (int*)ptr);
-}
-
 SI SkNf inv(const SkNf& x) { return 1.0f - x; }
 
 RGBA_XFERMODE(clear)    { return 0.0f; }
@@ -763,6 +760,48 @@ RGB_XFERMODE(softlight) {
 STAGE(luminance_to_alpha) {
     a = SK_LUM_COEFF_R*r + SK_LUM_COEFF_G*g + SK_LUM_COEFF_B*b;
     r = g = b = 0;
+}
+
+STAGE(rgb_to_hsl) {
+    auto max = SkNf::Max(SkNf::Max(r, g), b);
+    auto min = SkNf::Min(SkNf::Min(r, g), b);
+    auto l = 0.5f * (max + min);
+
+    auto d = max - min;
+    auto d_inv = 1.0f/d;
+    auto s = (max == min).thenElse(0.0f,
+        d/(l > 0.5f).thenElse(2.0f - max - min, max + min));
+    SkNf h = (max != r).thenElse(0.0f,
+        (g - b)*d_inv + (g < b).thenElse(6.0f, 0.0f));
+    h = (max == g).thenElse((b - r)*d_inv + 2.0f, h);
+    h = (max == b).thenElse((r - g)*d_inv + 4.0f, h);
+    h *= (1/6.0f);
+
+    h = (max == min).thenElse(0.0f, h);
+
+    r = h;
+    g = s;
+    b = l;
+}
+
+STAGE(hsl_to_rgb) {
+    auto h = r;
+    auto s = g;
+    auto l = b;
+    auto q = (l < 0.5f).thenElse(l*(1.0f + s), l + s - l*s);
+    auto p = 2.0f*l - q;
+
+    auto hue_to_rgb = [](const SkNf& p, const SkNf& q, const SkNf& t) {
+        auto t2 = (t < 0.0f).thenElse(t + 1.0f, (t > 1.0f).thenElse(t - 1.0f, t));
+        return (t2 < (1/6.0f)).thenElse(
+            p + (q - p)*6.0f*t, (t2 < (3/6.0f)).thenElse(
+                q, (t2 < (4/6.0f)).thenElse(
+                    p + (q - p)*((4/6.0f) - t2)*6.0f, p)));
+    };
+
+    r = (s == 0.f).thenElse(l, hue_to_rgb(p, q, h + (1/3.0f)));
+    g = (s == 0.f).thenElse(l, hue_to_rgb(p, q, h));
+    b = (s == 0.f).thenElse(l, hue_to_rgb(p, q, h - (1/3.0f)));
 }
 
 STAGE_CTX(matrix_2x3, const float*) {
@@ -1092,6 +1131,16 @@ STAGE_CTX(byte_tables, const void*) {
     a = SkNf_from_byte(gather(tail, tables->a, SkNf_round(255.0f, a)));
 }
 
+STAGE_CTX(byte_tables_rgb, const void*) {
+    struct Tables { const uint8_t *r, *g, *b; int n; };
+    auto tables = (const Tables*)ctx;
+
+    float scale = tables->n - 1;
+    r = SkNf_from_byte(gather(tail, tables->r, SkNf_round(scale, r)));
+    g = SkNf_from_byte(gather(tail, tables->g, SkNf_round(scale, g)));
+    b = SkNf_from_byte(gather(tail, tables->b, SkNf_round(scale, b)));
+}
+
 STAGE_CTX(shader_adapter, SkShader::Context*) {
     SkPM4f buf[N];
     static_assert(sizeof(buf) == sizeof(r) + sizeof(g) + sizeof(b) + sizeof(a), "");
@@ -1167,11 +1216,6 @@ namespace {
 }
 
 namespace SK_OPTS_NS {
-
-    SI std::function<void(size_t, size_t)>
-    compile_pipeline(const SkRasterPipeline::Stage* stages, int nstages) {
-        return Compiled{stages,nstages};
-    }
 
     SI void run_pipeline(size_t x, size_t n,
                          const SkRasterPipeline::Stage* stages, int nstages) {

@@ -73,7 +73,7 @@ static SkPaint calculate_text_paint(const SkPaint& paint) {
                                                     kStdFakeBoldInterpKeys,
                                                     kStdFakeBoldInterpValues,
                                                     kStdFakeBoldInterpLength);
-        SkScalar width = SkScalarMul(result.getTextSize(), fakeBoldScale);
+        SkScalar width = result.getTextSize() * fakeBoldScale;
         if (result.getStyle() == SkPaint::kFill_Style) {
             result.setStyle(SkPaint::kStrokeAndFill_Style);
         } else {
@@ -343,8 +343,7 @@ void GraphicStackState::updateDrawingState(const SkPDFDevice::GraphicStateEntry&
 
     if (state.fTextScaleX) {
         if (state.fTextScaleX != currentEntry()->fTextScaleX) {
-            SkScalar pdfScale = SkScalarMul(state.fTextScaleX,
-                                            SkIntToScalar(100));
+            SkScalar pdfScale = state.fTextScaleX * 1000;
             SkPDFUtils::AppendScalar(pdfScale, fContentStream);
             fContentStream->writeText(" Tz\n");
             currentEntry()->fTextScaleX = state.fTextScaleX;
@@ -566,12 +565,10 @@ void SkPDFDevice::drawPoints(const SkDraw& d,
     // We only use this when there's a path effect because of the overhead
     // of multiple calls to setUpContentEntry it causes.
     if (passedPaint.getPathEffect()) {
-        if (d.fRC->isEmpty()) {
+        if (d.fClipStack->isEmpty(this->getGlobalBounds())) {
             return;
         }
-        SkDraw pointDraw(d);
-        pointDraw.fDevice = this;
-        pointDraw.drawPoints(mode, count, points, passedPaint, true);
+        d.drawPoints(mode, count, points, passedPaint, this);
         return;
     }
 
@@ -690,7 +687,7 @@ void SkPDFDevice::drawRect(const SkDraw& d,
     r.sort();
 
     if (paint.getPathEffect()) {
-        if (d.fRC->isEmpty()) {
+        if (d.fClipStack->isEmpty(this->getGlobalBounds())) {
             return;
         }
         SkPath path;
@@ -752,7 +749,7 @@ void SkPDFDevice::drawPath(const SkDraw& d,
     }
 
     if (paint.getPathEffect()) {
-        if (d.fRC->isEmpty()) {
+        if (d.fClipStack->isEmpty(this->getGlobalBounds())) {
             return;
         }
         if (!pathIsMutable) {
@@ -872,7 +869,7 @@ void SkPDFDevice::drawBitmap(const SkDraw& d,
                              const SkBitmap& bitmap,
                              const SkMatrix& matrix,
                              const SkPaint& srcPaint) {
-    if (bitmap.drawsNothing() || d.fRC->isEmpty()) {
+    if (bitmap.drawsNothing() || d.fClipStack->isEmpty(this->getGlobalBounds())) {
         return;
     }
     SkPaint paint = srcPaint;
@@ -894,7 +891,7 @@ void SkPDFDevice::drawSprite(const SkDraw& d,
                              int x,
                              int y,
                              const SkPaint& srcPaint) {
-    if (bitmap.drawsNothing() || d.fRC->isEmpty()) {
+    if (bitmap.drawsNothing() || d.fClipStack->isEmpty(this->getGlobalBounds())) {
         return;
     }
     SkPaint paint = srcPaint;
@@ -921,9 +918,6 @@ void SkPDFDevice::drawImage(const SkDraw& draw,
     }
     if (image->isOpaque()) {
         replace_srcmode_on_opaque_paint(&paint);
-    }
-    if (draw.fRC->isEmpty()) {
-        return;
     }
     SkImageSubset imageSubset(sk_ref_sp(const_cast<SkImage*>(image)));
     if (!imageSubset.isValid()) {
@@ -1443,7 +1437,7 @@ void SkPDFDevice::drawVertices(const SkDraw& d, SkCanvas::VertexMode,
                                const SkPoint texs[], const SkColor colors[],
                                SkBlendMode, const uint16_t indices[],
                                int indexCount, const SkPaint& paint) {
-    if (d.fRC->isEmpty()) {
+    if (d.fClipStack->isEmpty(this->getGlobalBounds())) {
         return;
     }
     // TODO: implement drawVertices
@@ -1575,7 +1569,7 @@ bool SkPDFDevice::handleInversePath(const SkDraw& d, const SkPath& origPath,
         return false;
     }
 
-    if (d.fRC->isEmpty()) {
+    if (d.fClipStack->isEmpty(this->getGlobalBounds())) {
         return false;
     }
 
@@ -1602,7 +1596,6 @@ bool SkPDFDevice::handleInversePath(const SkDraw& d, const SkPath& origPath,
 
     // Get bounds of clip in current transform space
     // (clip bounds are given in device space).
-    SkRect bounds;
     SkMatrix transformInverse;
     SkMatrix totalMatrix = *d.fMatrix;
     if (prePathMatrix) {
@@ -1611,7 +1604,7 @@ bool SkPDFDevice::handleInversePath(const SkDraw& d, const SkPath& origPath,
     if (!totalMatrix.invert(&transformInverse)) {
         return false;
     }
-    bounds.set(d.fRC->getBounds());
+    SkRect bounds = SkRect::Make(d.fRC->getBounds());
     transformInverse.mapRect(&bounds);
 
     // Extend the bounds by the line width (plus some padding)
@@ -1749,33 +1742,16 @@ void SkPDFDevice::drawFormXObjectWithMask(int xObjectIndex,
 }
 
 SkPDFDevice::ContentEntry* SkPDFDevice::setUpContentEntry(const SkClipStack* clipStack,
-                                             const SkRegion& clipRegion,
-                                             const SkMatrix& matrix,
-                                             const SkPaint& paint,
-                                             bool hasText,
-                                             sk_sp<SkPDFObject>* dst) {
+                                                          const SkRegion& clipRegion,
+                                                          const SkMatrix& matrix,
+                                                          const SkPaint& paint,
+                                                          bool hasText,
+                                                          sk_sp<SkPDFObject>* dst) {
     *dst = nullptr;
     if (clipRegion.isEmpty()) {
         return nullptr;
     }
-
-    // The clip stack can come from an SkDraw where it is technically optional.
-    SkClipStack synthesizedClipStack;
-    if (clipStack == nullptr) {
-        if (clipRegion == fExistingClipRegion) {
-            clipStack = &fExistingClipStack;
-        } else {
-            // GraphicStackState::updateClip expects the clip stack to have
-            // fExistingClip as a prefix, so start there, then set the clip
-            // to the passed region.
-            synthesizedClipStack = fExistingClipStack;
-            SkPath clipPath;
-            clipRegion.getBoundaryPath(&clipPath);
-            synthesizedClipStack.clipPath(clipPath, SkMatrix::I(), kReplace_SkClipOp, false);
-            clipStack = &synthesizedClipStack;
-        }
-    }
-
+    SkASSERT(clipStack);
     SkBlendMode blendMode = paint.getBlendMode();
 
     // For the following modes, we want to handle source and destination
@@ -2296,7 +2272,8 @@ void SkPDFDevice::drawSpecial(const SkDraw& draw, SkSpecialImage* srcImg, int x,
         SkIPoint offset = SkIPoint::Make(0, 0);
         SkMatrix matrix = *draw.fMatrix;
         matrix.postTranslate(SkIntToScalar(-x), SkIntToScalar(-y));
-        const SkIRect clipBounds = draw.fRC->getBounds().makeOffset(-x, -y);
+        const SkIRect clipBounds =
+            draw.fClipStack->bounds(this->imageInfo().bounds()).roundOut().makeOffset(-x, -y);
         sk_sp<SkImageFilterCache> cache(this->getImageFilterCache());
         // TODO: Should PDF be operating in a specified color space? For now, run the filter
         // in the same color space as the source (this is different from all other backends).

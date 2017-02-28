@@ -32,9 +32,21 @@ SkBaseDevice::SkBaseDevice(const SkImageInfo& info, const SkSurfaceProps& surfac
     , fSurfaceProps(surfaceProps)
 {
     fOrigin.setZero();
+    fCTM.reset();
 }
 
-SkBaseDevice::~SkBaseDevice() {}
+void SkBaseDevice::setOrigin(const SkMatrix& globalCTM, int x, int y) {
+    fOrigin.set(x, y);
+    fCTM = globalCTM;
+    fCTM.postTranslate(SkIntToScalar(-x), SkIntToScalar(-y));
+}
+
+void SkBaseDevice::setGlobalCTM(const SkMatrix& ctm) {
+    fCTM = ctm;
+    if (fOrigin.fX | fOrigin.fY) {
+        fCTM.postTranslate(-SkIntToScalar(fOrigin.fX), -SkIntToScalar(fOrigin.fY));
+    }
+}
 
 SkPixelGeometry SkBaseDevice::CreateInfo::AdjustGeometry(const SkImageInfo& info,
                                                          TileUsage tileUsage,
@@ -159,61 +171,8 @@ void SkBaseDevice::drawTextBlob(const SkDraw& draw, const SkTextBlob* blob, SkSc
     }
 }
 
-bool SkBaseDevice::drawExternallyScaledImage(const SkDraw& draw,
-                                             const SkImage* image,
-                                             const SkRect* src,
-                                             const SkRect& dst,
-                                             const SkPaint& paint,
-                                             SkCanvas::SrcRectConstraint constraint) {
-    SkImageCacherator* cacherator = as_IB(image)->peekCacherator();
-    if (!cacherator) {
-        return false;
-    }
-
-    SkTLazy<SkRect> tmpSrc(src);
-    if (!tmpSrc.isValid()) {
-        tmpSrc.init(SkRect::Make(image->bounds()));
-    }
-
-    SkMatrix m = *draw.fMatrix;
-    m.preConcat(SkMatrix::MakeRectToRect(*tmpSrc.get(), dst, SkMatrix::kFill_ScaleToFit));
-
-    // constrain src to our bounds
-    if (!image->bounds().contains(*tmpSrc.get()) &&
-        !tmpSrc.get()->intersect(SkRect::Make(image->bounds()))) {
-        return false;
-    }
-
-    SkImageGenerator::ScaledImageRec rec;
-    if (!cacherator->directAccessScaledImage(*tmpSrc.get(), m, paint.getFilterQuality(), &rec)) {
-        return false;
-    }
-
-    SkBitmap bm;
-    if (!bm.installPixels(rec.fPixmap.info(), const_cast<void*>(rec.fPixmap.addr()),
-                          rec.fPixmap.rowBytes(), rec.fPixmap.ctable(),
-                          rec.fReleaseProc, rec.fReleaseCtx)) {
-        return false;
-    }
-
-    SkTCopyOnFirstWrite<SkPaint> adjustedPaint(paint);
-    if (rec.fQuality != paint.getFilterQuality()) {
-        adjustedPaint.writable()->setFilterQuality(rec.fQuality);
-    }
-
-    this->drawBitmapRect(draw, bm, &rec.fSrcRect, dst, *adjustedPaint, constraint);
-
-    return true;
-}
 void SkBaseDevice::drawImage(const SkDraw& draw, const SkImage* image, SkScalar x, SkScalar y,
                              const SkPaint& paint) {
-    // Default impl : turns everything into raster bitmap
-    if (this->drawExternallyScaledImage(draw, image, nullptr,
-                                        SkRect::Make(image->bounds()).makeOffset(x, y),
-                                        paint, SkCanvas::kFast_SrcRectConstraint)) {
-        return;
-    }
-
     SkBitmap bm;
     if (as_IB(image)->getROPixels(&bm, this->imageInfo().colorSpace())) {
         this->drawBitmap(draw, bm, SkMatrix::MakeTrans(x, y), paint);
@@ -223,11 +182,6 @@ void SkBaseDevice::drawImage(const SkDraw& draw, const SkImage* image, SkScalar 
 void SkBaseDevice::drawImageRect(const SkDraw& draw, const SkImage* image, const SkRect* src,
                                  const SkRect& dst, const SkPaint& paint,
                                  SkCanvas::SrcRectConstraint constraint) {
-    // Default impl : turns everything into raster bitmap
-    if (this->drawExternallyScaledImage(draw, image, src, dst, paint, constraint)) {
-        return;
-    }
-
     SkBitmap bm;
     if (as_IB(image)->getROPixels(&bm, this->imageInfo().colorSpace())) {
         this->drawBitmapRect(draw, bm, src, dst, paint, constraint);
@@ -519,6 +473,10 @@ void SkBaseDevice::drawTextRSXform(const SkDraw& draw, const void* text, size_t 
         localM.setRSXform(*xform++);
         currM.setConcat(*draw.fMatrix, localM);
         localD.fMatrix = &currM;
+#ifdef SK_USE_DEVICE_CLIPPING
+        SkAutoDeviceCTMRestore adc(this, currM);
+#endif
+
         int subLen = proc((const char*)text);
         this->drawText(localD, text, subLen, 0, 0, paint);
         text = (const char*)text + subLen;

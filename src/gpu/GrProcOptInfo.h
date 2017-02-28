@@ -22,23 +22,19 @@ class GrPrimitiveProcessor;
  */
 class GrProcOptInfo {
 public:
-    GrProcOptInfo() { this->reset(0, kNone_GrColorComponentFlags); }
+    GrProcOptInfo() = default;
 
-    GrProcOptInfo(GrColor color, GrColorComponentFlags colorFlags) {
-        this->reset(color, colorFlags);
+    GrProcOptInfo(const GrPipelineInput& input) : GrProcOptInfo() {
+        fAllProcessorsCompatibleWithCoverageAsAlpha = !input.isLCDCoverage();
+        fIsOpaque = input.isOpaque();
+        GrColor color;
+        if (input.isConstant(&color)) {
+            fLastKnownOutputColor = GrColor4f::FromGrColor(color);
+            fProcessorsVisitedWithKnownOutput = 0;
+        }
     }
 
-    void resetToLCDCoverage(GrColor color, GrColorComponentFlags colorFlags) {
-        this->internalReset(color, colorFlags, true);
-    }
-
-    void reset(GrColor color, GrColorComponentFlags colorFlags) {
-        this->internalReset(color, colorFlags, false);
-    }
-
-    void reset(const GrPipelineInput& input) {
-        this->internalReset(input.fColor, input.fValidFlags, input.fIsLCDCoverage);
-    }
+    void reset(const GrPipelineInput& input) { *this = GrProcOptInfo(input); }
 
     /**
      * Runs through a series of processors and updates calculated values. This can be called
@@ -46,13 +42,10 @@ public:
      */
     void analyzeProcessors(const GrFragmentProcessor* const* processors, int cnt);
 
-    bool isSolidWhite() const {
-        return fProcessorsVisitedWithKnownOutput == fTotalProcessorsVisited &&
-               fLastKnownOutputColor == GrColor4f::OpaqueWhite();
-    }
     bool isOpaque() const { return fIsOpaque; }
-    bool allProcessorsModulateByPremul() const { return fAllProcessorsModulatePremul; }
-    bool isLCDCoverage() const { return fIsLCDCoverage; }
+    bool allProcessorsCompatibleWithCoverageAsAlpha() const {
+        return fAllProcessorsCompatibleWithCoverageAsAlpha;
+    }
 
     /**
      * If we detected that the result after the first N processors is a known color then we
@@ -67,6 +60,7 @@ public:
         }
         return SkTMax(0, fProcessorsVisitedWithKnownOutput);
     }
+
     int initialProcessorsToEliminate(GrColor4f* newPipelineInputColor) const {
         if (fProcessorsVisitedWithKnownOutput > 0) {
             *newPipelineInputColor = fLastKnownOutputColor;
@@ -85,25 +79,11 @@ public:
     }
 
 private:
-    void internalReset(GrColor color, GrColorComponentFlags colorFlags, bool isLCDCoverage) {
-        fTotalProcessorsVisited = 0;
-        fIsLCDCoverage = isLCDCoverage;
-        fIsOpaque = (kA_GrColorComponentFlag & colorFlags) && GrColorIsOpaque(color);
-        fAllProcessorsModulatePremul = true;
-        if (kRGBA_GrColorComponentFlags == colorFlags) {
-            fProcessorsVisitedWithKnownOutput = 0;
-            fLastKnownOutputColor = GrColor4f::FromGrColor(color);
-        } else {
-            // -1 so that we know that even without adding processors that the color is not known.
-            fProcessorsVisitedWithKnownOutput = -1;
-        }
-    }
-
-    int fTotalProcessorsVisited;
-    int fProcessorsVisitedWithKnownOutput;
-    bool fIsLCDCoverage;
-    bool fIsOpaque;
-    bool fAllProcessorsModulatePremul;
+    int fTotalProcessorsVisited = 0;
+    // negative one means even the color is unknown before adding the first processor.
+    int fProcessorsVisitedWithKnownOutput = -1;
+    bool fIsOpaque = false;
+    bool fAllProcessorsCompatibleWithCoverageAsAlpha = true;
     GrColor4f fLastKnownOutputColor;
 };
 

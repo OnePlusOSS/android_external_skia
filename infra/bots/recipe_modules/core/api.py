@@ -41,22 +41,19 @@ class SkiaApi(recipe_api.RecipeApi):
         git = 'git.bat'
       else:
         git = 'git'
-      self.m.step('git remote set-url',
-                  cmd=[git, 'remote', 'set-url', 'origin', repo.url],
-                  cwd=repo_path,
-                  infra_step=True)
-      self.m.step('git fetch',
-                  cmd=[git, 'fetch'],
-                  cwd=repo_path,
-                  infra_step=True)
-      self.m.step('git reset',
-                  cmd=[git, 'reset', '--hard', repo.revision],
-                  cwd=repo_path,
-                  infra_step=True)
-      self.m.step('git clean',
-                  cmd=[git, 'clean', '-d', '-f'],
-                  cwd=repo_path,
-                  infra_step=True)
+      with self.m.step.context({'cwd': repo_path}):
+        self.m.step('git remote set-url',
+                    cmd=[git, 'remote', 'set-url', 'origin', repo.url],
+                    infra_step=True)
+        self.m.step('git fetch',
+                    cmd=[git, 'fetch'],
+                    infra_step=True)
+        self.m.step('git reset',
+                    cmd=[git, 'reset', '--hard', repo.revision],
+                    infra_step=True)
+        self.m.step('git clean',
+                    cmd=[git, 'clean', '-d', '-f'],
+                    infra_step=True)
 
   def checkout_steps(self):
     """Run the steps to obtain a checkout of Skia."""
@@ -80,9 +77,15 @@ class SkiaApi(recipe_api.RecipeApi):
     main_repo = self.m.properties['repository']
     if self.m.vars.need_pdfium_checkout:
       main_repo = 'https://pdfium.googlesource.com/pdfium.git'
+    if self.m.vars.need_flutter_checkout:
+      main_repo = 'https://github.com/flutter/engine.git'
     main_name = self.m.path.basename(main_repo)
     if main_name.endswith('.git'):
       main_name = main_name[:-len('.git')]
+      # Special case for flutter because it seems to need a very specific
+      # directory structure to successfully build.
+      if self.m.vars.need_flutter_checkout and main_name == 'engine':
+        main_name = 'src/flutter'
     main = gclient_cfg.solutions.add()
     main.name = main_name
     main.managed = False
@@ -100,6 +103,21 @@ class SkiaApi(recipe_api.RecipeApi):
       m[main_name] = 'got_%s_revision' % main_name
 
       skia_dep_path = 'pdfium/third_party/skia'
+      gclient_cfg.patch_projects['skia'] = (skia_dep_path, 'HEAD')
+      gclient_cfg.revisions[skia_dep_path] = self.m.properties['revision']
+      m[skia_dep_path] = 'got_revision'
+      patch_root = skia_dep_path
+
+    if self.m.vars.need_flutter_checkout:
+      # Skia is a DEP of Flutter; the 'revision' property is a Skia revision,
+      # and any patch should be applied to Skia, not Flutter.
+      main.revision = 'origin/master'
+      main.managed = True
+      m[main_name] = 'got_flutter_revision'
+      if 'Android' in self.m.vars.builder_cfg.get('extra_config', ''):
+        gclient_cfg.target_os.add('android')
+
+      skia_dep_path = 'src/third_party/skia'
       gclient_cfg.patch_projects['skia'] = (skia_dep_path, 'HEAD')
       gclient_cfg.revisions[skia_dep_path] = self.m.properties['revision']
       m[skia_dep_path] = 'got_revision'
@@ -137,14 +155,14 @@ class SkiaApi(recipe_api.RecipeApi):
         )
 
     self.m.gclient.c = gclient_cfg
-    update_step = self.m.bot_update.ensure_checkout(
-        cwd=self.m.vars.checkout_root,
-        patch_root=patch_root,
-        **checkout_kwargs)
+    with self.m.step.context({'cwd': self.m.vars.checkout_root}):
+      update_step = self.m.bot_update.ensure_checkout(
+          patch_root=patch_root,
+          **checkout_kwargs)
 
     self.m.vars.got_revision = (
         update_step.presentation.properties['got_revision'])
 
     if self.m.vars.need_chromium_checkout:
-      self.m.gclient.runhooks(cwd=self.m.vars.checkout_root,
-                              env=self.m.vars.gclient_env)
+      with self.m.step.context({'cwd': self.m.vars.checkout_root}):
+        self.m.gclient.runhooks(env=self.m.vars.gclient_env)

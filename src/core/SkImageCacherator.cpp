@@ -17,6 +17,7 @@
 
 #if SK_SUPPORT_GPU
 #include "GrContext.h"
+#include "GrContextPriv.h"
 #include "GrGpuResourcePriv.h"
 #include "GrImageTextureMaker.h"
 #include "GrResourceKey.h"
@@ -100,9 +101,9 @@ SkImageCacherator::Validator::Validator(sk_sp<SharedGenerator> gen, const SkIRec
     }
 }
 
-SkImageCacherator* SkImageCacherator::NewFromGenerator(SkImageGenerator* gen,
+SkImageCacherator* SkImageCacherator::NewFromGenerator(std::unique_ptr<SkImageGenerator> gen,
                                                        const SkIRect* subset) {
-    Validator validator(SharedGenerator::Make(gen), subset);
+    Validator validator(SharedGenerator::Make(std::move(gen)), subset);
 
     return validator ? new SkImageCacherator(&validator) : nullptr;
 }
@@ -173,13 +174,6 @@ bool SkImageCacherator::directGeneratePixels(const SkImageInfo& info, void* pixe
         return false;
     }
     return generator->getPixels(info, pixels, rb);
-}
-
-bool SkImageCacherator::directAccessScaledImage(const SkRect& srcRect,
-                                                const SkMatrix& totalMatrix,
-                                                SkFilterQuality fq,
-                                                SkImageGenerator::ScaledImageRec* rec) {
-    return ScopedGenerator(fSharedGenerator)->accessScaledImage(srcRect, totalMatrix, fq, rec);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -569,7 +563,7 @@ GrTexture* SkImageCacherator::lockTexture(GrContext* ctx, const GrUniqueKey& ori
 #endif
 
     // 4. Ask the generator to return YUV planes, which the GPU can convert
-    {
+    if (!ctx->contextPriv().disableGpuYUVConversion()) {
         ScopedGenerator generator(fSharedGenerator);
         Generator_GrYUVProvider provider(generator);
         sk_sp<GrTexture> tex = provider.refAsTexture(ctx, desc, true);

@@ -86,7 +86,7 @@ GrCircleBlurFragmentProcessor::GrCircleBlurFragmentProcessor(const SkRect& circl
                                                              float textureRadius,
                                                              float solidRadius,
                                                              GrTexture* blurProfile)
-        : INHERITED(kModulatesInput_OptimizationFlag)
+        : INHERITED(kCompatibleWithCoverageAsAlpha_OptimizationFlag)
         , fCircle(circle)
         , fSolidRadius(solidRadius)
         , fTextureRadius(textureRadius)
@@ -346,7 +346,7 @@ sk_sp<GrFragmentProcessor> GrCircleBlurFragmentProcessor::TestCreate(GrProcessor
     SkScalar wh = d->fRandom->nextRangeScalar(100.f, 1000.f);
     SkScalar sigma = d->fRandom->nextRangeF(1.f,10.f);
     SkRect circle = SkRect::MakeWH(wh, wh);
-    return GrCircleBlurFragmentProcessor::Make(d->fContext->textureProvider(), circle, sigma);
+    return GrCircleBlurFragmentProcessor::Make(d->context()->textureProvider(), circle, sigma);
 }
 #endif
 

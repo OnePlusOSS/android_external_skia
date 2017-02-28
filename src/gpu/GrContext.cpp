@@ -19,7 +19,7 @@
 #include "GrSurfaceProxyPriv.h"
 #include "GrTextureContext.h"
 
-#include "SkConfig8888.h"
+#include "SkConvertPixels.h"
 #include "SkGrPriv.h"
 #include "SkUnPreMultiplyPriv.h"
 
@@ -91,6 +91,7 @@ void GrContext::initCommon(const GrContextOptions& options) {
     fResourceCache = new GrResourceCache(fCaps);
     fResourceProvider = new GrResourceProvider(fGpu, fResourceCache, &fSingleOwner);
 
+    fDisableGpuYUVConversion = options.fDisableGpuYUVConversion;
     fDidTestPMConversions = false;
 
     GrRenderTargetOpList::Options rtOpListOptions;

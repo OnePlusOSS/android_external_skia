@@ -183,7 +183,7 @@ struct DegenerateTestData {
 };
 
 static const SkScalar kClose = (SK_Scalar1 / 16);
-static const SkScalar kCloseSqd = SkScalarMul(kClose, kClose);
+static const SkScalar kCloseSqd = kClose * kClose;
 
 static void update_degenerate_test(DegenerateTestData* data, const SkPoint& pt) {
     switch (data->fStage) {
@@ -218,8 +218,8 @@ static inline bool get_direction(const SkPath& path, const SkMatrix& m,
     }
     // check whether m reverses the orientation
     SkASSERT(!m.hasPerspective());
-    SkScalar det2x2 = SkScalarMul(m.get(SkMatrix::kMScaleX), m.get(SkMatrix::kMScaleY)) -
-                      SkScalarMul(m.get(SkMatrix::kMSkewX), m.get(SkMatrix::kMSkewY));
+    SkScalar det2x2 = m.get(SkMatrix::kMScaleX) * m.get(SkMatrix::kMScaleY) -
+                      m.get(SkMatrix::kMSkewX)  * m.get(SkMatrix::kMSkewY);
     if (det2x2 < 0) {
         *dir = SkPathPriv::OppositeFirstDirection(*dir);
     }
@@ -656,7 +656,7 @@ GR_DEFINE_GEOMETRY_PROCESSOR_TEST(QuadEdgeEffect);
 #if GR_TEST_UTILS
 sk_sp<GrGeometryProcessor> QuadEdgeEffect::TestCreate(GrProcessorTestData* d) {
     // Doesn't work without derivative instructions.
-    return d->fContext->caps()->shaderCaps()->shaderDerivativeSupport()
+    return d->context()->caps()->shaderCaps()->shaderDerivativeSupport()
                    ? QuadEdgeEffect::Make(GrRandomColor(d->fRandom),
                                           GrTest::TestMatrix(d->fRandom),
                                           d->fRandom->nextBool())
@@ -747,9 +747,9 @@ private:
         this->setTransformedBounds(path.getBounds(), viewMatrix, HasAABloat::kYes, IsZeroArea::kNo);
     }
 
-    void getPipelineAnalysisInput(GrPipelineAnalysisDrawOpInput* input) const override {
-        input->pipelineColorInput()->setKnownFourComponents(fColor);
-        input->pipelineCoverageInput()->setUnknownSingleComponent();
+    void getFragmentProcessorAnalysisInputs(FragmentProcessorAnalysisInputs* input) const override {
+        input->colorInput()->setToConstant(fColor);
+        input->coverageInput()->setToUnknown();
     }
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {

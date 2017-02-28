@@ -10,6 +10,7 @@
 
 #include "GrBuffer.h"
 #include "GrContext.h"
+#include "GrDistanceFieldGenFromVector.h"
 #include "GrDrawOpTest.h"
 #include "GrOpFlushState.h"
 #include "GrPipelineBuilder.h"
@@ -20,10 +21,9 @@
 #include "effects/GrDistanceFieldGeoProc.h"
 #include "ops/GrMeshDrawOp.h"
 
-#include "SkPathOps.h"
 #include "SkAutoMalloc.h"
 #include "SkDistanceFieldGen.h"
-#include "GrDistanceFieldGenFromVector.h"
+#include "SkPathOps.h"
 
 #define ATLAS_TEXTURE_WIDTH 2048
 #define ATLAS_TEXTURE_HEIGHT 2048
@@ -39,9 +39,12 @@ static int g_NumFreedShapes = 0;
 #endif
 
 // mip levels
-static const int kSmallMIP = 32;
-static const int kMediumMIP = 73;
-static const int kLargeMIP = 162;
+static const SkScalar kIdealMinMIP = 12;
+static const SkScalar kMaxMIP = 162;
+
+static const SkScalar kMaxDim = 73;
+static const SkScalar kMinSize = SK_ScalarHalf;
+static const SkScalar kMaxSize = 2*kMaxMIP;
 
 // Callback to clear out internal path cache when eviction occurs
 void GrAADistanceFieldPathRenderer::HandleEviction(GrDrawOpAtlas::AtlasID id, void* pr) {
@@ -107,14 +110,20 @@ bool GrAADistanceFieldPathRenderer::onCanDrawPath(const CanDrawPathArgs& args) c
         return false;
     }
 
-    // Only support paths with bounds within kMediumMIP by kMediumMIP,
-    // scaled to have bounds within 2.0f*kLargeMIP by 2.0f*kLargeMIP.
+    // Only support paths with bounds within kMaxDim by kMaxDim,
+    // scaled to have bounds within kMaxSize by kMaxSize.
     // The goal is to accelerate rendering of lots of small paths that may be scaling.
-    SkScalar maxScale = args.fViewMatrix->getMaxScale();
+    SkScalar scaleFactors[2];
+    if (!args.fViewMatrix->getMinMaxScales(scaleFactors)) {
+        return false;
+    }
     SkRect bounds = args.fShape->styledBounds();
+    SkScalar minDim = SkMinScalar(bounds.width(), bounds.height());
     SkScalar maxDim = SkMaxScalar(bounds.width(), bounds.height());
+    SkScalar minSize = minDim * SkScalarAbs(scaleFactors[0]);
+    SkScalar maxSize = maxDim * SkScalarAbs(scaleFactors[1]);
 
-    return maxDim <= kMediumMIP && maxDim * maxScale <= 2.0f*kLargeMIP;
+    return maxDim <= kMaxDim && kMinSize <= minSize && maxSize <= kMaxSize;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -168,9 +177,9 @@ private:
         this->setTransformedBounds(shape.bounds(), viewMatrix, HasAABloat::kYes, IsZeroArea::kNo);
     }
 
-    void getPipelineAnalysisInput(GrPipelineAnalysisDrawOpInput* input) const override {
-        input->pipelineColorInput()->setKnownFourComponents(fShapes[0].fColor);
-        input->pipelineCoverageInput()->setUnknownSingleComponent();
+    void getFragmentProcessorAnalysisInputs(FragmentProcessorAnalysisInputs* input) const override {
+        input->colorInput()->setToConstant(fShapes[0].fColor);
+        input->coverageInput()->setToUnknown();
     }
 
     void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
@@ -237,25 +246,39 @@ private:
             const Entry& args = fShapes[i];
 
             // get mip level
-            SkScalar maxScale = this->viewMatrix().getMaxScale();
+            SkScalar maxScale = SkScalarAbs(this->viewMatrix().getMaxScale());
             const SkRect& bounds = args.fShape.bounds();
             SkScalar maxDim = SkMaxScalar(bounds.width(), bounds.height());
-            SkScalar size = maxScale * maxDim;
-            SkScalar desiredDimension;
-            // For minimizing (or the common case of identity) transforms, we try to
-            // create the DF at the appropriately sized native src-space path resolution.
+            // We try to create the DF at a power of two scaled path resolution (1/2, 1, 2, 4, etc)
             // In the majority of cases this will yield a crisper rendering.
-            if (size <= maxDim && maxDim < kSmallMIP) {
-                desiredDimension = maxDim;
-            } else if (size <= kSmallMIP) {
-                desiredDimension = kSmallMIP;
-            } else if (size <= maxDim) {
-                desiredDimension = maxDim;
-            } else if (size <= kMediumMIP) {
-                desiredDimension = kMediumMIP;
-            } else {
-                desiredDimension = kLargeMIP;
+            SkScalar mipScale = 1.0f;
+            // Our mipscale is the maxScale clamped to the next highest power of 2
+            if (maxScale <= SK_ScalarHalf) {
+                SkScalar log = SkScalarFloorToScalar(SkScalarLog2(SkScalarInvert(maxScale)));
+                mipScale = SkScalarPow(2, -log);
+            } else if (maxScale > SK_Scalar1) {
+                SkScalar log = SkScalarCeilToScalar(SkScalarLog2(maxScale));
+                mipScale = SkScalarPow(2, log);
             }
+            SkASSERT(maxScale <= mipScale);
+
+            SkScalar mipSize = mipScale*SkScalarAbs(maxDim);
+            // For sizes less than kIdealMinMIP we want to use as large a distance field as we can
+            // so we can preserve as much detail as possible. However, we can't scale down more
+            // than a 1/4 of the size without artifacts. So the idea is that we pick the mipsize
+            // just bigger than the ideal, and then scale down until we are no more than 4x the
+            // original mipsize.
+            if (mipSize < kIdealMinMIP) {
+                SkScalar newMipSize = mipSize;
+                do {
+                    newMipSize *= 2;
+                } while (newMipSize < kIdealMinMIP);
+                while (newMipSize > 4*mipSize) {
+                    newMipSize *= 0.25f;
+                }
+                mipSize = newMipSize;
+            }
+            SkScalar desiredDimension = SkTMin(mipSize, kMaxMIP);
 
             // check to see if path is cached
             ShapeData::Key key(args.fShape, SkScalarCeilToInt(desiredDimension));
@@ -333,6 +356,8 @@ private:
 
         SkASSERT(devPathBounds.fLeft == 0);
         SkASSERT(devPathBounds.fTop == 0);
+        SkASSERT(devPathBounds.width() > 0);
+        SkASSERT(devPathBounds.height() > 0);
 
         // setup signed distance field storage
         SkIRect dfBounds = devPathBounds.makeOutset(SK_DistanceFieldPad, SK_DistanceFieldPad);

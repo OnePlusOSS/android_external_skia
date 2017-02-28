@@ -86,8 +86,6 @@ BASE_SRCS_ALL = struct(
         "third_party/etc1/*.h",
         "third_party/gif/*.cpp",
         "third_party/gif/*.h",
-        "third_party/ktx/*.cpp",
-        "third_party/ktx/*.h",
     ],
     # Note: PRIVATE_HDRS_INCLUDE_LIST is excluded from BASE_SRCS_ALL here
     # because they are required to appear in srcs for some rules but hdrs for
@@ -106,9 +104,9 @@ BASE_SRCS_ALL = struct(
         "src/gpu/gl/mac/*",
         "src/gpu/gl/win/*",
         "src/images/*",
+        "src/jumper/*",
         "src/opts/**/*",
         "src/ports/**/*",
-        "src/splicer/*",
         "src/utils/android/**/*",
         "src/utils/mac/**/*",
         "src/utils/SkThreadUtils_win.cpp",  # Windows-only. Move to ports?
@@ -392,7 +390,6 @@ INCLUDES = [
     "src/utils",
     "third_party/etc1",
     "third_party/gif",
-    "third_party/ktx",
 ]
 
 ################################################################################
@@ -483,7 +480,9 @@ DM_SRCS_IOS = struct(
 DM_INCLUDES = [
     "dm",
     "gm",
+    "experimental/svg/model",
     "src/codec",
+    "src/core",
     "src/effects",
     "src/effects/gradients",
     "src/fonts",
@@ -491,6 +490,7 @@ DM_INCLUDES = [
     "src/pathops",
     "src/pipe/utils",
     "src/ports",
+    "src/xml",
     "tests",
     "tools",
     "tools/debugger",
@@ -599,6 +599,7 @@ DEFINES_ALL = [
     "SK_NO_ANALYTIC_AA",
     "SK_SUPPORT_LEGACY_BITMAP_SETPIXELREF",
     "SK_SUPPORT_LEGACY_CLIPOP_EXOTIC_NAMES",
+    "SK_SUPPORT_LEGACY_CANVAS_HELPERS",
 ]
 
 ################################################################################

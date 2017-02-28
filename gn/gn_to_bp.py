@@ -37,6 +37,7 @@ tool_shared_libs = [
 
 # The ordering here is important: libsfntly needs to come after libskia.
 tool_static_libs = [
+    'libarect',
     'libjsoncpp',
     'libskia',
     'libsfntly',
@@ -130,6 +131,7 @@ cc_library {
         "libz",
     ],
     static_libs: [
+        "libarect",
         "libsfntly",
         "libwebp-decode",
         "libwebp-encode",
@@ -186,7 +188,6 @@ cc_test {
 
 # We'll run GN to get the main source lists and include directories for Skia.
 gn_args = {
-  'skia_enable_splicer':             'false',
   'skia_enable_vulkan_debug_layers': 'false',
   'skia_use_system_expat':           'true',
   'skia_use_system_jsoncpp':         'true',

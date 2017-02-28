@@ -12,7 +12,6 @@
 #include "SkNx.h"
 #include "SkTArray.h"
 #include "SkTypes.h"
-#include <functional>
 #include <vector>
 
 /**
@@ -68,11 +67,12 @@
     M(load_a8)   M(store_a8)                                     \
     M(load_g8)                                                   \
     M(load_565)  M(store_565)                                    \
+    M(load_4444) M(store_4444)                                   \
     M(load_f16)  M(store_f16)                                    \
     M(load_8888) M(store_8888)                                   \
     M(load_u16_be) M(load_rgb_u16_be) M(store_u16_be)            \
     M(load_tables_u16_be) M(load_tables_rgb_u16_be)              \
-    M(load_tables) M(store_tables)                               \
+    M(load_tables)                                               \
     M(scale_u8) M(scale_1_float)                                 \
     M(lerp_u8) M(lerp_565) M(lerp_1_float)                       \
     M(dstatop) M(dstin) M(dstout) M(dstover)                     \
@@ -96,8 +96,10 @@
     M(bicubic_n3y) M(bicubic_n1y) M(bicubic_p1y) M(bicubic_p3y)  \
     M(save_xy) M(accumulate)                                     \
     M(linear_gradient_2stops)                                    \
-    M(byte_tables)                                               \
-    M(shader_adapter)
+    M(byte_tables) M(byte_tables_rgb)                            \
+    M(shader_adapter)                                            \
+    M(rgb_to_hsl)                                                \
+    M(hsl_to_rgb)
 
 class SkRasterPipeline {
 public:
@@ -117,9 +119,6 @@ public:
     // Runs the pipeline walking x through [x,x+n).
     void run(size_t x, size_t n) const;
 
-    // If you're going to run() the pipeline more than once, it's best to compile it.
-    std::function<void(size_t x, size_t n)> compile() const;
-
     void dump() const;
 
     struct Stage {
@@ -131,8 +130,10 @@ public:
     // Use these helpers to keep things sane.
     void append_from_srgb(SkAlphaType);
 
+    bool empty() const { return fStages.empty(); }
+
 private:
-    std::function<void(size_t, size_t)> jit() const;
+    bool run_with_jumper(size_t x, size_t n) const;
 
     std::vector<Stage> fStages;
 };

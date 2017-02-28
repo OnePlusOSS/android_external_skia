@@ -31,7 +31,9 @@ public:
 
 private:
     AARectEffect(GrPrimitiveEdgeType edgeType, const SkRect& rect)
-            : INHERITED(kModulatesInput_OptimizationFlag), fRect(rect), fEdgeType(edgeType) {
+            : INHERITED(kCompatibleWithCoverageAsAlpha_OptimizationFlag)
+            , fRect(rect)
+            , fEdgeType(edgeType) {
         this->initClassID<AARectEffect>();
     }
 
@@ -251,8 +253,12 @@ sk_sp<GrFragmentProcessor> GrConvexPolyEffect::Make(GrPrimitiveEdgeType type, co
             return GrConstColorProcessor::Make(GrColor4f::OpaqueWhite(),
                                                GrConstColorProcessor::kModulateRGBA_InputMode);
         }
+        // This could use kIgnore instead of kModulateRGBA but it would trigger a debug print
+        // about a coverage processor not being compatible with the alpha-as-coverage optimization.
+        // We don't really care about this unlikely case so we just use kModulateRGBA to suppress
+        // the print.
         return GrConstColorProcessor::Make(GrColor4f::TransparentBlack(),
-                                           GrConstColorProcessor::kIgnore_InputMode);
+                                           GrConstColorProcessor::kModulateRGBA_InputMode);
     }
 
     SkVector t;
@@ -327,7 +333,9 @@ GrGLSLFragmentProcessor* GrConvexPolyEffect::onCreateGLSLInstance() const  {
 }
 
 GrConvexPolyEffect::GrConvexPolyEffect(GrPrimitiveEdgeType edgeType, int n, const SkScalar edges[])
-        : INHERITED(kModulatesInput_OptimizationFlag), fEdgeType(edgeType), fEdgeCount(n) {
+        : INHERITED(kCompatibleWithCoverageAsAlpha_OptimizationFlag)
+        , fEdgeType(edgeType)
+        , fEdgeCount(n) {
     this->initClassID<GrConvexPolyEffect>();
     // Factory function should have already ensured this.
     SkASSERT(n <= kMaxEdges);

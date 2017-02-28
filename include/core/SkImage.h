@@ -73,7 +73,8 @@ public:
      *
      *  If a subset is specified, it must be contained within the generator's bounds.
      */
-    static sk_sp<SkImage> MakeFromGenerator(SkImageGenerator*, const SkIRect* subset = nullptr);
+    static sk_sp<SkImage> MakeFromGenerator(std::unique_ptr<SkImageGenerator>,
+                                            const SkIRect* subset = nullptr);
 
     /**
      *  Construct a new SkImage based on the specified encoded data. Returns NULL on failure,
@@ -158,14 +159,6 @@ public:
         kU8,
         kF16,
     };
-
-    /**
-     *  Create a new image from the specified picture.
-     *  This SkImage has no defined BitDepth or SkColorSpace, it is a flexible container for
-     *  draw commands.
-     */
-    static sk_sp<SkImage> MakeFromPicture(sk_sp<SkPicture> picture, const SkISize& dimensions,
-                                          const SkMatrix* matrix, const SkPaint* paint);
 
     /**
      *  Create a new image from the specified picture.

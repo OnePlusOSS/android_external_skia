@@ -973,7 +973,7 @@ GrTexture* GrRectBlurEffect::CreateBlurProfileTexture(GrTextureProvider* texture
 
 GrRectBlurEffect::GrRectBlurEffect(const SkRect& rect, float sigma, GrTexture* blurProfile,
                                    GrSLPrecision precision)
-        : INHERITED(kModulatesInput_OptimizationFlag)
+        : INHERITED(kCompatibleWithCoverageAsAlpha_OptimizationFlag)
         , fRect(rect)
         , fSigma(sigma)
         , fBlurProfileSampler(blurProfile)
@@ -1003,7 +1003,7 @@ sk_sp<GrFragmentProcessor> GrRectBlurEffect::TestCreate(GrProcessorTestData* d) 
     float sigma = d->fRandom->nextRangeF(3,8);
     float width = d->fRandom->nextRangeF(200,300);
     float height = d->fRandom->nextRangeF(200,300);
-    return GrRectBlurEffect::Make(d->fContext->textureProvider(), SkRect::MakeWH(width, height),
+    return GrRectBlurEffect::Make(d->context()->textureProvider(), SkRect::MakeWH(width, height),
                                   sigma);
 }
 #endif
@@ -1197,7 +1197,7 @@ sk_sp<GrFragmentProcessor> GrRRectBlurEffect::Make(GrContext* context,
 }
 
 GrRRectBlurEffect::GrRRectBlurEffect(float sigma, const SkRRect& rrect, GrTexture* ninePatchTexture)
-        : INHERITED(kModulatesInput_OptimizationFlag)
+        : INHERITED(kCompatibleWithCoverageAsAlpha_OptimizationFlag)
         , fRRect(rrect)
         , fSigma(sigma)
         , fNinePatchSampler(ninePatchTexture) {
@@ -1224,7 +1224,7 @@ sk_sp<GrFragmentProcessor> GrRRectBlurEffect::TestCreate(GrProcessorTestData* d)
     SkScalar sigma = d->fRandom->nextRangeF(1.f,10.f);
     SkRRect rrect;
     rrect.setRectXY(SkRect::MakeWH(w, h), r, r);
-    return GrRRectBlurEffect::Make(d->fContext, sigma, sigma, rrect, rrect);
+    return GrRRectBlurEffect::Make(d->context(), sigma, sigma, rrect, rrect);
 }
 #endif
 

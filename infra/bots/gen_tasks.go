@@ -86,6 +86,12 @@ func deriveCompileTaskName(jobName string, parts map[string]string) string {
 		task_os := parts["os"]
 		ec := parts["extra_config"]
 		ec = strings.TrimSuffix(ec, "_Skpbench")
+		ec = strings.TrimSuffix(ec, "_AbandonGpuContext")
+		ec = strings.TrimSuffix(ec, "_PreAbandonGpuContext")
+		if ec == "Valgrind" {
+			// skia:6267
+			ec = ""
+		}
 		if task_os == "Android" {
 			if ec == "Vulkan" {
 				ec = "Android_Vulkan"
@@ -177,6 +183,17 @@ func swarmDimensions(parts map[string]string) []string {
 				glog.Fatalf("Entry %q not found in GPU mapping: %v", parts["cpu_or_gpu_value"], GPU_MAPPING)
 			}
 			d["gpu"] = gpu
+
+			// Hack: Specify machine_type dimension for NUCs and ShuttleCs. We
+			// temporarily have two types of machines with a GTX960. The only way to
+			// distinguish these bots is by machine_type.
+			machine_type, ok := map[string]string{
+				"NUC6i7KYK": "n1-highcpu-8",
+				"ShuttleC":  "n1-standard-8",
+			}[parts["model"]]
+			if ok {
+				d["machine_type"] = machine_type
+			}
 		}
 	} else {
 		d["gpu"] = "none"
@@ -396,9 +413,10 @@ func test(b *specs.TasksCfgBuilder, name string, parts map[string]string, compil
 			fmt.Sprintf("patch_issue=%s", specs.PLACEHOLDER_ISSUE),
 			fmt.Sprintf("patch_set=%s", specs.PLACEHOLDER_PATCHSET),
 		},
-		IoTimeout: 40 * time.Minute,
-		Isolate:   "test_skia.isolate",
-		Priority:  0.8,
+		IoTimeout:   40 * time.Minute,
+		Isolate:     "test_skia.isolate",
+		MaxAttempts: 1,
+		Priority:    0.8,
 	}
 	if strings.Contains(parts["extra_config"], "Valgrind") {
 		s.ExecutionTimeout = 9 * time.Hour
@@ -467,9 +485,10 @@ func perf(b *specs.TasksCfgBuilder, name string, parts map[string]string, compil
 			fmt.Sprintf("patch_issue=%s", specs.PLACEHOLDER_ISSUE),
 			fmt.Sprintf("patch_set=%s", specs.PLACEHOLDER_PATCHSET),
 		},
-		IoTimeout: 40 * time.Minute,
-		Isolate:   isolate,
-		Priority:  0.8,
+		IoTimeout:   40 * time.Minute,
+		Isolate:     isolate,
+		MaxAttempts: 1,
+		Priority:    0.8,
 	}
 	if strings.Contains(parts["extra_config"], "Valgrind") {
 		s.ExecutionTimeout = 9 * time.Hour
@@ -566,8 +585,10 @@ func process(b *specs.TasksCfgBuilder, name string) {
 	if strings.Contains(name, "Ubuntu") && strings.Contains(name, "SAN") {
 		pkgs = append(pkgs, b.MustGetCipdPackageFromAsset("clang_linux"))
 	}
-	if strings.Contains(name, "Ubuntu") && strings.Contains(name, "Vulkan") {
-		pkgs = append(pkgs, b.MustGetCipdPackageFromAsset("linux_vulkan_sdk"))
+	if strings.Contains(name, "Ubuntu16") {
+		if strings.Contains(name, "Vulkan") {
+			pkgs = append(pkgs, b.MustGetCipdPackageFromAsset("linux_vulkan_sdk"))
+		}
 		if strings.Contains(name, "Release") {
 			pkgs = append(pkgs, b.MustGetCipdPackageFromAsset("linux_vulkan_intel_driver_release"))
 		} else {

@@ -29,9 +29,9 @@ declare_args() {
   skia_enable_android_framework_defines = false
   skia_enable_discrete_gpu = true
   skia_enable_effects = true
+  skia_enable_jumper = is_skia_standalone
   skia_enable_gpu = true
   skia_enable_pdf = true
-  skia_enable_splicer = is_skia_standalone && sanitize != "MSAN" && !is_ios
   skia_enable_tools = is_skia_standalone
   skia_enable_vulkan_debug_layers = is_skia_standalone && is_debug
   skia_vulkan_sdk = getenv("VULKAN_SDK")
@@ -67,7 +67,6 @@ skia_public_includes = [
   "include/svg",
   "include/utils",
   "include/utils/mac",
-  "include/xml",
 ]
 
 # Skia public API, generally provided by :skia.
@@ -112,9 +111,9 @@ config("skia_private") {
     "src/sksl",
     "src/utils",
     "src/utils/win",
+    "src/xml",
     "third_party/etc1",
     "third_party/gif",
-    "third_party/ktx",
   ]
 
   defines = [
@@ -494,13 +493,18 @@ optional("raw") {
   ]
 }
 
-optional("splicer") {
-  enabled = skia_enable_splicer
-  public_defines = [ "SK_RASTER_PIPELINE_HAS_JIT" ]
-
+optional("jumper") {
+  enabled = skia_enable_jumper
+  public_defines = [ "SK_JUMPER" ]
   sources = [
-    "src/splicer/SkSplicer.cpp",
+    "src/jumper/SkJumper.cpp",
+    "src/jumper/SkJumper_stages.cpp",
   ]
+  if (is_win && target_cpu == "x64") {
+    sources += [ "src/jumper/SkJumper_generated_win.S" ]
+  } else if (!is_win) {
+    sources += [ "src/jumper/SkJumper_generated.S" ]
+  }
 }
 
 optional("typeface_freetype") {
@@ -562,11 +566,11 @@ component("skia") {
     ":gpu",
     ":hsw",
     ":jpeg",
+    ":jumper",
     ":none",
     ":pdf",
     ":png",
     ":raw",
-    ":splicer",
     ":sse2",
     ":sse41",
     ":sse42",
@@ -613,7 +617,6 @@ component("skia") {
     "src/utils/mac/SkStream_mac.cpp",
     "third_party/etc1/etc1.cpp",
     "third_party/gif/SkGifImageReader.cpp",
-    "third_party/ktx/ktx.cpp",
   ]
 
   libs = []

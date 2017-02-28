@@ -190,6 +190,12 @@ config("default") {
     if (target_cpu == "arm") {
       _target = "armv7"
     }
+    asmflags += [
+      "-isysroot",
+      ios_sysroot,
+      "-arch",
+      _target,
+    ]
     cflags += [
       "-isysroot",
       ios_sysroot,
@@ -433,6 +439,14 @@ toolchain("msvc") {
   if (target_cpu == "x86") {
     bin += "_x86"
     env_setup = "cmd /c $windk/win_sdk/bin/SetEnv.cmd /x86 && "
+  }
+
+  tool("asm") {
+    command = "$env_setup$bin/ml64.exe /nologo /c /Fo {{output}} {{source}}"
+    outputs = [
+      "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.obj",
+    ]
+    description = "assemble {{source}}"
   }
 
   tool("cc") {

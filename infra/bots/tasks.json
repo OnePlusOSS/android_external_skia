@@ -258,6 +258,12 @@
         "Build-Ubuntu-GCC-x86_64-Release-ANGLE"
       ]
     },
+    "Build-Ubuntu-GCC-x86_64-Release-Flutter_Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Build-Ubuntu-GCC-x86_64-Release-Flutter_Android"
+      ]
+    },
     "Build-Ubuntu-GCC-x86_64-Release-Mesa": {
       "priority": 0.8,
       "tasks": [
@@ -292,12 +298,6 @@
       "priority": 0.8,
       "tasks": [
         "Build-Ubuntu-GCC-x86_64-Release-Shared"
-      ]
-    },
-    "Build-Ubuntu-GCC-x86_64-Release-Valgrind": {
-      "priority": 0.8,
-      "tasks": [
-        "Build-Ubuntu-GCC-x86_64-Release-Valgrind"
       ]
     },
     "Build-Win-Clang-arm64-Release-Android": {
@@ -452,22 +452,10 @@
         "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android"
       ]
     },
-    "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android_Vulkan": {
-      "priority": 0.8,
-      "tasks": [
-        "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android_Vulkan"
-      ]
-    },
     "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android": {
       "priority": 0.8,
       "tasks": [
         "Upload-Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android"
-      ]
-    },
-    "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan": {
-      "priority": 0.8,
-      "tasks": [
-        "Upload-Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan"
       ]
     },
     "Perf-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Debug-Android": {
@@ -752,6 +740,12 @@
         "Perf-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind"
       ]
     },
+    "Perf-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_AbandonGpuContext": {
+      "priority": 0.8,
+      "tasks": [
+        "Perf-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_AbandonGpuContext"
+      ]
+    },
     "Perf-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Debug": {
       "priority": 0.8,
       "tasks": [
@@ -840,6 +834,18 @@
       "priority": 0.8,
       "tasks": [
         "Upload-Perf-Win10-MSVC-NUC-GPU-IntelIris6100-x86_64-Release-ANGLE"
+      ]
+    },
+    "Perf-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Debug": {
+      "priority": 0.8,
+      "tasks": [
+        "Perf-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Debug"
+      ]
+    },
+    "Perf-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Perf-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release"
       ]
     },
     "Perf-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Debug": {
@@ -1028,22 +1034,10 @@
         "Upload-Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android"
       ]
     },
-    "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android_Vulkan": {
-      "priority": 0.8,
-      "tasks": [
-        "Upload-Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android_Vulkan"
-      ]
-    },
     "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android": {
       "priority": 0.8,
       "tasks": [
         "Upload-Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android"
-      ]
-    },
-    "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan": {
-      "priority": 0.8,
-      "tasks": [
-        "Upload-Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan"
       ]
     },
     "Test-Android-Clang-GalaxyTab3-GPU-Vivante-arm-Debug-Android": {
@@ -1365,6 +1359,18 @@
         "Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind"
       ]
     },
+    "Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_AbandonGpuContext": {
+      "priority": 0.8,
+      "tasks": [
+        "Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_AbandonGpuContext"
+      ]
+    },
+    "Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_PreAbandonGpuContext": {
+      "priority": 0.8,
+      "tasks": [
+        "Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_PreAbandonGpuContext"
+      ]
+    },
     "Test-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Debug": {
       "priority": 0.8,
       "tasks": [
@@ -1453,6 +1459,18 @@
       "priority": 0.8,
       "tasks": [
         "Upload-Test-Win10-MSVC-NUC-GPU-IntelIris6100-x86_64-Release-ANGLE"
+      ]
+    },
+    "Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Debug": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Debug"
+      ]
+    },
+    "Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release"
       ]
     },
     "Test-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Debug": {
@@ -2900,6 +2918,38 @@
       "isolate": "compile_skia.isolate",
       "priority": 0.8
     },
+    "Build-Ubuntu-GCC-x86_64-Release-Flutter_Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/android_ndk_linux",
+          "path": "android_ndk_linux",
+          "version": "version:5"
+        }
+      ],
+      "dimensions": [
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_compile",
+        "repository=<(REPO)",
+        "buildername=Build-Ubuntu-GCC-x86_64-Release-Flutter_Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "isolate": "compile_skia.isolate",
+      "priority": 0.8
+    },
     "Build-Ubuntu-GCC-x86_64-Release-Mesa": {
       "dimensions": [
         "gpu:none",
@@ -3037,31 +3087,6 @@
         "swarm_compile",
         "repository=<(REPO)",
         "buildername=Build-Ubuntu-GCC-x86_64-Release-Shared",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "isolate": "compile_skia.isolate",
-      "priority": 0.8
-    },
-    "Build-Ubuntu-GCC-x86_64-Release-Valgrind": {
-      "dimensions": [
-        "gpu:none",
-        "os:Ubuntu-14.04",
-        "pool:Skia"
-      ],
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_compile",
-        "repository=<(REPO)",
-        "buildername=Build-Ubuntu-GCC-x86_64-Release-Valgrind",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -3725,7 +3750,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -3762,6 +3787,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android": {
@@ -3774,7 +3800,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -3811,6 +3837,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Debug-Android": {
@@ -3823,7 +3850,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -3860,6 +3887,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Release-Android": {
@@ -3872,7 +3900,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -3909,6 +3937,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android": {
@@ -3921,7 +3950,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -3958,55 +3987,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
-      "priority": 0.8
-    },
-    "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android_Vulkan": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:35"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Ubuntu-Clang-arm64-Debug-Android_Vulkan"
-      ],
-      "dimensions": [
-        "device_os:MMB29M",
-        "device_type:heroqlteatt",
-        "os:Android",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_perf",
-        "repository=<(REPO)",
-        "buildername=Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android_Vulkan",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android": {
@@ -4019,7 +4000,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4056,55 +4037,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
-      "priority": 0.8
-    },
-    "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:35"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Ubuntu-Clang-arm64-Release-Android_Vulkan"
-      ],
-      "dimensions": [
-        "device_os:MMB29M",
-        "device_type:heroqlteatt",
-        "os:Android",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_perf",
-        "repository=<(REPO)",
-        "buildername=Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Debug-Android": {
@@ -4117,7 +4050,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4154,6 +4087,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Debug-Android_Vulkan": {
@@ -4166,7 +4100,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4203,6 +4137,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Release-Android": {
@@ -4215,7 +4150,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4252,6 +4187,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Release-Android_Vulkan": {
@@ -4264,7 +4200,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4301,6 +4237,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Nexus10-GPU-MaliT604-arm-Debug-Android": {
@@ -4313,7 +4250,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4350,6 +4287,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Nexus10-GPU-MaliT604-arm-Release-Android": {
@@ -4362,7 +4300,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4399,6 +4337,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Nexus5-GPU-Adreno330-arm-Debug-Android": {
@@ -4411,7 +4350,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4448,6 +4387,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Nexus5-GPU-Adreno330-arm-Release-Android": {
@@ -4460,7 +4400,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4497,6 +4437,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Nexus6p-GPU-Adreno430-arm64-Debug-Android": {
@@ -4509,7 +4450,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4546,6 +4487,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Nexus6p-GPU-Adreno430-arm64-Debug-Android_Vulkan": {
@@ -4558,7 +4500,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4595,6 +4537,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Nexus6p-GPU-Adreno430-arm64-Release-Android": {
@@ -4607,7 +4550,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4644,6 +4587,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Nexus6p-GPU-Adreno430-arm64-Release-Android_Vulkan": {
@@ -4656,7 +4600,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4693,6 +4637,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Nexus7-GPU-Tegra3-arm-Debug-Android": {
@@ -4705,7 +4650,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4742,6 +4687,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Nexus7-GPU-Tegra3-arm-Release-Android": {
@@ -4754,7 +4700,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4791,6 +4737,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-NexusPlayer-CPU-Moorefield-x86-Debug-Android": {
@@ -4803,7 +4750,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4840,6 +4787,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android": {
@@ -4852,7 +4800,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4889,6 +4837,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android": {
@@ -4901,7 +4850,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4938,6 +4887,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Pixel-GPU-Adreno530-arm64-Debug-Android": {
@@ -4950,7 +4900,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -4987,6 +4937,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Pixel-GPU-Adreno530-arm64-Debug-Android_Vulkan": {
@@ -4999,7 +4950,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5036,6 +4987,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Pixel-GPU-Adreno530-arm64-Release-Android": {
@@ -5048,7 +5000,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5085,6 +5037,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-Pixel-GPU-Adreno530-arm64-Release-Android_Vulkan": {
@@ -5097,7 +5050,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5134,6 +5087,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-PixelC-CPU-TegraX1-arm64-Debug-Android": {
@@ -5146,7 +5100,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5183,6 +5137,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-PixelC-CPU-TegraX1-arm64-Release-Android": {
@@ -5195,7 +5150,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5232,6 +5187,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-PixelC-GPU-TegraX1-arm64-Release-Android_Skpbench": {
@@ -5239,7 +5195,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         }
       ],
       "dependencies": [
@@ -5271,6 +5227,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "skpbench_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Android-Clang-PixelC-GPU-TegraX1-arm64-Release-Android_Vulkan_Skpbench": {
@@ -5278,7 +5235,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         }
       ],
       "dependencies": [
@@ -5310,6 +5267,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "skpbench_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Mac-Clang-MacMini4.1-GPU-GeForce320M-x86_64-Debug": {
@@ -5322,7 +5280,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5358,6 +5316,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Mac-Clang-MacMini4.1-GPU-GeForce320M-x86_64-Release": {
@@ -5370,7 +5329,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5406,6 +5365,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Mac-Clang-MacMini6.2-CPU-AVX-x86_64-Debug": {
@@ -5418,7 +5378,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5455,6 +5415,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Mac-Clang-MacMini6.2-CPU-AVX-x86_64-Release": {
@@ -5467,7 +5428,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5504,6 +5465,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Mac-Clang-MacMini6.2-GPU-HD4000-x86_64-Debug": {
@@ -5516,7 +5478,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5552,6 +5514,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Mac-Clang-MacMini6.2-GPU-HD4000-x86_64-Release": {
@@ -5564,7 +5527,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5600,6 +5563,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Mac-Clang-MacMini6.2-GPU-HD4000-x86_64-Release-CommandBuffer": {
@@ -5612,7 +5576,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5648,6 +5612,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Debug": {
@@ -5660,7 +5625,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5697,6 +5662,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Debug-ASAN": {
@@ -5709,7 +5675,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5751,6 +5717,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Debug-MSAN": {
@@ -5763,7 +5730,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5805,6 +5772,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release": {
@@ -5817,7 +5785,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5854,6 +5822,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-ASAN": {
@@ -5866,7 +5835,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5908,6 +5877,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-Fast": {
@@ -5920,7 +5890,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -5957,6 +5927,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Debug-ASAN": {
@@ -5969,7 +5940,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6010,6 +5981,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-ASAN": {
@@ -6022,7 +5994,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6063,6 +6035,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-GCC-GCE-CPU-AVX2-x86-Debug": {
@@ -6075,7 +6048,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6112,6 +6085,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Debug": {
@@ -6124,7 +6098,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6161,6 +6135,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Debug-SK_USE_DISCARDABLE_SCALEDIMAGECACHE": {
@@ -6173,7 +6148,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6210,6 +6185,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Release": {
@@ -6222,7 +6198,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6259,6 +6235,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Release-CT_BENCH_1k_SKPs": {
@@ -6321,7 +6298,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6330,7 +6307,7 @@
         }
       ],
       "dependencies": [
-        "Build-Ubuntu-GCC-x86_64-Release-Valgrind"
+        "Build-Ubuntu-GCC-x86_64-Release"
       ],
       "dimensions": [
         "gpu:10de:1244",
@@ -6357,6 +6334,56 @@
       ],
       "io_timeout_ns": 3600000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_AbandonGpuContext": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:21"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:36"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-GCC-x86_64-Release"
+      ],
+      "dimensions": [
+        "gpu:10de:1244",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 32400000000000,
+      "expiration_ns": 172800000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_AbandonGpuContext",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 3600000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Debug": {
@@ -6369,7 +6396,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6405,6 +6432,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Release": {
@@ -6417,7 +6445,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6453,6 +6481,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Debug": {
@@ -6465,12 +6494,17 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
           "path": "svg",
           "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_debug",
+          "path": "linux_vulkan_intel_driver_debug",
+          "version": "version:1"
         }
       ],
       "dependencies": [
@@ -6501,6 +6535,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Debug-Vulkan": {
@@ -6513,7 +6548,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6528,7 +6563,7 @@
         {
           "name": "skia/bots/linux_vulkan_intel_driver_debug",
           "path": "linux_vulkan_intel_driver_debug",
-          "version": "version:0"
+          "version": "version:1"
         }
       ],
       "dependencies": [
@@ -6559,6 +6594,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release": {
@@ -6571,12 +6607,17 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
           "path": "svg",
           "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_release",
+          "path": "linux_vulkan_intel_driver_release",
+          "version": "version:1"
         }
       ],
       "dependencies": [
@@ -6607,6 +6648,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release-Vulkan": {
@@ -6619,7 +6661,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6634,7 +6676,7 @@
         {
           "name": "skia/bots/linux_vulkan_intel_driver_release",
           "path": "linux_vulkan_intel_driver_release",
-          "version": "version:0"
+          "version": "version:1"
         }
       ],
       "dependencies": [
@@ -6665,6 +6707,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-Golo-GPU-GT610-x86_64-Release": {
@@ -6677,7 +6720,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6713,6 +6756,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug": {
@@ -6725,7 +6769,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6761,6 +6805,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug-ANGLE": {
@@ -6773,7 +6818,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6809,6 +6854,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug-Vulkan": {
@@ -6821,7 +6867,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6857,6 +6903,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release": {
@@ -6869,7 +6916,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6905,6 +6952,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release-ANGLE": {
@@ -6917,7 +6965,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -6953,6 +7001,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release-Vulkan": {
@@ -6965,7 +7014,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7001,6 +7050,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-NUC-GPU-IntelIris6100-x86_64-Debug-ANGLE": {
@@ -7013,7 +7063,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7049,6 +7099,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-NUC-GPU-IntelIris6100-x86_64-Release-ANGLE": {
@@ -7061,7 +7112,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7097,6 +7148,107 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Debug": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:21"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:36"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Win-MSVC-x86_64-Debug"
+      ],
+      "dimensions": [
+        "gpu:10de:1401",
+        "machine_type:n1-highcpu-8",
+        "os:Windows-10-14393",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Debug",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:21"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:36"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Win-MSVC-x86_64-Release"
+      ],
+      "dimensions": [
+        "gpu:10de:1401",
+        "machine_type:n1-highcpu-8",
+        "os:Windows-10-14393",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Debug": {
@@ -7109,7 +7261,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7145,6 +7297,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Release": {
@@ -7157,7 +7310,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7193,6 +7346,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Debug": {
@@ -7205,7 +7359,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7241,6 +7395,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Debug-Vulkan": {
@@ -7253,7 +7408,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7289,6 +7444,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Release": {
@@ -7301,7 +7457,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7337,6 +7493,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Release-Vulkan": {
@@ -7349,7 +7506,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7385,6 +7542,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleB-GPU-IntelHD4600-x86_64-Debug": {
@@ -7397,7 +7555,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7433,6 +7591,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleB-GPU-IntelHD4600-x86_64-Release": {
@@ -7445,7 +7604,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7481,6 +7640,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Debug": {
@@ -7493,7 +7653,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7506,6 +7666,7 @@
       ],
       "dimensions": [
         "gpu:10de:1401",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -7529,6 +7690,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Debug-ANGLE": {
@@ -7541,7 +7703,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7554,6 +7716,7 @@
       ],
       "dimensions": [
         "gpu:10de:1401",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -7577,6 +7740,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Release": {
@@ -7589,7 +7753,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7602,6 +7766,7 @@
       ],
       "dimensions": [
         "gpu:10de:1401",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -7625,6 +7790,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Release-ANGLE": {
@@ -7637,7 +7803,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7650,6 +7816,7 @@
       ],
       "dimensions": [
         "gpu:10de:1401",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -7673,6 +7840,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug": {
@@ -7685,7 +7853,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7698,6 +7866,7 @@
       ],
       "dimensions": [
         "gpu:8086:1912",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -7721,6 +7890,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release": {
@@ -7733,7 +7903,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7746,6 +7916,7 @@
       ],
       "dimensions": [
         "gpu:8086:1912",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -7769,6 +7940,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug": {
@@ -7781,7 +7953,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7817,6 +7989,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug-ANGLE": {
@@ -7829,7 +8002,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7865,6 +8038,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug-Vulkan": {
@@ -7877,7 +8051,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7913,6 +8087,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release": {
@@ -7925,7 +8100,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -7961,6 +8136,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release-ANGLE": {
@@ -7973,7 +8149,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8009,6 +8185,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release-Vulkan": {
@@ -8021,7 +8198,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8057,6 +8234,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win2k8-MSVC-GCE-CPU-AVX2-x86-Debug": {
@@ -8069,7 +8247,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8106,6 +8284,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Debug": {
@@ -8118,7 +8297,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8155,6 +8334,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Debug-GDI": {
@@ -8167,7 +8347,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8204,6 +8384,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Release": {
@@ -8216,7 +8397,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8253,6 +8434,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-iOS-Clang-iPadMini4-GPU-GX6450-arm64-Debug": {
@@ -8265,7 +8447,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8301,6 +8483,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Perf-iOS-Clang-iPadMini4-GPU-GX6450-arm64-Release": {
@@ -8313,7 +8496,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8349,6 +8532,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android": {
@@ -8361,7 +8545,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8398,6 +8582,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android": {
@@ -8410,7 +8595,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8447,6 +8632,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Debug-Android": {
@@ -8459,7 +8645,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8496,6 +8682,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Release-Android": {
@@ -8508,7 +8695,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8545,6 +8732,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android": {
@@ -8557,7 +8745,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8594,55 +8782,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
-      "priority": 0.8
-    },
-    "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android_Vulkan": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:35"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Ubuntu-Clang-arm64-Debug-Android_Vulkan"
-      ],
-      "dimensions": [
-        "device_os:MMB29M",
-        "device_type:heroqlteatt",
-        "os:Android",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_test",
-        "repository=<(REPO)",
-        "buildername=Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android_Vulkan",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android": {
@@ -8655,7 +8795,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8692,55 +8832,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
-      "priority": 0.8
-    },
-    "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:35"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Ubuntu-Clang-arm64-Release-Android_Vulkan"
-      ],
-      "dimensions": [
-        "device_os:MMB29M",
-        "device_type:heroqlteatt",
-        "os:Android",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_test",
-        "repository=<(REPO)",
-        "buildername=Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-GalaxyTab3-GPU-Vivante-arm-Debug-Android": {
@@ -8753,7 +8845,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8790,6 +8882,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Debug-Android": {
@@ -8802,7 +8895,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8839,6 +8932,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Debug-Android_Vulkan": {
@@ -8851,7 +8945,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8888,6 +8982,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Release-Android": {
@@ -8900,7 +8995,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8937,6 +9032,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Release-Android_Vulkan": {
@@ -8949,7 +9045,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -8986,6 +9082,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-Nexus10-GPU-MaliT604-arm-Debug-Android": {
@@ -8998,7 +9095,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9035,6 +9132,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-Nexus10-GPU-MaliT604-arm-Release-Android": {
@@ -9047,7 +9145,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9084,6 +9182,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-Nexus5-GPU-Adreno330-arm-Debug-Android": {
@@ -9096,7 +9195,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9133,6 +9232,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-Nexus5-GPU-Adreno330-arm-Release-Android": {
@@ -9145,7 +9245,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9182,6 +9282,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-Nexus6p-GPU-Adreno430-arm64-Debug-Android": {
@@ -9194,7 +9295,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9231,6 +9332,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-Nexus6p-GPU-Adreno430-arm64-Debug-Android_Vulkan": {
@@ -9243,7 +9345,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9280,6 +9382,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-Nexus6p-GPU-Adreno430-arm64-Release-Android": {
@@ -9292,7 +9395,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9329,6 +9432,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-Nexus6p-GPU-Adreno430-arm64-Release-Android_Vulkan": {
@@ -9341,7 +9445,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9378,6 +9482,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-Nexus7-GPU-Tegra3-arm-Debug-Android": {
@@ -9390,7 +9495,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9427,6 +9532,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-Nexus7-GPU-Tegra3-arm-Release-Android": {
@@ -9439,7 +9545,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9476,6 +9582,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-NexusPlayer-CPU-Moorefield-x86-Debug-Android": {
@@ -9488,7 +9595,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9525,6 +9632,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-NexusPlayer-CPU-Moorefield-x86-Release-Android": {
@@ -9537,7 +9645,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9574,6 +9682,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android": {
@@ -9586,7 +9695,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9623,6 +9732,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Debug-Android_Vulkan": {
@@ -9635,7 +9745,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9672,6 +9782,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android": {
@@ -9684,7 +9795,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9721,6 +9832,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-NexusPlayer-GPU-PowerVR-x86-Release-Android_Vulkan": {
@@ -9733,7 +9845,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9770,6 +9882,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-PixelC-CPU-TegraX1-arm64-Debug-Android": {
@@ -9782,7 +9895,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9819,6 +9932,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-PixelC-CPU-TegraX1-arm64-Release-Android": {
@@ -9831,7 +9945,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9868,6 +9982,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-PixelXL-GPU-Adreno530-arm64-Debug-Android": {
@@ -9880,7 +9995,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9917,6 +10032,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-PixelXL-GPU-Adreno530-arm64-Debug-Android_Vulkan": {
@@ -9929,7 +10045,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -9966,6 +10082,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-PixelXL-GPU-Adreno530-arm64-Release-Android": {
@@ -9978,7 +10095,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10015,6 +10132,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Android-Clang-PixelXL-GPU-Adreno530-arm64-Release-Android_Vulkan": {
@@ -10027,7 +10145,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10064,6 +10182,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Mac-Clang-MacMini4.1-GPU-GeForce320M-x86_64-Debug": {
@@ -10076,7 +10195,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10112,6 +10231,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Mac-Clang-MacMini4.1-GPU-GeForce320M-x86_64-Release": {
@@ -10124,7 +10244,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10160,6 +10280,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Mac-Clang-MacMini6.2-CPU-AVX-x86_64-Debug": {
@@ -10172,7 +10293,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10209,6 +10330,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Mac-Clang-MacMini6.2-CPU-AVX-x86_64-Release": {
@@ -10221,7 +10343,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10258,6 +10380,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Mac-Clang-MacMini6.2-GPU-HD4000-x86_64-Debug": {
@@ -10270,7 +10393,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10306,6 +10429,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Mac-Clang-MacMini6.2-GPU-HD4000-x86_64-Debug-CommandBuffer": {
@@ -10318,7 +10442,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10354,6 +10478,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Mac-Clang-MacMini6.2-GPU-HD4000-x86_64-Release": {
@@ -10366,7 +10491,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10402,6 +10527,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Debug": {
@@ -10414,7 +10540,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10451,6 +10577,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Debug-ASAN": {
@@ -10463,7 +10590,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10505,6 +10632,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Debug-MSAN": {
@@ -10517,7 +10645,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10559,6 +10687,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release": {
@@ -10571,7 +10700,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10608,6 +10737,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-ASAN": {
@@ -10620,7 +10750,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10662,6 +10792,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-Fast": {
@@ -10674,7 +10805,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10711,6 +10842,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-Clang-GCE-CPU-AVX2-x86_64-Release-TSAN": {
@@ -10723,7 +10855,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10765,6 +10897,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Debug-ASAN": {
@@ -10777,7 +10910,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10818,6 +10951,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-ASAN": {
@@ -10830,7 +10964,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10871,6 +11005,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-Clang-Golo-GPU-GT610-x86_64-Release-TSAN": {
@@ -10883,7 +11018,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10924,6 +11059,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-GCC-GCE-CPU-AVX2-x86-Debug": {
@@ -10936,7 +11072,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -10973,6 +11109,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Debug": {
@@ -10985,7 +11122,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11022,6 +11159,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Debug-CT_DM_100k_SKPs": {
@@ -11109,7 +11247,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11146,6 +11284,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Release": {
@@ -11158,7 +11297,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11195,6 +11334,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Release-SKNX_NO_SIMD": {
@@ -11207,7 +11347,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11244,6 +11384,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind": {
@@ -11256,7 +11397,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11265,7 +11406,7 @@
         }
       ],
       "dependencies": [
-        "Build-Ubuntu-GCC-x86_64-Release-Valgrind"
+        "Build-Ubuntu-GCC-x86_64-Release"
       ],
       "dimensions": [
         "gpu:10de:1244",
@@ -11292,6 +11433,105 @@
       ],
       "io_timeout_ns": 3600000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_AbandonGpuContext": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:21"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:36"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-GCC-x86_64-Release"
+      ],
+      "dimensions": [
+        "gpu:10de:1244",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 32400000000000,
+      "expiration_ns": 172800000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_AbandonGpuContext",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 3600000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_PreAbandonGpuContext": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:21"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:36"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-GCC-x86_64-Release"
+      ],
+      "dimensions": [
+        "gpu:10de:1244",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 32400000000000,
+      "expiration_ns": 172800000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind_PreAbandonGpuContext",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 3600000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Debug": {
@@ -11304,7 +11544,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11340,6 +11580,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Release": {
@@ -11352,7 +11593,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11388,6 +11629,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Debug": {
@@ -11400,12 +11642,17 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
           "path": "svg",
           "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_debug",
+          "path": "linux_vulkan_intel_driver_debug",
+          "version": "version:1"
         }
       ],
       "dependencies": [
@@ -11436,6 +11683,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Debug-Vulkan": {
@@ -11448,7 +11696,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11463,7 +11711,7 @@
         {
           "name": "skia/bots/linux_vulkan_intel_driver_debug",
           "path": "linux_vulkan_intel_driver_debug",
-          "version": "version:0"
+          "version": "version:1"
         }
       ],
       "dependencies": [
@@ -11494,6 +11742,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release": {
@@ -11506,12 +11755,17 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
           "path": "svg",
           "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_release",
+          "path": "linux_vulkan_intel_driver_release",
+          "version": "version:1"
         }
       ],
       "dependencies": [
@@ -11542,6 +11796,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release-Vulkan": {
@@ -11554,7 +11809,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11569,7 +11824,7 @@
         {
           "name": "skia/bots/linux_vulkan_intel_driver_release",
           "path": "linux_vulkan_intel_driver_release",
-          "version": "version:0"
+          "version": "version:1"
         }
       ],
       "dependencies": [
@@ -11600,6 +11855,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-Golo-GPU-GT610-x86_64-Release": {
@@ -11612,7 +11868,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11648,6 +11904,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug": {
@@ -11660,7 +11917,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11696,6 +11953,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug-ANGLE": {
@@ -11708,7 +11966,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11744,6 +12002,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug-Vulkan": {
@@ -11756,7 +12015,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11792,6 +12051,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release": {
@@ -11804,7 +12064,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11840,6 +12100,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release-ANGLE": {
@@ -11852,7 +12113,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11888,6 +12149,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Release-Vulkan": {
@@ -11900,7 +12162,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11936,6 +12198,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-NUC-GPU-IntelIris6100-x86_64-Debug-ANGLE": {
@@ -11948,7 +12211,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -11984,6 +12247,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-NUC-GPU-IntelIris6100-x86_64-Release-ANGLE": {
@@ -11996,7 +12260,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12032,6 +12296,107 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Debug": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:21"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:36"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Win-MSVC-x86_64-Debug"
+      ],
+      "dimensions": [
+        "gpu:10de:1401",
+        "machine_type:n1-highcpu-8",
+        "os:Windows-10-14393",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Debug",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:21"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:36"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Win-MSVC-x86_64-Release"
+      ],
+      "dimensions": [
+        "gpu:10de:1401",
+        "machine_type:n1-highcpu-8",
+        "os:Windows-10-14393",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Debug": {
@@ -12044,7 +12409,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12080,6 +12445,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Release": {
@@ -12092,7 +12458,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12128,6 +12494,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Debug": {
@@ -12140,7 +12507,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12176,6 +12543,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Debug-Vulkan": {
@@ -12188,7 +12556,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12224,6 +12592,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Release": {
@@ -12236,7 +12605,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12272,6 +12641,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleB-GPU-IntelHD4600-x86_64-Debug": {
@@ -12284,7 +12654,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12320,6 +12690,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleB-GPU-IntelHD4600-x86_64-Release": {
@@ -12332,7 +12703,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12368,6 +12739,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Debug": {
@@ -12380,7 +12752,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12393,6 +12765,7 @@
       ],
       "dimensions": [
         "gpu:10de:1401",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -12416,6 +12789,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Debug-ANGLE": {
@@ -12428,7 +12802,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12441,6 +12815,7 @@
       ],
       "dimensions": [
         "gpu:10de:1401",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -12464,6 +12839,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Release": {
@@ -12476,7 +12852,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12489,6 +12865,7 @@
       ],
       "dimensions": [
         "gpu:10de:1401",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -12512,6 +12889,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Release-ANGLE": {
@@ -12524,7 +12902,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12537,6 +12915,7 @@
       ],
       "dimensions": [
         "gpu:10de:1401",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -12560,6 +12939,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug": {
@@ -12572,7 +12952,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12585,6 +12965,7 @@
       ],
       "dimensions": [
         "gpu:8086:1912",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -12608,6 +12989,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release": {
@@ -12620,7 +13002,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12633,6 +13015,7 @@
       ],
       "dimensions": [
         "gpu:8086:1912",
+        "machine_type:n1-standard-8",
         "os:Windows-10-14393",
         "pool:Skia"
       ],
@@ -12656,6 +13039,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug": {
@@ -12668,7 +13052,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12704,6 +13088,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug-ANGLE": {
@@ -12716,7 +13101,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12752,6 +13137,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug-Vulkan": {
@@ -12764,7 +13150,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12800,6 +13186,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release": {
@@ -12812,7 +13199,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12848,6 +13235,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release-ANGLE": {
@@ -12860,7 +13248,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12896,6 +13284,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release-Vulkan": {
@@ -12908,7 +13297,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12944,6 +13333,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win2k8-MSVC-GCE-CPU-AVX2-x86-Debug": {
@@ -12956,7 +13346,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -12993,6 +13383,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win2k8-MSVC-GCE-CPU-AVX2-x86-Release": {
@@ -13005,7 +13396,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -13042,6 +13433,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Debug": {
@@ -13054,7 +13446,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -13091,6 +13483,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Debug-GDI": {
@@ -13103,7 +13496,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -13140,6 +13533,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Release": {
@@ -13152,7 +13546,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -13189,6 +13583,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-Win2k8-MSVC-GCE-CPU-AVX2-x86_64-Release-GDI": {
@@ -13201,7 +13596,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -13238,6 +13633,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-iOS-Clang-iPadMini4-GPU-GX6450-arm64-Debug": {
@@ -13250,7 +13646,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -13286,6 +13682,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Test-iOS-Clang-iPadMini4-GPU-GX6450-arm64-Release": {
@@ -13298,7 +13695,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:35"
+          "version": "version:36"
         },
         {
           "name": "skia/bots/svg",
@@ -13334,6 +13731,7 @@
       ],
       "io_timeout_ns": 2400000000000,
       "isolate": "test_skia.isolate",
+      "max_attempts": 1,
       "priority": 0.8
     },
     "Upload-Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android": {
@@ -13412,36 +13810,6 @@
         "upload_nano_results",
         "repository=<(REPO)",
         "buildername=Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)",
-        "gs_bucket=skia-perf"
-      ],
-      "isolate": "upload_nano_results.isolate",
-      "priority": 0.8
-    },
-    "Upload-Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan": {
-      "dependencies": [
-        "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan"
-      ],
-      "dimensions": [
-        "cpu:x86-64-avx2",
-        "gpu:none",
-        "os:Ubuntu-14.04",
-        "pool:Skia"
-      ],
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "upload_nano_results",
-        "repository=<(REPO)",
-        "buildername=Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -14296,6 +14664,36 @@
       "isolate": "upload_nano_results.isolate",
       "priority": 0.8
     },
+    "Upload-Perf-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release": {
+      "dependencies": [
+        "Perf-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_nano_results",
+        "repository=<(REPO)",
+        "buildername=Perf-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-perf"
+      ],
+      "isolate": "upload_nano_results.isolate",
+      "priority": 0.8
+    },
     "Upload-Perf-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Release": {
       "dependencies": [
         "Perf-Win10-MSVC-ShuttleA-GPU-AMDHD7770-x86_64-Release"
@@ -14806,36 +15204,6 @@
       "isolate": "upload_dm_results.isolate",
       "priority": 0.8
     },
-    "Upload-Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android_Vulkan": {
-      "dependencies": [
-        "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android_Vulkan"
-      ],
-      "dimensions": [
-        "cpu:x86-64-avx2",
-        "gpu:none",
-        "os:Ubuntu-14.04",
-        "pool:Skia"
-      ],
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "upload_dm_results",
-        "repository=<(REPO)",
-        "buildername=Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android_Vulkan",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)",
-        "gs_bucket=skia-infra-gm"
-      ],
-      "isolate": "upload_dm_results.isolate",
-      "priority": 0.8
-    },
     "Upload-Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android": {
       "dependencies": [
         "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android"
@@ -14852,36 +15220,6 @@
         "upload_dm_results",
         "repository=<(REPO)",
         "buildername=Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)",
-        "gs_bucket=skia-infra-gm"
-      ],
-      "isolate": "upload_dm_results.isolate",
-      "priority": 0.8
-    },
-    "Upload-Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan": {
-      "dependencies": [
-        "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan"
-      ],
-      "dimensions": [
-        "cpu:x86-64-avx2",
-        "gpu:none",
-        "os:Ubuntu-14.04",
-        "pool:Skia"
-      ],
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "upload_dm_results",
-        "repository=<(REPO)",
-        "buildername=Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android_Vulkan",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -16592,6 +16930,66 @@
         "upload_dm_results",
         "repository=<(REPO)",
         "buildername=Test-Win10-MSVC-NUC-GPU-IntelIris6100-x86_64-Release-ANGLE",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Debug": {
+      "dependencies": [
+        "Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Debug"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Debug",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release": {
+      "dependencies": [
+        "Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Win10-MSVC-NUC6i7KYK-GPU-GTX960-x86_64-Release",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",

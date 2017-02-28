@@ -1873,10 +1873,11 @@ SpvId SPIRVCodeGenerator::writeVariableReference(const VariableReference& ref, S
             SkString name("sksl_synthetic_uniforms");
             Type intfStruct(Position(), name, fields);
             Layout layout(-1, -1, 1, -1, -1, -1, -1, false, false, false, Layout::Format::kUnspecified,
-                          false);
+                          false, Layout::kUnspecified_Primitive, -1, -1);
             Variable intfVar(Position(), Modifiers(layout, Modifiers::kUniform_Flag), name,
                              intfStruct, Variable::kGlobal_Storage);
-            InterfaceBlock intf(Position(), intfVar, st);
+            InterfaceBlock intf(Position(), intfVar, name, SkString(""),
+                                std::vector<std::unique_ptr<Expression>>(), st);
             fRTHeightStructId = this->writeInterfaceBlock(intf);
             fRTHeightFieldIndex = 0;
         }
@@ -1988,6 +1989,15 @@ bool is_assignment(Token::Kind op) {
     }
 }
 
+SpvId SPIRVCodeGenerator::foldToBool(SpvId id, const Type& operandType, SkWStream& out) {
+    if (operandType.kind() == Type::kVector_Kind) {
+        SpvId result = this->nextId();
+        this->writeInstruction(SpvOpAll, this->getType(*fContext.fBool_Type), result, id, out);
+        return result;
+    }
+    return id;
+}
+
 SpvId SPIRVCodeGenerator::writeBinaryExpression(const BinaryExpression& b, SkWStream& out) {
     // handle cases where we don't necessarily evaluate both LHS and RHS
     switch (b.fOperator) {
@@ -2088,15 +2098,20 @@ SpvId SPIRVCodeGenerator::writeBinaryExpression(const BinaryExpression& b, SkWSt
         ASSERT(*operandType == b.fRight->fType);
     }
     switch (b.fOperator) {
-        case Token::EQEQ:
+        case Token::EQEQ: {
             ASSERT(resultType == *fContext.fBool_Type);
-            return this->writeBinaryOperation(resultType, *operandType, lhs, rhs, SpvOpFOrdEqual,
-                                              SpvOpIEqual, SpvOpIEqual, SpvOpLogicalEqual, out);
+            return this->foldToBool(this->writeBinaryOperation(resultType, *operandType, lhs, rhs,
+                                                               SpvOpFOrdEqual, SpvOpIEqual,
+                                                               SpvOpIEqual, SpvOpLogicalEqual, out),
+                                    *operandType, out);
+        }
         case Token::NEQ:
             ASSERT(resultType == *fContext.fBool_Type);
-            return this->writeBinaryOperation(resultType, *operandType, lhs, rhs, SpvOpFOrdNotEqual,
-                                              SpvOpINotEqual, SpvOpINotEqual, SpvOpLogicalNotEqual,
-                                              out);
+            return this->foldToBool(this->writeBinaryOperation(resultType, *operandType, lhs, rhs,
+                                                               SpvOpFOrdNotEqual, SpvOpINotEqual,
+                                                               SpvOpINotEqual, SpvOpLogicalNotEqual,
+                                                               out),
+                                    *operandType, out);
         case Token::GT:
             ASSERT(resultType == *fContext.fBool_Type);
             return this->writeBinaryOperation(resultType, *operandType, lhs, rhs,
@@ -2857,6 +2872,9 @@ void SPIRVCodeGenerator::writeInstructions(const Program& program, SkWStream& ou
             break;
         case Program::kFragment_Kind:
             this->writeWord(SpvExecutionModelFragment, out);
+            break;
+        case Program::kGeometry_Kind:
+            this->writeWord(SpvExecutionModelGeometry, out);
             break;
     }
     this->writeWord(fFunctionMap[main], out);

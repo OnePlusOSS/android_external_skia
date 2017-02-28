@@ -25,7 +25,30 @@ public:
                                            GrTexture* maskTexture,
                                            float innerThreshold,
                                            float outerThreshold,
-                                           const SkIRect& bounds);
+                                           const SkIRect& bounds) {
+        return sk_sp<GrFragmentProcessor>(new GrAlphaThresholdFragmentProcessor(
+                                                                    texture,
+                                                                    std::move(colorSpaceXform),
+                                                                    maskTexture,
+                                                                    innerThreshold, outerThreshold,
+                                                                    bounds));
+    }
+
+    static sk_sp<GrFragmentProcessor> Make(GrContext* context,
+                                           sk_sp<GrTextureProxy> proxy,
+                                           sk_sp<GrColorSpaceXform> colorSpaceXform,
+                                           sk_sp<GrTextureProxy> maskProxy,
+                                           float innerThreshold,
+                                           float outerThreshold,
+                                           const SkIRect& bounds) {
+        return sk_sp<GrFragmentProcessor>(new GrAlphaThresholdFragmentProcessor(
+                                                                    context,
+                                                                    std::move(proxy),
+                                                                    std::move(colorSpaceXform),
+                                                                    std::move(maskProxy),
+                                                                    innerThreshold, outerThreshold,
+                                                                    bounds));
+    }
 
     const char* name() const override { return "Alpha Threshold"; }
 
@@ -40,6 +63,14 @@ private:
     GrAlphaThresholdFragmentProcessor(GrTexture* texture,
                                       sk_sp<GrColorSpaceXform> colorSpaceXform,
                                       GrTexture* maskTexture,
+                                      float innerThreshold,
+                                      float outerThreshold,
+                                      const SkIRect& bounds);
+
+    GrAlphaThresholdFragmentProcessor(GrContext*,
+                                      sk_sp<GrTextureProxy> proxy,
+                                      sk_sp<GrColorSpaceXform> colorSpaceXform,
+                                      sk_sp<GrTextureProxy> maskProxy,
                                       float innerThreshold,
                                       float outerThreshold,
                                       const SkIRect& bounds);
