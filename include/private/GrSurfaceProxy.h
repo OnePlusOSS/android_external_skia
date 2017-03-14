@@ -16,11 +16,13 @@
 class GrCaps;
 class GrRenderTargetOpList;
 class GrRenderTargetProxy;
+class GrResourceProvider;
 class GrSurfaceContext;
 class GrSurfaceProxyPriv;
 class GrTextureOpList;
-class GrTextureProvider;
 class GrTextureProxy;
+
+//#define SK_DISABLE_DEFERRED_PROXIES 1
 
 // This class replicates the functionality GrIORef<GrSurface> but tracks the
 // utilitization for later resource allocation (for the deferred case) and
@@ -170,19 +172,19 @@ public:
     static sk_sp<GrSurfaceProxy> MakeWrapped(sk_sp<GrSurface>);
     static sk_sp<GrTextureProxy> MakeWrapped(sk_sp<GrTexture>);
 
-    static sk_sp<GrSurfaceProxy> MakeDeferred(const GrCaps&, const GrSurfaceDesc&,
-                                              SkBackingFit, SkBudgeted);
+    static sk_sp<GrTextureProxy> MakeDeferred(GrResourceProvider*, const GrCaps&,
+                                              const GrSurfaceDesc&, SkBackingFit,
+                                              SkBudgeted, uint32_t flags = 0);
 
     // TODO: need to refine ownership semantics of 'srcData' if we're in completely
     // deferred mode
-    static sk_sp<GrSurfaceProxy> MakeDeferred(const GrCaps&, GrTextureProvider*,
+    static sk_sp<GrTextureProxy> MakeDeferred(const GrCaps&, GrResourceProvider*,
                                               const GrSurfaceDesc&, SkBudgeted,
                                               const void* srcData, size_t rowBytes);
 
     static sk_sp<GrSurfaceProxy> MakeWrappedBackend(
                                             GrContext*,
-                                            GrBackendTextureDesc&,
-                                            GrWrapOwnership ownership = kBorrow_GrWrapOwnership);
+                                            GrBackendTextureDesc&);
 
     const GrSurfaceDesc& desc() const { return fDesc; }
 
@@ -234,7 +236,7 @@ public:
      */
     UniqueID uniqueID() const { return fUniqueID; }
 
-    GrSurface* instantiate(GrTextureProvider* texProvider);
+    GrSurface* instantiate(GrResourceProvider* resourceProvider);
 
     /**
      * Helper that gets the width and height of the surface as a bounding rectangle.
@@ -304,10 +306,11 @@ public:
 
 protected:
     // Deferred version
-    GrSurfaceProxy(const GrSurfaceDesc& desc, SkBackingFit fit, SkBudgeted budgeted)
+    GrSurfaceProxy(const GrSurfaceDesc& desc, SkBackingFit fit, SkBudgeted budgeted, uint32_t flags)
         : fDesc(desc)
         , fFit(fit)
         , fBudgeted(budgeted)
+        , fFlags(flags)
         , fGpuMemorySize(kInvalidGpuMemorySize)
         , fLastOpList(nullptr) {
         // Note: this ctor pulls a new uniqueID from the same pool at the GrGpuResources
@@ -328,7 +331,9 @@ protected:
     // For wrapped resources, 'fDesc' will always be filled in from the wrapped resource.
     const GrSurfaceDesc  fDesc;
     const SkBackingFit   fFit;      // always exact for wrapped resources
-    const SkBudgeted     fBudgeted; // set from the backing resource for wrapped resources
+    mutable SkBudgeted   fBudgeted; // set from the backing resource for wrapped resources
+                                    // mutable bc of SkSurface/SkImage wishy-washiness
+    const uint32_t       fFlags;
     const UniqueID       fUniqueID; // set from the backing resource for wrapped resources
 
     static const size_t kInvalidGpuMemorySize = ~static_cast<size_t>(0);

@@ -15,6 +15,7 @@
 TAGS
 bower_components
 common
+imgui.ini
 infra/bots/tools/luci-go/linux64/cipd
 infra/bots/tools/luci-go/linux64/isolate
 infra/bots/tools/luci-go/mac64/cipd
@@ -39,3 +40,5 @@ tools/clang
 third_party/llvm-build
 bin/gn
 bin/gn.exe
+bin/clang-format
+bin/clang-format.exe

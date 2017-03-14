@@ -424,7 +424,7 @@ static sk_sp<SkPathEffect> make_path_effect(bool canBeNull = true) {
         case 1: {
             sk_sp<SkPathEffect> a = make_path_effect(false);
             sk_sp<SkPathEffect> b = make_path_effect(false);
-            pathEffect = SkComposePathEffect::Make(a, b);
+            pathEffect = SkPathEffect::MakeCompose(a, b);
             break;
         }
         case 2: {
@@ -473,7 +473,7 @@ static sk_sp<SkPathEffect> make_path_effect(bool canBeNull = true) {
         default: {
             sk_sp<SkPathEffect> a = make_path_effect(false);
             sk_sp<SkPathEffect> b = make_path_effect(false);
-            pathEffect = SkSumPathEffect::Make(a, b);
+            pathEffect = SkPathEffect::MakeCompose(a, b);
             break;
         }
     }
@@ -525,8 +525,6 @@ static SkPaint make_paint() {
     paint.setEmbeddedBitmapText(make_bool());
     paint.setAutohinted(make_bool());
     paint.setVerticalText(make_bool());
-    paint.setUnderlineText(make_bool());
-    paint.setStrikeThruText(make_bool());
     paint.setFakeBoldText(make_bool());
     paint.setDevKernText(make_bool());
     paint.setFilterQuality(make_filter_quality());

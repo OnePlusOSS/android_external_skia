@@ -34,7 +34,7 @@ public:
 
     SkColorSpace* getColorSpace() const { return fColorSpace.get(); }
     sk_sp<SkColorSpace> refColorSpace() const { return fColorSpace; }
-    bool isGammaCorrect() const { return SkToBool(fColorSpace.get()); }
+    bool isGammaCorrect() const;
 
     // TODO: these two calls would be way cooler if this object had a GrSurfaceProxy pointer
     int width() const { return this->asSurfaceProxy()->width(); }
@@ -74,12 +74,12 @@ public:
      *              unsupported pixel config.
      */
     bool readPixels(const SkImageInfo& dstInfo, void* dstBuffer, size_t dstRowBytes,
-                    int x, int y) {
-        return this->onReadPixels(dstInfo, dstBuffer, dstRowBytes, x, y);
+                    int x, int y, uint32_t flags = 0) {
+        return this->onReadPixels(dstInfo, dstBuffer, dstRowBytes, x, y, flags);
     }
 
     /**
-     * Writes a rectangle of pixels [srcInfo, srcBuffer, srcRowbytes] into the 
+     * Writes a rectangle of pixels [srcInfo, srcBuffer, srcRowbytes] into the
      * renderTargetContext at the specified position.
      * @param srcInfo       image info for the source pixels
      * @param srcBuffer     source for the write
@@ -91,8 +91,8 @@ public:
      *              unsupported pixel config.
      */
     bool writePixels(const SkImageInfo& srcInfo, const void* srcBuffer, size_t srcRowBytes,
-                     int x, int y) {
-        return this->onWritePixels(srcInfo, srcBuffer, srcRowBytes, x, y);
+                     int x, int y, uint32_t flags = 0) {
+        return this->onWritePixels(srcInfo, srcBuffer, srcRowBytes, x, y, flags);
     }
 
     // TODO: this is virtual b.c. this object doesn't have a pointer to the wrapped GrSurfaceProxy?
@@ -137,9 +137,9 @@ private:
                         const SkIRect& srcRect,
                         const SkIPoint& dstPoint) = 0;
     virtual bool onReadPixels(const SkImageInfo& dstInfo, void* dstBuffer,
-                              size_t dstRowBytes, int x, int y) = 0;
+                              size_t dstRowBytes, int x, int y, uint32_t flags) = 0;
     virtual bool onWritePixels(const SkImageInfo& srcInfo, const void* srcBuffer,
-                               size_t srcRowBytes, int x, int y) = 0;
+                               size_t srcRowBytes, int x, int y, uint32_t flags) = 0;
 
     GrDrawingManager*     fDrawingManager;
 

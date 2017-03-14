@@ -281,7 +281,7 @@ static bool get_segments(const SkPath& path,
 
     for (;;) {
         SkPoint pts[4];
-        SkPath::Verb verb = iter.next(pts);
+        SkPath::Verb verb = iter.next(pts, true, true);
         switch (verb) {
             case SkPath::kMove_Verb:
                 m.mapPoints(pts, 1);
@@ -725,9 +725,9 @@ static sk_sp<GrGeometryProcessor> create_fill_gp(bool tweakAlphaForCoverage,
 class AAConvexPathOp final : public GrMeshDrawOp {
 public:
     DEFINE_OP_CLASS_ID
-    static std::unique_ptr<GrDrawOp> Make(GrColor color, const SkMatrix& viewMatrix,
-                                          const SkPath& path) {
-        return std::unique_ptr<GrDrawOp>(new AAConvexPathOp(color, viewMatrix, path));
+    static std::unique_ptr<GrMeshDrawOp> Make(GrColor color, const SkMatrix& viewMatrix,
+                                              const SkPath& path) {
+        return std::unique_ptr<GrMeshDrawOp>(new AAConvexPathOp(color, viewMatrix, path));
     }
 
     const char* name() const override { return "AAConvexPathOp"; }
@@ -972,13 +972,13 @@ bool GrAAConvexPathRenderer::onDrawPath(const DrawPathArgs& args) {
     SkPath path;
     args.fShape->asPath(&path);
 
-    std::unique_ptr<GrDrawOp> op =
+    std::unique_ptr<GrMeshDrawOp> op =
             AAConvexPathOp::Make(args.fPaint.getColor(), *args.fViewMatrix, path);
 
     GrPipelineBuilder pipelineBuilder(std::move(args.fPaint), args.fAAType);
     pipelineBuilder.setUserStencil(args.fUserStencilSettings);
 
-    args.fRenderTargetContext->addDrawOp(pipelineBuilder, *args.fClip, std::move(op));
+    args.fRenderTargetContext->addMeshDrawOp(pipelineBuilder, *args.fClip, std::move(op));
 
     return true;
 

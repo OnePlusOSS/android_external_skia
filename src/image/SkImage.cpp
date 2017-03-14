@@ -8,6 +8,7 @@
 #include "SkBitmap.h"
 #include "SkBitmapCache.h"
 #include "SkCanvas.h"
+#include "SkCrossContextImageData.h"
 #include "SkData.h"
 #include "SkImageEncoder.h"
 #include "SkImageFilter.h"
@@ -20,6 +21,7 @@
 #include "SkPicture.h"
 #include "SkPixelRef.h"
 #include "SkPixelSerializer.h"
+#include "SkRGBAToYUV.h"
 #include "SkReadPixelsRec.h"
 #include "SkSpecialImage.h"
 #include "SkStream.h"
@@ -79,6 +81,14 @@ bool SkImage::scalePixels(const SkPixmap& dst, SkFilterQuality quality, CachingH
 
 SkAlphaType SkImage::alphaType() const {
     return as_IB(this)->onAlphaType();
+}
+
+SkColorSpace* SkImage::colorSpace() const {
+    return as_IB(this)->onImageInfo().colorSpace();
+}
+
+sk_sp<SkColorSpace> SkImage::refColorSpace() const {
+    return as_IB(this)->onImageInfo().refColorSpace();
 }
 
 sk_sp<SkShader> SkImage::makeShader(SkShader::TileMode tileX, SkShader::TileMode tileY,
@@ -202,28 +212,20 @@ SkImage_Base::~SkImage_Base() {
     }
 }
 
+bool SkImage_Base::onReadYUV8Planes(const SkISize sizes[3], void* const planes[3],
+                                    const size_t rowBytes[3], SkYUVColorSpace colorSpace) const {
+    return SkRGBAToYUV(this, sizes, planes, rowBytes, colorSpace);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool SkImage::readPixels(const SkPixmap& pmap, int srcX, int srcY, CachingHint chint) const {
     return this->readPixels(pmap.info(), pmap.writable_addr(), pmap.rowBytes(), srcX, srcY, chint);
 }
 
-#if SK_SUPPORT_GPU
-#include "GrTextureToYUVPlanes.h"
-#endif
-
-#include "SkRGBAToYUV.h"
-
 bool SkImage::readYUV8Planes(const SkISize sizes[3], void* const planes[3],
                              const size_t rowBytes[3], SkYUVColorSpace colorSpace) const {
-#if SK_SUPPORT_GPU
-    if (GrTexture* texture = as_IB(this)->peekTexture()) {
-        if (GrTextureToYUVPlanes(texture, sizes, planes, rowBytes, colorSpace)) {
-            return true;
-        }
-    }
-#endif
-    return SkRGBAToYUV(this, sizes, planes, rowBytes, colorSpace);
+    return as_IB(this)->onReadYUV8Planes(sizes, planes, rowBytes, colorSpace);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -355,6 +357,21 @@ sk_sp<SkImage> SkImage::MakeFromYUVTexturesCopy(GrContext* ctx, SkYUVColorSpace 
 
 sk_sp<SkImage> SkImage::makeTextureImage(GrContext*, SkColorSpace* dstColorSpace) const {
     return nullptr;
+}
+
+std::unique_ptr<SkCrossContextImageData> SkCrossContextImageData::MakeFromEncoded(
+        GrContext*, sk_sp<SkData> encoded, SkColorSpace* dstColorSpace) {
+    sk_sp<SkImage> image = SkImage::MakeFromEncoded(std::move(encoded));
+    if (!image) {
+        return nullptr;
+    }
+    // TODO: Force decode to raster here?
+    return std::unique_ptr<SkCrossContextImageData>(new SkCrossContextImageData(std::move(image)));
+}
+
+sk_sp<SkImage> SkImage::MakeFromCrossContextImageData(
+        GrContext*, std::unique_ptr<SkCrossContextImageData> ccid) {
+    return ccid->fImage;
 }
 
 sk_sp<SkImage> SkImage::makeNonTextureImage() const {

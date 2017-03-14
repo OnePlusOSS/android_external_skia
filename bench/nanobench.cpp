@@ -33,13 +33,13 @@
 #include "SkCodec.h"
 #include "SkCommonFlags.h"
 #include "SkCommonFlagsConfig.h"
+#include "SkCommonFlagsPathRenderer.h"
 #include "SkData.h"
 #include "SkGraphics.h"
 #include "SkLeanWindows.h"
 #include "SkOSFile.h"
 #include "SkOSPath.h"
 #include "SkPictureRecorder.h"
-#include "SkPictureUtils.h"
 #include "SkSVGDOM.h"
 #include "SkScan.h"
 #include "SkString.h"
@@ -127,6 +127,10 @@ DEFINE_string(sourceType, "",
         "Apply usual --match rules to source type: bench, gm, skp, image, etc.");
 DEFINE_string(benchType,  "",
         "Apply usual --match rules to bench type: micro, recording, piping, playback, skcodec, etc.");
+
+#if SK_SUPPORT_GPU
+DEFINE_pathrenderer_flag;
+#endif
 
 static double now_ms() { return SkTime::GetNSecs() * 1e-6; }
 
@@ -709,7 +713,7 @@ public:
             SkString name = SkOSPath::Basename(path.c_str());
             fSourceType = "skp";
             fBenchType  = "recording";
-            fSKPBytes = static_cast<double>(SkPictureUtils::ApproximateBytesUsed(pic.get()));
+            fSKPBytes = static_cast<double>(pic->approximateBytesUsed());
             fSKPOps   = pic->approximateOpCount();
             return new RecordingBench(name.c_str(), pic.get(), FLAGS_bbh, FLAGS_lite);
         }
@@ -724,7 +728,7 @@ public:
             SkString name = SkOSPath::Basename(path.c_str());
             fSourceType = "skp";
             fBenchType  = "piping";
-            fSKPBytes = static_cast<double>(SkPictureUtils::ApproximateBytesUsed(pic.get()));
+            fSKPBytes = static_cast<double>(pic->approximateBytesUsed());
             fSKPOps   = pic->approximateOpCount();
             return new PipingBench(name.c_str(), pic.get());
         }
@@ -1106,6 +1110,7 @@ int main(int argc, char** argv) {
 
 #if SK_SUPPORT_GPU
     GrContextOptions grContextOpts;
+    grContextOpts.fGpuPathRenderers = CollectGpuPathRenderersFromFlags();
     gGrFactory.reset(new GrContextFactory(grContextOpts));
 #endif
 

@@ -164,6 +164,8 @@ public:
 
     virtual bool onIsNumericalTransferFn(SkColorSpaceTransferFn* coeffs) const = 0;
 
+    virtual bool onIsCMYK() const { return false; }
+
     /**
      *  Returns a color space with the same gamut as this one, but with a linear gamma.
      *  For color spaces whose gamut can not be described in terms of XYZ D50, returns
@@ -179,6 +181,7 @@ public:
     virtual sk_sp<SkColorSpace> makeSRGBGamma() = 0;
 
     sk_sp<SkColorSpace> makeWithoutFlags();
+    sk_sp<SkColorSpace> makeWithNonLinearBlending();
 
     enum class Type : uint8_t {
         kXYZ,

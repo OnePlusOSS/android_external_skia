@@ -12,7 +12,7 @@
 #include "GrSurfaceProxy.h"
 #include "GrTypes.h"
 
-class GrTextureProvider;
+class GrResourceProvider;
 
 // This class delays the acquisition of RenderTargets until they are actually
 // required
@@ -24,7 +24,7 @@ public:
     const GrRenderTargetProxy* asRenderTargetProxy() const override { return this; }
 
     // Actually instantiate the backing rendertarget, if necessary.
-    GrRenderTarget* instantiate(GrTextureProvider* texProvider);
+    GrRenderTarget* instantiate(GrResourceProvider* resourceProvider);
 
     bool isStencilBufferMultisampled() const { return fDesc.fSampleCnt > 0; }
 
@@ -32,7 +32,7 @@ public:
      * For our purposes, "Mixed Sampled" means the stencil buffer is multisampled but the color
      * buffer is not.
      */
-    bool isMixedSampled() const { return fFlags & GrRenderTarget::Flags::kMixedSampled; }
+    bool isMixedSampled() const { return fRenderTargetFlags & GrRenderTarget::Flags::kMixedSampled; }
 
     /**
      * "Unified Sampled" means the stencil and color buffers are both multisampled.
@@ -60,7 +60,8 @@ protected:
     friend class GrSurfaceProxy;  // for ctors
 
     // Deferred version
-    GrRenderTargetProxy(const GrCaps&, const GrSurfaceDesc&, SkBackingFit, SkBudgeted);
+    GrRenderTargetProxy(const GrCaps&, const GrSurfaceDesc&,
+                        SkBackingFit, SkBudgeted, uint32_t flags);
 
     // Wrapped version
     GrRenderTargetProxy(sk_sp<GrSurface>);
@@ -77,7 +78,7 @@ private:
     // we know the newly created render target will be internal, we are able to precompute what the
     // flags will ultimately end up being. In the wrapped case we just copy the wrapped
     // rendertarget's info here.
-    GrRenderTarget::Flags   fFlags;
+    GrRenderTarget::Flags   fRenderTargetFlags;
 
     typedef GrSurfaceProxy INHERITED;
 };

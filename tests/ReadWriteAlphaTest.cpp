@@ -12,6 +12,7 @@
 
 #include "GrContext.h"
 #include "GrContextPriv.h"
+#include "GrResourceProvider.h"
 #include "GrSurfaceContext.h"
 #include "GrSurfaceProxy.h"
 #include "SkCanvas.h"
@@ -55,17 +56,17 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(ReadWriteAlpha, reporter, ctxInfo) {
         // We are initializing the texture with zeros here
         memset(alphaData, 0, X_SIZE * Y_SIZE);
 
-        sk_sp<GrSurfaceProxy> sProxy(GrSurfaceProxy::MakeDeferred(*context->caps(),
-                                                                  context->textureProvider(),
-                                                                  desc,
-                                                                  SkBudgeted::kNo,
-                                                                  alphaData, 0));
-        if (!sProxy) {
+        sk_sp<GrTextureProxy> proxy(GrSurfaceProxy::MakeDeferred(*context->caps(),
+                                                                 context->resourceProvider(),
+                                                                 desc,
+                                                                 SkBudgeted::kNo,
+                                                                 alphaData, 0));
+        if (!proxy) {
             ERRORF(reporter, "Could not create alpha texture.");
             return;
         }
         sk_sp<GrSurfaceContext> sContext(context->contextPriv().makeWrappedSurfaceContext(
-                                                                  sProxy, nullptr));
+                                                                  std::move(proxy), nullptr));
 
         const SkImageInfo ii = SkImageInfo::MakeA8(X_SIZE, Y_SIZE);
         sk_sp<SkSurface> surf(SkSurface::MakeRenderTarget(context, SkBudgeted::kNo, ii));
@@ -160,7 +161,7 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(ReadWriteAlpha, reporter, ctxInfo) {
                 }
             }
             sk_sp<GrTexture> texture(
-                context->textureProvider()->createTexture(desc, SkBudgeted::kNo, rgbaData, 0));
+                context->resourceProvider()->createTexture(desc, SkBudgeted::kNo, rgbaData, 0));
             if (!texture) {
                 // We always expect to be able to create a RGBA texture
                 if (!rt  && kRGBA_8888_GrPixelConfig == desc.fConfig) {

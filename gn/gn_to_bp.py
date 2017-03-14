@@ -33,6 +33,7 @@ tool_shared_libs = [
     'libft2',
     'libdng_sdk',
     'libpiex',
+    'libcutils',
 ]
 
 # The ordering here is important: libsfntly needs to come after libskia.
@@ -57,6 +58,7 @@ cc_library {
         "-U_FORTIFY_SOURCE",
         "-D_FORTIFY_SOURCE=1",
         "-DSKIA_IMPLEMENTATION=1",
+        "-DATRACE_TAG=ATRACE_TAG_VIEW",
     ],
 
     export_include_dirs: [
@@ -129,6 +131,7 @@ cc_library {
         "libpng",
         "libvulkan",
         "libz",
+        "libcutils",
     ],
     static_libs: [
         "libarect",
@@ -188,14 +191,12 @@ cc_test {
 
 # We'll run GN to get the main source lists and include directories for Skia.
 gn_args = {
-  'skia_enable_vulkan_debug_layers': 'false',
-  'skia_use_system_expat':           'true',
-  'skia_use_system_jsoncpp':         'true',
-  'skia_use_system_libpng':          'true',
-  'skia_use_system_zlib':            'true',
-  'skia_use_vulkan':                 'true',
-  'target_cpu':                      '"none"',
-  'target_os':                       '"android"',
+  'is_official_build':  'true',
+  'skia_enable_jumper': 'true',
+  'skia_enable_tools':  'true',
+  'skia_use_vulkan':    'true',
+  'target_cpu':         '"none"',
+  'target_os':          '"android"',
 }
 gn_args = ' '.join(sorted('%s=%s' % (k,v) for (k,v) in gn_args.iteritems()))
 
@@ -205,7 +206,7 @@ subprocess.check_call(['gn', 'gen', tmp, '--args=%s' % gn_args, '--ide=json'])
 js = json.load(open(os.path.join(tmp, 'project.json')))
 
 def strip_slashes(lst):
-  return [str(p.lstrip('/')) for p in lst]
+  return {str(p.lstrip('/')) for p in lst}
 
 srcs            = strip_slashes(js['targets']['//:skia']['sources'])
 local_includes  = strip_slashes(js['targets']['//:skia']['include_dirs'])
@@ -228,20 +229,22 @@ def GrabDependentSrcs(name, srcs_to_extend, exclude):
       continue   # We'll handle all cpu-specific sources manually later.
     if exclude and exclude in dep:
       continue
-    srcs_to_extend.extend(strip_slashes(js['targets'][dep].get('sources', [])))
+    srcs_to_extend.update(strip_slashes(js['targets'][dep].get('sources', [])))
+    GrabDependentSrcs(dep, srcs_to_extend, exclude)
 
 GrabDependentSrcs('//:skia', srcs, None)
 GrabDependentSrcs('//:dm', dm_srcs, 'skia')
 GrabDependentSrcs('//:nanobench', nanobench_srcs, 'skia')
 
 # No need to list headers.
-srcs            = [s for s in srcs           if not s.endswith('.h')]
-dm_srcs         = [s for s in dm_srcs        if not s.endswith('.h')]
-nanobench_srcs  = [s for s in nanobench_srcs if not s.endswith('.h')]
+srcs            = {s for s in srcs           if not s.endswith('.h')}
+dm_srcs         = {s for s in dm_srcs        if not s.endswith('.h')}
+nanobench_srcs  = {s for s in nanobench_srcs if not s.endswith('.h')}
 
 # Most defines go into SkUserConfig.h, where they're seen by Skia and its users.
 # Start with the defines :skia uses, minus a couple.  We'll add more in a bit.
 defines = [str(d) for d in js['targets']['//:skia']['defines']]
+defines.remove('NDEBUG')                 # Let the Android build control this.
 defines.remove('SKIA_IMPLEMENTATION=1')  # Only libskia should have this define.
 
 # For architecture specific files, it's easier to just read the same source

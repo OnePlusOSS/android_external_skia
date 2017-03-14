@@ -199,7 +199,7 @@ sk_sp<GrRenderTargetContext> GaussianBlur(GrContext* context,
         // Chrome is crashing with proxies when they need to be instantiated.
         // Force an instantiation here (where, in olden days, we used to require a GrTexture)
         // to see if the input is already un-instantiable.
-        GrTexture* temp = srcProxy->instantiate(context->textureProvider());
+        GrTexture* temp = srcProxy->instantiate(context->resourceProvider());
         if (!temp) {
             return nullptr;
         }
@@ -372,12 +372,12 @@ sk_sp<GrRenderTargetContext> GaussianBlur(GrContext* context,
         paint.setGammaCorrect(dstRenderTargetContext->isGammaCorrect());
         // FIXME:  this should be mitchell, not bilinear.
         GrSamplerParams params(SkShader::kClamp_TileMode, GrSamplerParams::kBilerp_FilterMode);
-        sk_sp<GrTexture> tex(srcRenderTargetContext->asTexture());
-        if (!tex) {
+        sk_sp<GrTextureProxy> proxy(srcRenderTargetContext->asTextureProxyRef());
+        if (!proxy) {
             return nullptr;
         }
 
-        paint.addColorTextureProcessor(tex.get(), nullptr, SkMatrix::I(), params);
+        paint.addColorTextureProcessor(context, std::move(proxy), nullptr, SkMatrix::I(), params);
         paint.setPorterDuffXPFactory(SkBlendMode::kSrc);
 
         SkIRect dstRect(srcRect);

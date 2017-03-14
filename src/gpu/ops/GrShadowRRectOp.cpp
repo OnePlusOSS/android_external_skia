@@ -67,9 +67,9 @@ class ShadowCircleOp final : public GrMeshDrawOp {
 public:
     DEFINE_OP_CLASS_ID
 
-    static std::unique_ptr<GrDrawOp> Make(GrColor color, const SkMatrix& viewMatrix, SkPoint center,
-                                          SkScalar radius, SkScalar blurRadius,
-                                          const GrStyle& style) {
+    static std::unique_ptr<GrMeshDrawOp> Make(GrColor color, const SkMatrix& viewMatrix,
+                                              SkPoint center, SkScalar radius, SkScalar blurRadius,
+                                              const GrStyle& style) {
         SkASSERT(viewMatrix.isSimilarity());
         const SkStrokeRec& stroke = style.strokeRec();
         if (style.hasPathEffect()) {
@@ -101,13 +101,6 @@ public:
             }
         }
 
-        // TODO: still needed?
-        // The radii are outset for two reasons. First, it allows the shader to simply perform
-        // simpler computation because the computed alpha is zero, rather than 50%, at the radius.
-        // Second, the outer radius is used to compute the verts of the bounding box that is
-        // rendered and the outset ensures the box will cover all partially covered by the circle.
-        outerRadius += SK_ScalarHalf;
-        innerRadius -= SK_ScalarHalf;
         bool stroked = isStrokeOnly && innerRadius > 0.0f;
         std::unique_ptr<ShadowCircleOp> op(new ShadowCircleOp());
         op->fViewMatrixIfUsingLocalCoords = viewMatrix;
@@ -533,8 +526,6 @@ public:
             }
 
             if (strokeOnly) {
-                // Outset stroke by 1/4 pixel
-                devStrokeWidth += 0.25f;
                 // If stroke is greater than width or height, this is still a fill
                 // Otherwise we compute stroke params
                 if (devStrokeWidth <= devRect.width() && devStrokeWidth <= devRect.height()) {
@@ -546,19 +537,7 @@ public:
             bounds.outset(halfWidth, halfWidth);
         }
 
-        // TODO: still needed?
-        // The radii are outset for two reasons. First, it allows the shader to simply perform
-        // simpler computation because the computed alpha is zero, rather than 50%, at the radius.
-        // Second, the outer radius is used to compute the verts of the bounding box that is
-        // rendered and the outset ensures the box will cover all partially covered by the rrect
-        // corners.
-        outerRadius += SK_ScalarHalf;
-        innerRadius -= SK_ScalarHalf;
-
-        this->setBounds(bounds, HasAABloat::kYes, IsZeroArea::kNo);
-
-        // Expand the rect for aa to generate correct vertices.
-        bounds.outset(SK_ScalarHalf, SK_ScalarHalf);
+        this->setBounds(bounds, HasAABloat::kNo, IsZeroArea::kNo);
 
         fGeoData.emplace_back(Geometry{color, outerRadius, innerRadius, blurRadius, bounds, type});
         fVertCount = rrect_type_to_vert_count(type);
@@ -827,12 +806,12 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<GrDrawOp> make_shadow_circle_op(GrColor color,
-                                                const SkMatrix& viewMatrix,
-                                                const SkRect& oval,
-                                                SkScalar blurRadius,
-                                                const SkStrokeRec& stroke,
-                                                const GrShaderCaps* shaderCaps) {
+std::unique_ptr<GrMeshDrawOp> make_shadow_circle_op(GrColor color,
+                                                    const SkMatrix& viewMatrix,
+                                                    const SkRect& oval,
+                                                    SkScalar blurRadius,
+                                                    const SkStrokeRec& stroke,
+                                                    const GrShaderCaps* shaderCaps) {
     // we can only draw circles
     SkScalar width = oval.width();
     SkASSERT(SkScalarNearlyEqual(width, oval.height()) && viewMatrix.isSimilarity());
@@ -841,11 +820,11 @@ std::unique_ptr<GrDrawOp> make_shadow_circle_op(GrColor color,
                                 GrStyle(stroke, nullptr));
 }
 
-static std::unique_ptr<GrDrawOp> make_shadow_rrect_op(GrColor color,
-                                                      const SkMatrix& viewMatrix,
-                                                      const SkRRect& rrect,
-                                                      SkScalar blurRadius,
-                                                      const SkStrokeRec& stroke) {
+static std::unique_ptr<GrMeshDrawOp> make_shadow_rrect_op(GrColor color,
+                                                          const SkMatrix& viewMatrix,
+                                                          const SkRRect& rrect,
+                                                          SkScalar blurRadius,
+                                                          const SkStrokeRec& stroke) {
     SkASSERT(viewMatrix.rectStaysRect());
     SkASSERT(rrect.isSimple());
     SkASSERT(!rrect.isOval());
@@ -898,17 +877,17 @@ static std::unique_ptr<GrDrawOp> make_shadow_rrect_op(GrColor color,
         return nullptr;
     }
 
-    return std::unique_ptr<GrDrawOp>(new ShadowCircularRRectOp(
+    return std::unique_ptr<GrMeshDrawOp>(new ShadowCircularRRectOp(
             color, viewMatrix, bounds, xRadius, blurRadius, scaledStroke.fX, isStrokeOnly));
 }
 
 namespace GrShadowRRectOp {
-std::unique_ptr<GrDrawOp> Make(GrColor color,
-                               const SkMatrix& viewMatrix,
-                               const SkRRect& rrect,
-                               const SkScalar blurRadius,
-                               const SkStrokeRec& stroke,
-                               const GrShaderCaps* shaderCaps) {
+std::unique_ptr<GrMeshDrawOp> Make(GrColor color,
+                                   const SkMatrix& viewMatrix,
+                                   const SkRRect& rrect,
+                                   const SkScalar blurRadius,
+                                   const SkStrokeRec& stroke,
+                                   const GrShaderCaps* shaderCaps) {
     if (rrect.isOval()) {
         return make_shadow_circle_op(color, viewMatrix, rrect.getBounds(), blurRadius, stroke,
                                      shaderCaps);
@@ -941,8 +920,8 @@ DRAW_OP_TEST_DEFINE(ShadowCircleOp) {
         SkScalar radius = circle.width() / 2.f;
         SkStrokeRec stroke = GrTest::TestStrokeRec(random);
         SkScalar blurRadius = random->nextSScalar1() * 72.f;
-        std::unique_ptr<GrDrawOp> op = ShadowCircleOp::Make(color, viewMatrix, center, radius,
-                                                            blurRadius, GrStyle(stroke, nullptr));
+        std::unique_ptr<GrMeshDrawOp> op = ShadowCircleOp::Make(
+                color, viewMatrix, center, radius, blurRadius, GrStyle(stroke, nullptr));
         if (op) {
             return op;
         }

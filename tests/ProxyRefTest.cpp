@@ -10,12 +10,11 @@
 #include "Test.h"
 
 #if SK_SUPPORT_GPU
-#include "GrSurfaceProxy.h"
-#include "GrTextureProxy.h"
 #include "GrRenderTargetPriv.h"
 #include "GrRenderTargetProxy.h"
-
-static const int kWidthHeight = 128;
+#include "GrResourceProvider.h"
+#include "GrSurfaceProxy.h"
+#include "GrTextureProxy.h"
 
 int32_t GrIORefProxy::getProxyRefCnt_TestOnly() const {
     return fRefCnt;
@@ -47,6 +46,10 @@ int32_t GrIORefProxy::getPendingWriteCnt_TestOnly() const {
     return fPendingWrites;
 }
 
+#ifndef SK_DISABLE_DEFERRED_PROXIES
+
+static const int kWidthHeight = 128;
+
 static void check_refs(skiatest::Reporter* reporter,
                        GrSurfaceProxy* proxy,
                        int32_t expectedProxyRefs,
@@ -64,17 +67,18 @@ static void check_refs(skiatest::Reporter* reporter,
     SkASSERT(proxy->getPendingWriteCnt_TestOnly() == expectedNumWrites);
 }
 
-static sk_sp<GrSurfaceProxy> make_deferred(const GrCaps& caps, GrTextureProvider* provider) {
+static sk_sp<GrSurfaceProxy> make_deferred(const GrCaps& caps, GrResourceProvider* provider) {
     GrSurfaceDesc desc;
     desc.fFlags = kRenderTarget_GrSurfaceFlag;
     desc.fWidth = kWidthHeight;
     desc.fHeight = kWidthHeight;
     desc.fConfig = kRGBA_8888_GrPixelConfig;
 
-    return GrSurfaceProxy::MakeDeferred(caps, desc, SkBackingFit::kApprox, SkBudgeted::kYes);
+    return GrSurfaceProxy::MakeDeferred(provider, caps, desc,
+                                        SkBackingFit::kApprox, SkBudgeted::kYes);
 }
 
-static sk_sp<GrSurfaceProxy> make_wrapped(const GrCaps& caps, GrTextureProvider* provider) {
+static sk_sp<GrSurfaceProxy> make_wrapped(const GrCaps& caps, GrResourceProvider* provider) {
     GrSurfaceDesc desc;
     desc.fFlags = kRenderTarget_GrSurfaceFlag;
     desc.fWidth = kWidthHeight;
@@ -90,7 +94,7 @@ static sk_sp<GrSurfaceProxy> make_wrapped(const GrCaps& caps, GrTextureProvider*
 }
 
 DEF_GPUTEST_FOR_RENDERING_CONTEXTS(ProxyRefTest, reporter, ctxInfo) {
-    GrTextureProvider* provider = ctxInfo.grContext()->textureProvider();
+    GrResourceProvider* provider = ctxInfo.grContext()->resourceProvider();
     const GrCaps& caps = *ctxInfo.grContext()->caps();
 
     // Currently the op itself takes a pending write and the render target op list does as well.
@@ -203,5 +207,6 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(ProxyRefTest, reporter, ctxInfo) {
         }
     }
 }
+#endif
 
 #endif

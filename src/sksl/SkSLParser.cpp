@@ -10,21 +10,9 @@
 #include "SkSLToken.h"
 
 #define register
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
-#pragma clang diagnostic ignored "-Wnull-conversion"
-#pragma clang diagnostic ignored "-Wsign-compare"
-#endif
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-compare"
-#endif
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4018)
-#endif
+#include "disable_flex_warnings.h"
 #include "lex.sksl.c"
+#undef register
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -34,8 +22,8 @@
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-#undef register
 
+#include "lex.layout.h"
 #include "ast/SkSLASTBinaryExpression.h"
 #include "ast/SkSLASTBlock.h"
 #include "ast/SkSLASTBoolLiteral.h"
@@ -63,6 +51,8 @@
 #include "ast/SkSLASTReturnStatement.h"
 #include "ast/SkSLASTStatement.h"
 #include "ast/SkSLASTSuffixExpression.h"
+#include "ast/SkSLASTSwitchCase.h"
+#include "ast/SkSLASTSwitchStatement.h"
 #include "ast/SkSLASTTernaryExpression.h"
 #include "ast/SkSLASTType.h"
 #include "ast/SkSLASTVarDeclaration.h"
@@ -104,6 +94,7 @@ Parser::Parser(SkString text, SymbolTable& types, ErrorReporter& errors)
 , fTypes(types)
 , fErrors(errors) {
     sksllex_init(&fScanner);
+    layoutlex_init(&fLayoutScanner);
     fBuffer = sksl_scan_string(text.c_str(), fScanner);
     skslset_lineno(1, fScanner);
 
@@ -111,32 +102,12 @@ Parser::Parser(SkString text, SymbolTable& types, ErrorReporter& errors)
         // avoid unused warning
         yyunput(0, nullptr, fScanner);
     }
-
-    fLayoutKeys[SkString("location")]                    = kLocation_LayoutKey;
-    fLayoutKeys[SkString("offset")]                      = kOffset_LayoutKey;
-    fLayoutKeys[SkString("binding")]                     = kBinding_LayoutKey;
-    fLayoutKeys[SkString("index")]                       = kIndex_LayoutKey;
-    fLayoutKeys[SkString("set")]                         = kSet_LayoutKey;
-    fLayoutKeys[SkString("builtin")]                     = kBuiltin_LayoutKey;
-    fLayoutKeys[SkString("input_attachment_index")]      = kInputAttachmentIndex_LayoutKey;
-    fLayoutKeys[SkString("origin_upper_left")]           = kOriginUpperLeft_LayoutKey;
-    fLayoutKeys[SkString("override_coverage")]           = kOverrideCoverage_LayoutKey;
-    fLayoutKeys[SkString("blend_support_all_equations")] = kBlendSupportAllEquations_LayoutKey;
-    fLayoutKeys[SkString("push_constant")]               = kPushConstant_LayoutKey;
-    fLayoutKeys[SkString("points")]                      = kPoints_LayoutKey;
-    fLayoutKeys[SkString("lines")]                       = kLines_LayoutKey;
-    fLayoutKeys[SkString("line_strip")]                  = kLineStrip_LayoutKey;
-    fLayoutKeys[SkString("lines_adjacency")]             = kLinesAdjacency_LayoutKey;
-    fLayoutKeys[SkString("triangles")]                   = kTriangles_LayoutKey;
-    fLayoutKeys[SkString("triangle_strip")]              = kTriangleStrip_LayoutKey;
-    fLayoutKeys[SkString("triangles_adjacency")]         = kTrianglesAdjacency_LayoutKey;
-    fLayoutKeys[SkString("max_vertices")]                = kMaxVertices_LayoutKey;
-    fLayoutKeys[SkString("invocations")]                 = kInvocations_LayoutKey;
 }
 
 Parser::~Parser() {
     sksl_delete_buffer(fBuffer, fScanner);
     sksllex_destroy(fScanner);
+    layoutlex_destroy(fLayoutScanner);
 }
 
 /* (precision | directive | declaration)* END_OF_FILE */
@@ -591,67 +562,70 @@ Layout Parser::layout() {
         }
         for (;;) {
             Token t = this->nextToken();
-            auto found = fLayoutKeys.find(t.fText);
-            if (found != fLayoutKeys.end()) {
-                switch (found->second) {
-                    case kLocation_LayoutKey:
+            YY_BUFFER_STATE buffer;
+            buffer = layout_scan_string(t.fText.c_str(), fLayoutScanner);
+            int token = layoutlex(fLayoutScanner);
+            layout_delete_buffer(buffer, fLayoutScanner);
+            if (token != Token::INVALID_TOKEN) {
+                switch (token) {
+                    case Token::LOCATION:
                         location = this->layoutInt();
                         break;
-                    case kOffset_LayoutKey:
+                    case Token::OFFSET:
                         offset = this->layoutInt();
                         break;
-                    case kBinding_LayoutKey:
+                    case Token::BINDING:
                         binding = this->layoutInt();
                         break;
-                    case kIndex_LayoutKey:
+                    case Token::INDEX:
                         index = this->layoutInt();
                         break;
-                    case kSet_LayoutKey:
+                    case Token::SET:
                         set = this->layoutInt();
                         break;
-                    case kBuiltin_LayoutKey:
+                    case Token::BUILTIN:
                         builtin = this->layoutInt();
                         break;
-                    case kInputAttachmentIndex_LayoutKey:
+                    case Token::INPUT_ATTACHMENT_INDEX:
                         inputAttachmentIndex = this->layoutInt();
                         break;
-                    case kOriginUpperLeft_LayoutKey:
+                    case Token::ORIGIN_UPPER_LEFT:
                         originUpperLeft = true;
                         break;
-                    case kOverrideCoverage_LayoutKey:
+                    case Token::OVERRIDE_COVERAGE:
                         overrideCoverage = true;
                         break;
-                    case kBlendSupportAllEquations_LayoutKey:
+                    case Token::BLEND_SUPPORT_ALL_EQUATIONS:
                         blendSupportAllEquations = true;
                         break;
-                    case kPushConstant_LayoutKey:
+                    case Token::PUSH_CONSTANT:
                         pushConstant = true;
                         break;
-                    case kPoints_LayoutKey:
+                    case Token::POINTS:
                         primitive = Layout::kPoints_Primitive;
                         break;
-                    case kLines_LayoutKey:
+                    case Token::LINES:
                         primitive = Layout::kLines_Primitive;
                         break;
-                    case kLineStrip_LayoutKey:
+                    case Token::LINE_STRIP:
                         primitive = Layout::kLineStrip_Primitive;
                         break;
-                    case kLinesAdjacency_LayoutKey:
+                    case Token::LINES_ADJACENCY:
                         primitive = Layout::kLinesAdjacency_Primitive;
                         break;
-                    case kTriangles_LayoutKey:
+                    case Token::TRIANGLES:
                         primitive = Layout::kTriangles_Primitive;
                         break;
-                    case kTriangleStrip_LayoutKey:
+                    case Token::TRIANGLE_STRIP:
                         primitive = Layout::kTriangleStrip_Primitive;
                         break;
-                    case kTrianglesAdjacency_LayoutKey:
+                    case Token::TRIANGLES_ADJACENCY:
                         primitive = Layout::kTrianglesAdjacency_Primitive;
                         break;
-                    case kMaxVertices_LayoutKey:
+                    case Token::MAX_VERTICES:
                         maxVertices = this->layoutInt();
                         break;
-                    case kInvocations_LayoutKey:
+                    case Token::INVOCATIONS:
                         invocations = this->layoutInt();
                         break;
                 }
@@ -770,6 +744,8 @@ std::unique_ptr<ASTStatement> Parser::statement() {
             return this->doStatement();
         case Token::WHILE:
             return this->whileStatement();
+        case Token::SWITCH:
+            return this->switchStatement();
         case Token::RETURN:
             return this->returnStatement();
         case Token::BREAK:
@@ -973,6 +949,86 @@ std::unique_ptr<ASTWhileStatement> Parser::whileStatement() {
     return std::unique_ptr<ASTWhileStatement>(new ASTWhileStatement(start.fPosition,
                                                                     std::move(test),
                                                                     std::move(statement)));
+}
+
+/* CASE expression COLON statement* */
+std::unique_ptr<ASTSwitchCase> Parser::switchCase() {
+    Token start;
+    if (!this->expect(Token::CASE, "'case'", &start)) {
+        return nullptr;
+    }
+    std::unique_ptr<ASTExpression> value = this->expression();
+    if (!value) {
+        return nullptr;
+    }
+    if (!this->expect(Token::COLON, "':'")) {
+        return nullptr;
+    }
+    std::vector<std::unique_ptr<ASTStatement>> statements;
+    while (this->peek().fKind != Token::RBRACE && this->peek().fKind != Token::CASE &&
+           this->peek().fKind != Token::DEFAULT) {
+        std::unique_ptr<ASTStatement> s = this->statement();
+        if (!s) {
+            return nullptr;
+        }
+        statements.push_back(std::move(s));
+    }
+    return std::unique_ptr<ASTSwitchCase>(new ASTSwitchCase(start.fPosition, std::move(value),
+                                                            std::move(statements)));
+}
+
+/* SWITCH LPAREN expression RPAREN LBRACE switchCase* (DEFAULT COLON statement*)? RBRACE */
+std::unique_ptr<ASTStatement> Parser::switchStatement() {
+    Token start;
+    if (!this->expect(Token::SWITCH, "'switch'", &start)) {
+        return nullptr;
+    }
+    if (!this->expect(Token::LPAREN, "'('")) {
+        return nullptr;
+    }
+    std::unique_ptr<ASTExpression> value(this->expression());
+    if (!value) {
+        return nullptr;
+    }
+    if (!this->expect(Token::RPAREN, "')'")) {
+        return nullptr;
+    }
+    if (!this->expect(Token::LBRACE, "'{'")) {
+        return nullptr;
+    }
+    std::vector<std::unique_ptr<ASTSwitchCase>> cases;
+    while (this->peek().fKind == Token::CASE) {
+        std::unique_ptr<ASTSwitchCase> c = this->switchCase();
+        if (!c) {
+            return nullptr;
+        }
+        cases.push_back(std::move(c));
+    }
+    // Requiring default: to be last (in defiance of C and GLSL) was a deliberate decision. Other
+    // parts of the compiler may rely upon this assumption.
+    if (this->peek().fKind == Token::DEFAULT) {
+        Token defaultStart;
+        SkAssertResult(this->expect(Token::DEFAULT, "'default'", &defaultStart));
+        if (!this->expect(Token::COLON, "':'")) {
+            return nullptr;
+        }
+        std::vector<std::unique_ptr<ASTStatement>> statements;
+        while (this->peek().fKind != Token::RBRACE) {
+            std::unique_ptr<ASTStatement> s = this->statement();
+            if (!s) {
+                return nullptr;
+            }
+            statements.push_back(std::move(s));
+        }
+        cases.emplace_back(new ASTSwitchCase(defaultStart.fPosition, nullptr,
+                                             std::move(statements)));
+    }
+    if (!this->expect(Token::RBRACE, "'}'")) {
+        return nullptr;
+    }
+    return std::unique_ptr<ASTStatement>(new ASTSwitchStatement(start.fPosition,
+                                                                std::move(value),
+                                                                std::move(cases)));
 }
 
 /* FOR LPAREN (declaration | expression)? SEMICOLON expression? SEMICOLON expression? RPAREN

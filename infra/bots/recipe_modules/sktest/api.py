@@ -50,6 +50,7 @@ def dm_flags(bot):
     configs.extend(['f16'])
     configs.extend(['sp-8888', '2ndpic-8888'])   # Test niche uses of SkPicture.
     configs.extend(['lite-8888'])                # Experimental display list.
+    configs.extend(['srgbnl'])
 
   if '-TSAN' not in bot:
     if ('TegraK1'  in bot or
@@ -106,12 +107,10 @@ def dm_flags(bot):
   args.extend(configs)
 
   # Run tests, gms, and image decoding tests everywhere.
-  args.extend('--src tests gm image colorImage'.split(' '))
-  if 'Vulkan' not in bot or 'NexusPlayer' not in bot:
-    args.append('svg')
-
-  if 'GalaxyS' in bot:
-    args.extend(('--threads', '0'))
+  args.extend('--src tests gm image colorImage svg'.split(' '))
+  if 'Vulkan' in bot and 'NexusPlayer' in bot:
+    args.remove('svg')
+    args.remove('image')
 
   blacklisted = []
   def blacklist(quad):
@@ -307,6 +306,10 @@ def dm_flags(bot):
     blacklist('_ image _ abnormal.wbmp')
     blacklist(['msaa16', 'gm', '_', 'blurcircles'])
 
+  if 'IntelHD405' in bot and 'Ubuntu16' in bot:
+    # skia:6331
+    blacklist('msaa16 image gen_codec_gpu abnormal.wbmp')
+
   if 'Nexus5' in bot:
     # skia:5876
     blacklist(['_', 'gm', '_', 'encode-platform'])
@@ -344,6 +347,12 @@ def dm_flags(bot):
     match.append('~CopySurface') # skia:5509
     match.append('~SRGBReadWritePixels') # skia:6097
 
+  if 'GalaxyJ5' in bot:
+    match.append('~SRGBReadWritePixels') # skia:6097
+
+  if 'GalaxyS6' in bot:
+    match.append('~SpecialImage') # skia:6338
+
   if 'ANGLE' in bot and 'Debug' in bot:
     match.append('~GLPrograms') # skia:4717
 
@@ -375,8 +384,8 @@ def dm_flags(bot):
     match.append('~GPUMemorySize')
 
   if 'Vulkan' in bot and 'IntelIris540' in bot and 'Ubuntu' in bot:
-    # skia:6245
-    match.append('~VkHeapTests')
+    match.extend(['~VkHeapTests', # skia:6245
+                  '~XfermodeImageFilterCroppedInput_Gpu']) #skia:6280
 
   if 'IntelIris540' in bot and 'ANGLE' in bot:
     match.append('~IntTexture') # skia:6086

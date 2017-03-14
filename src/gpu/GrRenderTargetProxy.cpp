@@ -11,46 +11,48 @@
 #include "GrGpuResourcePriv.h"
 #include "GrRenderTargetOpList.h"
 #include "GrRenderTargetPriv.h"
-#include "GrTextureProvider.h"
+#include "GrResourceProvider.h"
 #include "GrTextureRenderTargetProxy.h"
 
 // Deferred version
 // TODO: we can probably munge the 'desc' in both the wrapped and deferred
 // cases to make the sampleConfig/numSamples stuff more rational.
 GrRenderTargetProxy::GrRenderTargetProxy(const GrCaps& caps, const GrSurfaceDesc& desc,
-                                         SkBackingFit fit, SkBudgeted budgeted)
-    : INHERITED(desc, fit, budgeted)
-    , fFlags(GrRenderTarget::Flags::kNone) {
+                                         SkBackingFit fit, SkBudgeted budgeted, uint32_t flags)
+    : INHERITED(desc, fit, budgeted, flags)
+    , fRenderTargetFlags(GrRenderTarget::Flags::kNone) {
     // Since we know the newly created render target will be internal, we are able to precompute
     // what the flags will ultimately end up being.
     if (caps.usesMixedSamples() && fDesc.fSampleCnt > 0) {
-        fFlags |= GrRenderTarget::Flags::kMixedSampled;
+        fRenderTargetFlags |= GrRenderTarget::Flags::kMixedSampled;
     }
     if (caps.maxWindowRectangles() > 0) {
-        fFlags |= GrRenderTarget::Flags::kWindowRectsSupport;
+        fRenderTargetFlags |= GrRenderTarget::Flags::kWindowRectsSupport;
     }
 }
 
 // Wrapped version
 GrRenderTargetProxy::GrRenderTargetProxy(sk_sp<GrSurface> surf)
     : INHERITED(std::move(surf), SkBackingFit::kExact)
-    , fFlags(fTarget->asRenderTarget()->renderTargetPriv().flags()) {
+    , fRenderTargetFlags(fTarget->asRenderTarget()->renderTargetPriv().flags()) {
 }
 
 int GrRenderTargetProxy::maxWindowRectangles(const GrCaps& caps) const {
-    return (fFlags & GrRenderTarget::Flags::kWindowRectsSupport) ? caps.maxWindowRectangles() : 0;
+    return (fRenderTargetFlags & GrRenderTarget::Flags::kWindowRectsSupport)
+                   ? caps.maxWindowRectangles()
+                   : 0;
 }
 
-GrRenderTarget* GrRenderTargetProxy::instantiate(GrTextureProvider* texProvider) {
+GrRenderTarget* GrRenderTargetProxy::instantiate(GrResourceProvider* resourceProvider) {
     SkASSERT(fDesc.fFlags & GrSurfaceFlags::kRenderTarget_GrSurfaceFlag);
 
-    GrSurface* surf = INHERITED::instantiate(texProvider);
+    GrSurface* surf = INHERITED::instantiate(resourceProvider);
     if (!surf || !surf->asRenderTarget()) {
         return nullptr;
     }
 
     // Check that our a priori computation matched the ultimate reality
-    SkASSERT(fFlags == surf->asRenderTarget()->renderTargetPriv().flags());
+    SkASSERT(fRenderTargetFlags == surf->asRenderTarget()->renderTargetPriv().flags());
 
     return surf->asRenderTarget();
 }

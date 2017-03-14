@@ -12,13 +12,13 @@
 #include "GrContextPriv.h"
 #include "GrFixedClip.h"
 #include "GrRenderTargetContextPriv.h"
+#include "GrResourceProvider.h"
 #include "effects/GrSimpleTextureEffect.h"
 #include "GrStyle.h"
 #include "GrTexture.h"
 #include "GrTextureProxy.h"
-#include "GrTextureProvider.h"
 #include "SkDraw.h"
-#include "SkGrPriv.h"
+#include "SkGr.h"
 #include "SkMaskFilter.h"
 #include "SkPaint.h"
 #include "SkTLazy.h"
@@ -207,7 +207,7 @@ static void draw_path_with_mask_filter(GrContext* context,
             return;
         }
 
-        if (maskFilter->directFilterMaskGPU(context->textureProvider(),
+        if (maskFilter->directFilterMaskGPU(context->resourceProvider(),
                                             renderTargetContext,
                                             std::move(paint),
                                             clip,

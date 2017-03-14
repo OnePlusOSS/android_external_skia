@@ -103,8 +103,8 @@ const GrContextFactory::ContextType GrContextFactory::kNativeGL_ContextType =
     GrContextFactory::kGLES_ContextType;
 #endif
 
-ContextInfo GrContextFactory::getContextInfo(ContextType type, ContextOverrides overrides,
-                                             GrContext* shareContext, uint32_t shareIndex) {
+ContextInfo GrContextFactory::getContextInfoInternal(ContextType type, ContextOverrides overrides,
+                                                     GrContext* shareContext, uint32_t shareIndex) {
     // (shareIndex != 0) -> (shareContext != nullptr)
     SkASSERT((shareIndex == 0) || (shareContext != nullptr));
 
@@ -129,10 +129,7 @@ ContextInfo GrContextFactory::getContextInfo(ContextType type, ContextOverrides 
                 break;
             }
         }
-
-        if (!masterContext || masterContext->fType != type) {
-            return ContextInfo();
-        }
+        SkASSERT(masterContext && masterContext->fType == type);
     }
 
     std::unique_ptr<TestContext> testCtx;
@@ -196,12 +193,6 @@ ContextInfo GrContextFactory::getContextInfo(ContextType type, ContextOverrides 
             }
             testCtx.reset(glCtx);
             glInterface.reset(SkRef(glCtx->gl()));
-            if (ContextOverrides::kDisableNVPR & overrides) {
-                glInterface.reset(GrGLInterfaceRemoveNVPR(glInterface.get()));
-                if (!glInterface) {
-                    return ContextInfo();
-                }
-            }
             backendContext = reinterpret_cast<GrBackendContext>(glInterface.get());
             break;
         }
@@ -238,6 +229,9 @@ ContextInfo GrContextFactory::getContextInfo(ContextType type, ContextOverrides 
     testCtx->makeCurrent();
     SkASSERT(testCtx && testCtx->backend() == backend);
     GrContextOptions grOptions = fGlobalOptions;
+    if (ContextOverrides::kDisableNVPR & overrides) {
+        grOptions.fSuppressPathRendering = true;
+    }
     if (ContextOverrides::kUseInstanced & overrides) {
         grOptions.fEnableInstancedRendering = true;
     }
@@ -274,6 +268,22 @@ ContextInfo GrContextFactory::getContextInfo(ContextType type, ContextOverrides 
     context.fShareContext = shareContext;
     context.fShareIndex = shareIndex;
     return ContextInfo(context.fBackend, context.fTestContext, context.fGrContext);
+}
+
+ContextInfo GrContextFactory::getContextInfo(ContextType type, ContextOverrides overrides) {
+    return this->getContextInfoInternal(type, overrides, nullptr, 0);
+}
+
+ContextInfo GrContextFactory::getSharedContextInfo(GrContext* shareContext, uint32_t shareIndex) {
+    SkASSERT(shareContext);
+    for (int i = 0; i < fContexts.count(); ++i) {
+        if (!fContexts[i].fAbandoned && fContexts[i].fGrContext == shareContext) {
+            return this->getContextInfoInternal(fContexts[i].fType, fContexts[i].fOverrides,
+                                                shareContext, shareIndex);
+        }
+    }
+
+    return ContextInfo();
 }
 
 }  // namespace sk_gpu_test

@@ -216,6 +216,18 @@
         "Build-Ubuntu-Clang-x86_64-Release-Vulkan"
       ]
     },
+    "Build-Ubuntu-GCC-arm-Debug-Chromecast": {
+      "priority": 0.8,
+      "tasks": [
+        "Build-Ubuntu-GCC-arm-Debug-Chromecast"
+      ]
+    },
+    "Build-Ubuntu-GCC-arm-Release-Chromecast": {
+      "priority": 0.8,
+      "tasks": [
+        "Build-Ubuntu-GCC-arm-Release-Chromecast"
+      ]
+    },
     "Build-Ubuntu-GCC-x86-Debug": {
       "priority": 0.8,
       "tasks": [
@@ -422,18 +434,6 @@
       ],
       "trigger": "weekly"
     },
-    "Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android": {
-      "priority": 0.8,
-      "tasks": [
-        "Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android"
-      ]
-    },
-    "Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android": {
-      "priority": 0.8,
-      "tasks": [
-        "Upload-Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android"
-      ]
-    },
     "Perf-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Debug-Android": {
       "priority": 0.8,
       "tasks": [
@@ -446,16 +446,52 @@
         "Upload-Perf-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Release-Android"
       ]
     },
-    "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android": {
+    "Perf-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Debug-Android": {
       "priority": 0.8,
       "tasks": [
-        "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android"
+        "Perf-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Debug-Android"
       ]
     },
-    "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android": {
+    "Perf-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android": {
       "priority": 0.8,
       "tasks": [
-        "Upload-Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android"
+        "Upload-Perf-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android"
+      ]
+    },
+    "Perf-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Perf-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android"
+      ]
+    },
+    "Perf-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Perf-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android"
+      ]
+    },
+    "Perf-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Perf-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android"
+      ]
+    },
+    "Perf-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Perf-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android"
+      ]
+    },
+    "Perf-Android-Clang-MotoG4-GPU-Adreno405-arm-Debug-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Perf-Android-Clang-MotoG4-GPU-Adreno405-arm-Debug-Android"
+      ]
+    },
+    "Perf-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Perf-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android"
       ]
     },
     "Perf-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Debug-Android": {
@@ -480,6 +516,18 @@
       "priority": 0.8,
       "tasks": [
         "Upload-Perf-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Release-Android_Vulkan"
+      ]
+    },
+    "Perf-Android-Clang-Nexus10-CPU-Exynos5250-arm-Debug-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Perf-Android-Clang-Nexus10-CPU-Exynos5250-arm-Debug-Android"
+      ]
+    },
+    "Perf-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Perf-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android"
       ]
     },
     "Perf-Android-Clang-Nexus10-GPU-MaliT604-arm-Debug-Android": {
@@ -782,6 +830,30 @@
         "Upload-Perf-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release-Vulkan"
       ]
     },
+    "Perf-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug": {
+      "priority": 0.8,
+      "tasks": [
+        "Perf-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug"
+      ]
+    },
+    "Perf-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Perf-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release"
+      ]
+    },
+    "Perf-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Debug": {
+      "priority": 0.8,
+      "tasks": [
+        "Perf-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Debug"
+      ]
+    },
+    "Perf-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Perf-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release"
+      ]
+    },
     "Perf-Win10-MSVC-Golo-GPU-GT610-x86_64-Release": {
       "priority": 0.8,
       "tasks": [
@@ -920,18 +992,6 @@
         "Upload-Perf-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Release-ANGLE"
       ]
     },
-    "Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug": {
-      "priority": 0.8,
-      "tasks": [
-        "Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug"
-      ]
-    },
-    "Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release": {
-      "priority": 0.8,
-      "tasks": [
-        "Upload-Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release"
-      ]
-    },
     "Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug": {
       "priority": 0.8,
       "tasks": [
@@ -1004,18 +1064,6 @@
         "Upload-Perf-iOS-Clang-iPadMini4-GPU-GX6450-arm64-Release"
       ]
     },
-    "Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android": {
-      "priority": 0.8,
-      "tasks": [
-        "Upload-Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android"
-      ]
-    },
-    "Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android": {
-      "priority": 0.8,
-      "tasks": [
-        "Upload-Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android"
-      ]
-    },
     "Test-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Debug-Android": {
       "priority": 0.8,
       "tasks": [
@@ -1028,22 +1076,58 @@
         "Upload-Test-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Release-Android"
       ]
     },
-    "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android": {
+    "Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Debug-Android": {
       "priority": 0.8,
       "tasks": [
-        "Upload-Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android"
+        "Upload-Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Debug-Android"
       ]
     },
-    "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android": {
+    "Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android": {
       "priority": 0.8,
       "tasks": [
-        "Upload-Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android"
+        "Upload-Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android"
+      ]
+    },
+    "Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android"
+      ]
+    },
+    "Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android"
+      ]
+    },
+    "Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android"
+      ]
+    },
+    "Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android"
       ]
     },
     "Test-Android-Clang-GalaxyTab3-GPU-Vivante-arm-Debug-Android": {
       "priority": 0.8,
       "tasks": [
         "Upload-Test-Android-Clang-GalaxyTab3-GPU-Vivante-arm-Debug-Android"
+      ]
+    },
+    "Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Debug-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Debug-Android"
+      ]
+    },
+    "Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android"
       ]
     },
     "Test-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Debug-Android": {
@@ -1068,6 +1152,18 @@
       "priority": 0.8,
       "tasks": [
         "Upload-Test-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Release-Android_Vulkan"
+      ]
+    },
+    "Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Debug-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Debug-Android"
+      ]
+    },
+    "Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android"
       ]
     },
     "Test-Android-Clang-Nexus10-GPU-MaliT604-arm-Debug-Android": {
@@ -1407,6 +1503,30 @@
         "Upload-Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release-Vulkan"
       ]
     },
+    "Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug"
+      ]
+    },
+    "Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release"
+      ]
+    },
+    "Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Debug": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Debug"
+      ]
+    },
+    "Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release": {
+      "priority": 0.8,
+      "tasks": [
+        "Upload-Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release"
+      ]
+    },
     "Test-Win10-MSVC-Golo-GPU-GT610-x86_64-Release": {
       "priority": 0.8,
       "tasks": [
@@ -1537,18 +1657,6 @@
       "priority": 0.8,
       "tasks": [
         "Upload-Test-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Release-ANGLE"
-      ]
-    },
-    "Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug": {
-      "priority": 0.8,
-      "tasks": [
-        "Upload-Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug"
-      ]
-    },
-    "Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release": {
-      "priority": 0.8,
-      "tasks": [
-        "Upload-Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release"
       ]
     },
     "Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug": {
@@ -1692,7 +1800,7 @@
         {
           "name": "skia/bots/android_ndk_darwin",
           "path": "android_ndk_darwin",
-          "version": "version:1"
+          "version": "version:2"
         }
       ],
       "dimensions": [
@@ -1874,7 +1982,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -1906,7 +2014,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -1938,7 +2046,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -1970,7 +2078,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2002,7 +2110,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2034,7 +2142,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2066,7 +2174,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2098,7 +2206,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2130,7 +2238,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2162,7 +2270,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2194,7 +2302,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2226,7 +2334,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2258,7 +2366,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2290,7 +2398,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2322,7 +2430,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2354,7 +2462,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2386,7 +2494,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -2743,6 +2851,70 @@
       "isolate": "compile_skia.isolate",
       "priority": 0.8
     },
+    "Build-Ubuntu-GCC-arm-Debug-Chromecast": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/cast_toolchain",
+          "path": "cast_toolchain",
+          "version": "version:2"
+        }
+      ],
+      "dimensions": [
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_compile",
+        "repository=<(REPO)",
+        "buildername=Build-Ubuntu-GCC-arm-Debug-Chromecast",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "isolate": "compile_skia.isolate",
+      "priority": 0.8
+    },
+    "Build-Ubuntu-GCC-arm-Release-Chromecast": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/cast_toolchain",
+          "path": "cast_toolchain",
+          "version": "version:2"
+        }
+      ],
+      "dimensions": [
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_compile",
+        "repository=<(REPO)",
+        "buildername=Build-Ubuntu-GCC-arm-Release-Chromecast",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "isolate": "compile_skia.isolate",
+      "priority": 0.8
+    },
     "Build-Ubuntu-GCC-x86-Debug": {
       "dimensions": [
         "gpu:none",
@@ -2923,7 +3095,7 @@
         {
           "name": "skia/bots/android_ndk_linux",
           "path": "android_ndk_linux",
-          "version": "version:5"
+          "version": "version:7"
         }
       ],
       "dimensions": [
@@ -3105,7 +3277,7 @@
         {
           "name": "skia/bots/android_ndk_windows",
           "path": "n",
-          "version": "version:2"
+          "version": "version:3"
         }
       ],
       "dimensions": [
@@ -3655,7 +3827,7 @@
         {
           "name": "skia/bots/go",
           "path": "go",
-          "version": "version:0"
+          "version": "version:1"
         }
       ],
       "dependencies": [
@@ -3740,117 +3912,17 @@
       "isolate": "compile_skia.isolate",
       "priority": 0.8
     },
-    "Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:36"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Ubuntu-Clang-arm-Debug-Android"
-      ],
-      "dimensions": [
-        "device_os:MOB30Q",
-        "device_type:sprout",
-        "os:Android",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_perf",
-        "repository=<(REPO)",
-        "buildername=Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "perf_skia.isolate",
-      "max_attempts": 1,
-      "priority": 0.8
-    },
-    "Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:36"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Ubuntu-Clang-arm-Release-Android"
-      ],
-      "dimensions": [
-        "device_os:MOB30Q",
-        "device_type:sprout",
-        "os:Android",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_perf",
-        "repository=<(REPO)",
-        "buildername=Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "perf_skia.isolate",
-      "max_attempts": 1,
-      "priority": 0.8
-    },
     "Perf-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Debug-Android": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -3895,12 +3967,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -3940,17 +4012,217 @@
       "max_attempts": 1,
       "priority": 0.8
     },
-    "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android": {
+    "Perf-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Debug-Android": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Debug-Android"
+      ],
+      "dimensions": [
+        "device_os:MMB29M",
+        "device_type:j5xnlte",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Release-Android"
+      ],
+      "dimensions": [
+        "device_os:MMB29M",
+        "device_type:j5xnlte",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm64-Debug-Android"
+      ],
+      "dimensions": [
+        "device_os:MMB29K",
+        "device_type:zerofltetmo",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm64-Release-Android"
+      ],
+      "dimensions": [
+        "device_os:MMB29K",
+        "device_type:zerofltetmo",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -3974,7 +4246,7 @@
         "../../..",
         "swarm_perf",
         "repository=<(REPO)",
-        "buildername=Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android",
+        "buildername=Perf-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -3990,17 +4262,17 @@
       "max_attempts": 1,
       "priority": 0.8
     },
-    "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android": {
+    "Perf-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4024,7 +4296,107 @@
         "../../..",
         "swarm_perf",
         "repository=<(REPO)",
-        "buildername=Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android",
+        "buildername=Perf-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Android-Clang-MotoG4-GPU-Adreno405-arm-Debug-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Debug-Android"
+      ],
+      "dimensions": [
+        "device_os:MPJ24.139-64",
+        "device_type:athene",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-MotoG4-GPU-Adreno405-arm-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Release-Android"
+      ],
+      "dimensions": [
+        "device_os:MPJ24.139-64",
+        "device_type:athene",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -4045,12 +4417,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4095,12 +4467,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4145,12 +4517,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4195,12 +4567,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4240,17 +4612,117 @@
       "max_attempts": 1,
       "priority": 0.8
     },
+    "Perf-Android-Clang-Nexus10-CPU-Exynos5250-arm-Debug-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Debug-Android"
+      ],
+      "dimensions": [
+        "device_os:LMY49J",
+        "device_type:manta",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-Nexus10-CPU-Exynos5250-arm-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Release-Android"
+      ],
+      "dimensions": [
+        "device_os:LMY49J",
+        "device_type:manta",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
     "Perf-Android-Clang-Nexus10-GPU-MaliT604-arm-Debug-Android": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4295,12 +4767,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4345,12 +4817,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4395,12 +4867,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4445,12 +4917,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4495,12 +4967,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4545,12 +5017,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4595,12 +5067,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4645,12 +5117,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4695,12 +5167,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4745,12 +5217,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4795,12 +5267,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4845,12 +5317,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4895,12 +5367,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4945,12 +5417,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -4995,12 +5467,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5045,12 +5517,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5095,12 +5567,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5145,12 +5617,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5195,7 +5667,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         }
       ],
       "dependencies": [
@@ -5235,7 +5707,7 @@
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         }
       ],
       "dependencies": [
@@ -5275,12 +5747,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5324,12 +5796,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5373,12 +5845,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5423,12 +5895,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5473,12 +5945,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5522,12 +5994,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5571,12 +6043,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5620,12 +6092,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5670,12 +6142,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5725,12 +6197,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5780,12 +6252,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5830,12 +6302,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5885,12 +6357,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5935,12 +6407,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -5989,12 +6461,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6043,12 +6515,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6093,12 +6565,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6143,12 +6615,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6193,12 +6665,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6293,12 +6765,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6342,12 +6814,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6391,12 +6863,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6440,12 +6912,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6489,12 +6961,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6543,12 +7015,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6602,12 +7074,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6656,12 +7128,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6710,17 +7182,233 @@
       "max_attempts": 1,
       "priority": 0.8
     },
+    "Perf-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_debug",
+          "path": "linux_vulkan_intel_driver_debug",
+          "version": "version:1"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Debug"
+      ],
+      "dimensions": [
+        "gpu:8086:22b1",
+        "os:Ubuntu-16.10",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_release",
+          "path": "linux_vulkan_intel_driver_release",
+          "version": "version:1"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Release"
+      ],
+      "dimensions": [
+        "gpu:8086:22b1",
+        "os:Ubuntu-16.10",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Debug": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_debug",
+          "path": "linux_vulkan_intel_driver_debug",
+          "version": "version:1"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Debug"
+      ],
+      "dimensions": [
+        "gpu:8086:0f31",
+        "os:Ubuntu-16.10",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Debug",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Perf-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_release",
+          "path": "linux_vulkan_intel_driver_release",
+          "version": "version:1"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Release"
+      ],
+      "dimensions": [
+        "gpu:8086:0f31",
+        "os:Ubuntu-16.10",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_perf",
+        "repository=<(REPO)",
+        "buildername=Perf-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "perf_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
     "Perf-Win10-MSVC-Golo-GPU-GT610-x86_64-Release": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6764,12 +7452,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6813,12 +7501,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6862,12 +7550,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6911,12 +7599,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -6960,12 +7648,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7009,12 +7697,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7058,12 +7746,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7107,12 +7795,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7156,12 +7844,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7206,12 +7894,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7256,12 +7944,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7305,12 +7993,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7354,12 +8042,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7403,12 +8091,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7452,12 +8140,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7501,12 +8189,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7550,12 +8238,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7599,12 +8287,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7648,12 +8336,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7698,12 +8386,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7748,12 +8436,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7798,12 +8486,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7843,117 +8531,17 @@
       "max_attempts": 1,
       "priority": 0.8
     },
-    "Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:36"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Win-MSVC-x86_64-Debug"
-      ],
-      "dimensions": [
-        "gpu:8086:1912",
-        "machine_type:n1-standard-8",
-        "os:Windows-10-14393",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_perf",
-        "repository=<(REPO)",
-        "buildername=Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "perf_skia.isolate",
-      "max_attempts": 1,
-      "priority": 0.8
-    },
-    "Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:36"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Win-MSVC-x86_64-Release"
-      ],
-      "dimensions": [
-        "gpu:8086:1912",
-        "machine_type:n1-standard-8",
-        "os:Windows-10-14393",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_perf",
-        "repository=<(REPO)",
-        "buildername=Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "perf_skia.isolate",
-      "max_attempts": 1,
-      "priority": 0.8
-    },
     "Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -7997,12 +8585,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8046,12 +8634,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8095,12 +8683,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8144,12 +8732,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8193,12 +8781,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8242,12 +8830,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8292,12 +8880,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8342,12 +8930,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8392,12 +8980,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8442,12 +9030,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8491,12 +9079,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8535,117 +9123,17 @@
       "max_attempts": 1,
       "priority": 0.8
     },
-    "Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:36"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Ubuntu-Clang-arm-Debug-Android"
-      ],
-      "dimensions": [
-        "device_os:MOB30Q",
-        "device_type:sprout",
-        "os:Android",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_test",
-        "repository=<(REPO)",
-        "buildername=Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "test_skia.isolate",
-      "max_attempts": 1,
-      "priority": 0.8
-    },
-    "Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:36"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Ubuntu-Clang-arm-Release-Android"
-      ],
-      "dimensions": [
-        "device_os:MOB30Q",
-        "device_type:sprout",
-        "os:Android",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_test",
-        "repository=<(REPO)",
-        "buildername=Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "test_skia.isolate",
-      "max_attempts": 1,
-      "priority": 0.8
-    },
     "Test-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Debug-Android": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8690,12 +9178,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8735,17 +9223,217 @@
       "max_attempts": 1,
       "priority": 0.8
     },
-    "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android": {
+    "Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Debug-Android": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Debug-Android"
+      ],
+      "dimensions": [
+        "device_os:MMB29M",
+        "device_type:j5xnlte",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Release-Android"
+      ],
+      "dimensions": [
+        "device_os:MMB29M",
+        "device_type:j5xnlte",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm64-Debug-Android"
+      ],
+      "dimensions": [
+        "device_os:MMB29K",
+        "device_type:zerofltetmo",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm64-Release-Android"
+      ],
+      "dimensions": [
+        "device_os:MMB29K",
+        "device_type:zerofltetmo",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8769,7 +9457,7 @@
         "../../..",
         "swarm_test",
         "repository=<(REPO)",
-        "buildername=Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android",
+        "buildername=Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -8785,17 +9473,17 @@
       "max_attempts": 1,
       "priority": 0.8
     },
-    "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android": {
+    "Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8819,7 +9507,7 @@
         "../../..",
         "swarm_test",
         "repository=<(REPO)",
-        "buildername=Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android",
+        "buildername=Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -8840,12 +9528,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8885,17 +9573,117 @@
       "max_attempts": 1,
       "priority": 0.8
     },
+    "Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Debug-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Debug-Android"
+      ],
+      "dimensions": [
+        "device_os:MPJ24.139-64",
+        "device_type:athene",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Release-Android"
+      ],
+      "dimensions": [
+        "device_os:MPJ24.139-64",
+        "device_type:athene",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
     "Test-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Debug-Android": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8940,12 +9728,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -8990,12 +9778,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9040,12 +9828,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9085,17 +9873,117 @@
       "max_attempts": 1,
       "priority": 0.8
     },
+    "Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Debug-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Debug-Android"
+      ],
+      "dimensions": [
+        "device_os:LMY49J",
+        "device_type:manta",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-arm-Release-Android"
+      ],
+      "dimensions": [
+        "device_os:LMY49J",
+        "device_type:manta",
+        "os:Android",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
     "Test-Android-Clang-Nexus10-GPU-MaliT604-arm-Debug-Android": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9140,12 +10028,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9190,12 +10078,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9240,12 +10128,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9290,12 +10178,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9340,12 +10228,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9390,12 +10278,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9440,12 +10328,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9490,12 +10378,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9540,12 +10428,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9590,12 +10478,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9640,12 +10528,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9690,12 +10578,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9740,12 +10628,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9790,12 +10678,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9840,12 +10728,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9890,12 +10778,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9940,12 +10828,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -9990,12 +10878,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10040,12 +10928,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10090,12 +10978,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10140,12 +11028,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10190,12 +11078,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10239,12 +11127,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10288,12 +11176,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10338,12 +11226,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10388,12 +11276,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10437,12 +11325,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10486,12 +11374,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10535,12 +11423,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10585,12 +11473,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10640,12 +11528,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10695,12 +11583,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10745,12 +11633,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10800,12 +11688,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10850,12 +11738,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10905,12 +11793,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -10959,12 +11847,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11013,12 +11901,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11067,12 +11955,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11117,12 +12005,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11242,12 +12130,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11292,12 +12180,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11342,12 +12230,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11392,12 +12280,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11441,12 +12329,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11490,12 +12378,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11539,12 +12427,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11588,12 +12476,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11637,12 +12525,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11691,12 +12579,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11750,12 +12638,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11804,12 +12692,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11858,17 +12746,233 @@
       "max_attempts": 1,
       "priority": 0.8
     },
+    "Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_debug",
+          "path": "linux_vulkan_intel_driver_debug",
+          "version": "version:1"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Debug"
+      ],
+      "dimensions": [
+        "gpu:8086:22b1",
+        "os:Ubuntu-16.10",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_release",
+          "path": "linux_vulkan_intel_driver_release",
+          "version": "version:1"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Release"
+      ],
+      "dimensions": [
+        "gpu:8086:22b1",
+        "os:Ubuntu-16.10",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Debug": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_debug",
+          "path": "linux_vulkan_intel_driver_debug",
+          "version": "version:1"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Debug"
+      ],
+      "dimensions": [
+        "gpu:8086:0f31",
+        "os:Ubuntu-16.10",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Debug",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
+    "Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release": {
+      "cipd_packages": [
+        {
+          "name": "skia/bots/skimage",
+          "path": "skimage",
+          "version": "version:22"
+        },
+        {
+          "name": "skia/bots/skp",
+          "path": "skp",
+          "version": "version:39"
+        },
+        {
+          "name": "skia/bots/svg",
+          "path": "svg",
+          "version": "version:3"
+        },
+        {
+          "name": "skia/bots/linux_vulkan_intel_driver_release",
+          "path": "linux_vulkan_intel_driver_release",
+          "version": "version:1"
+        }
+      ],
+      "dependencies": [
+        "Build-Ubuntu-Clang-x86_64-Release"
+      ],
+      "dimensions": [
+        "gpu:8086:0f31",
+        "os:Ubuntu-16.10",
+        "pool:Skia"
+      ],
+      "execution_timeout_ns": 14400000000000,
+      "expiration_ns": 72000000000000,
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "swarm_test",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)"
+      ],
+      "io_timeout_ns": 2400000000000,
+      "isolate": "test_skia.isolate",
+      "max_attempts": 1,
+      "priority": 0.8
+    },
     "Test-Win10-MSVC-Golo-GPU-GT610-x86_64-Release": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11912,12 +13016,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -11961,12 +13065,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12010,12 +13114,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12059,12 +13163,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12108,12 +13212,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12157,12 +13261,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12206,12 +13310,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12255,12 +13359,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12304,12 +13408,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12354,12 +13458,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12404,12 +13508,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12453,12 +13557,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12502,12 +13606,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12551,12 +13655,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12600,12 +13704,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12649,12 +13753,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12698,12 +13802,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12747,12 +13851,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12797,12 +13901,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12847,12 +13951,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12897,12 +14001,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -12942,117 +14046,17 @@
       "max_attempts": 1,
       "priority": 0.8
     },
-    "Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:36"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Win-MSVC-x86_64-Debug"
-      ],
-      "dimensions": [
-        "gpu:8086:1912",
-        "machine_type:n1-standard-8",
-        "os:Windows-10-14393",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_test",
-        "repository=<(REPO)",
-        "buildername=Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "test_skia.isolate",
-      "max_attempts": 1,
-      "priority": 0.8
-    },
-    "Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release": {
-      "cipd_packages": [
-        {
-          "name": "skia/bots/skimage",
-          "path": "skimage",
-          "version": "version:21"
-        },
-        {
-          "name": "skia/bots/skp",
-          "path": "skp",
-          "version": "version:36"
-        },
-        {
-          "name": "skia/bots/svg",
-          "path": "svg",
-          "version": "version:3"
-        }
-      ],
-      "dependencies": [
-        "Build-Win-MSVC-x86_64-Release"
-      ],
-      "dimensions": [
-        "gpu:8086:1912",
-        "machine_type:n1-standard-8",
-        "os:Windows-10-14393",
-        "pool:Skia"
-      ],
-      "execution_timeout_ns": 14400000000000,
-      "expiration_ns": 72000000000000,
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "swarm_test",
-        "repository=<(REPO)",
-        "buildername=Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)"
-      ],
-      "io_timeout_ns": 2400000000000,
-      "isolate": "test_skia.isolate",
-      "max_attempts": 1,
-      "priority": 0.8
-    },
     "Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug": {
       "cipd_packages": [
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13096,12 +14100,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13145,12 +14149,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13194,12 +14198,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13243,12 +14247,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13292,12 +14296,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13341,12 +14345,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13391,12 +14395,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13441,12 +14445,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13491,12 +14495,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13541,12 +14545,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13591,12 +14595,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13641,12 +14645,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13690,12 +14694,12 @@
         {
           "name": "skia/bots/skimage",
           "path": "skimage",
-          "version": "version:21"
+          "version": "version:22"
         },
         {
           "name": "skia/bots/skp",
           "path": "skp",
-          "version": "version:36"
+          "version": "version:39"
         },
         {
           "name": "skia/bots/svg",
@@ -13734,36 +14738,6 @@
       "max_attempts": 1,
       "priority": 0.8
     },
-    "Upload-Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android": {
-      "dependencies": [
-        "Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android"
-      ],
-      "dimensions": [
-        "cpu:x86-64-avx2",
-        "gpu:none",
-        "os:Ubuntu-14.04",
-        "pool:Skia"
-      ],
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "upload_nano_results",
-        "repository=<(REPO)",
-        "buildername=Perf-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)",
-        "gs_bucket=skia-perf"
-      ],
-      "isolate": "upload_nano_results.isolate",
-      "priority": 0.8
-    },
     "Upload-Perf-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Release-Android": {
       "dependencies": [
         "Perf-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Release-Android"
@@ -13794,9 +14768,9 @@
       "isolate": "upload_nano_results.isolate",
       "priority": 0.8
     },
-    "Upload-Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android": {
+    "Upload-Perf-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android": {
       "dependencies": [
-        "Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android"
+        "Perf-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android"
       ],
       "dimensions": [
         "cpu:x86-64-avx2",
@@ -13809,7 +14783,97 @@
         "../../..",
         "upload_nano_results",
         "repository=<(REPO)",
-        "buildername=Perf-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android",
+        "buildername=Perf-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-perf"
+      ],
+      "isolate": "upload_nano_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Perf-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android": {
+      "dependencies": [
+        "Perf-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_nano_results",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-perf"
+      ],
+      "isolate": "upload_nano_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Perf-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android": {
+      "dependencies": [
+        "Perf-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_nano_results",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-perf"
+      ],
+      "isolate": "upload_nano_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Perf-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android": {
+      "dependencies": [
+        "Perf-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_nano_results",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -13870,6 +14934,36 @@
         "upload_nano_results",
         "repository=<(REPO)",
         "buildername=Perf-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Release-Android_Vulkan",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-perf"
+      ],
+      "isolate": "upload_nano_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Perf-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android": {
+      "dependencies": [
+        "Perf-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_nano_results",
+        "repository=<(REPO)",
+        "buildername=Perf-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -14514,6 +15608,66 @@
       "isolate": "upload_nano_results.isolate",
       "priority": 0.8
     },
+    "Upload-Perf-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release": {
+      "dependencies": [
+        "Perf-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_nano_results",
+        "repository=<(REPO)",
+        "buildername=Perf-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-perf"
+      ],
+      "isolate": "upload_nano_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Perf-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release": {
+      "dependencies": [
+        "Perf-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_nano_results",
+        "repository=<(REPO)",
+        "buildername=Perf-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-perf"
+      ],
+      "isolate": "upload_nano_results.isolate",
+      "priority": 0.8
+    },
     "Upload-Perf-Win10-MSVC-Golo-GPU-GT610-x86_64-Release": {
       "dependencies": [
         "Perf-Win10-MSVC-Golo-GPU-GT610-x86_64-Release"
@@ -14874,36 +16028,6 @@
       "isolate": "upload_nano_results.isolate",
       "priority": 0.8
     },
-    "Upload-Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release": {
-      "dependencies": [
-        "Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release"
-      ],
-      "dimensions": [
-        "cpu:x86-64-avx2",
-        "gpu:none",
-        "os:Ubuntu-14.04",
-        "pool:Skia"
-      ],
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "upload_nano_results",
-        "repository=<(REPO)",
-        "buildername=Perf-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)",
-        "gs_bucket=skia-perf"
-      ],
-      "isolate": "upload_nano_results.isolate",
-      "priority": 0.8
-    },
     "Upload-Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release": {
       "dependencies": [
         "Perf-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Release"
@@ -15054,66 +16178,6 @@
       "isolate": "upload_nano_results.isolate",
       "priority": 0.8
     },
-    "Upload-Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android": {
-      "dependencies": [
-        "Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android"
-      ],
-      "dimensions": [
-        "cpu:x86-64-avx2",
-        "gpu:none",
-        "os:Ubuntu-14.04",
-        "pool:Skia"
-      ],
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "upload_dm_results",
-        "repository=<(REPO)",
-        "buildername=Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Debug-Android",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)",
-        "gs_bucket=skia-infra-gm"
-      ],
-      "isolate": "upload_dm_results.isolate",
-      "priority": 0.8
-    },
-    "Upload-Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android": {
-      "dependencies": [
-        "Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android"
-      ],
-      "dimensions": [
-        "cpu:x86-64-avx2",
-        "gpu:none",
-        "os:Ubuntu-14.04",
-        "pool:Skia"
-      ],
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "upload_dm_results",
-        "repository=<(REPO)",
-        "buildername=Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-Android",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)",
-        "gs_bucket=skia-infra-gm"
-      ],
-      "isolate": "upload_dm_results.isolate",
-      "priority": 0.8
-    },
     "Upload-Test-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Debug-Android": {
       "dependencies": [
         "Test-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Debug-Android"
@@ -15174,9 +16238,9 @@
       "isolate": "upload_dm_results.isolate",
       "priority": 0.8
     },
-    "Upload-Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android": {
+    "Upload-Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Debug-Android": {
       "dependencies": [
-        "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android"
+        "Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Debug-Android"
       ],
       "dimensions": [
         "cpu:x86-64-avx2",
@@ -15189,7 +16253,7 @@
         "../../..",
         "upload_dm_results",
         "repository=<(REPO)",
-        "buildername=Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-Android",
+        "buildername=Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Debug-Android",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -15204,9 +16268,9 @@
       "isolate": "upload_dm_results.isolate",
       "priority": 0.8
     },
-    "Upload-Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android": {
+    "Upload-Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android": {
       "dependencies": [
-        "Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android"
+        "Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android"
       ],
       "dimensions": [
         "cpu:x86-64-avx2",
@@ -15219,7 +16283,127 @@
         "../../..",
         "upload_dm_results",
         "repository=<(REPO)",
-        "buildername=Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Release-Android",
+        "buildername=Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android": {
+      "dependencies": [
+        "Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android": {
+      "dependencies": [
+        "Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Release-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android": {
+      "dependencies": [
+        "Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android": {
+      "dependencies": [
+        "Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Release-Android",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -15250,6 +16434,66 @@
         "upload_dm_results",
         "repository=<(REPO)",
         "buildername=Test-Android-Clang-GalaxyTab3-GPU-Vivante-arm-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Debug-Android": {
+      "dependencies": [
+        "Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Debug-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android": {
+      "dependencies": [
+        "Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-MotoG4-GPU-Adreno405-arm-Release-Android",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -15370,6 +16614,66 @@
         "upload_dm_results",
         "repository=<(REPO)",
         "buildername=Test-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Release-Android_Vulkan",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Debug-Android": {
+      "dependencies": [
+        "Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Debug-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Debug-Android",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android": {
+      "dependencies": [
+        "Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Android-Clang-Nexus10-CPU-Exynos5250-arm-Release-Android",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",
@@ -16674,6 +17978,126 @@
       "isolate": "upload_dm_results.isolate",
       "priority": 0.8
     },
+    "Upload-Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug": {
+      "dependencies": [
+        "Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release": {
+      "dependencies": [
+        "Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Debug": {
+      "dependencies": [
+        "Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Debug"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Debug",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
+    "Upload-Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release": {
+      "dependencies": [
+        "Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release"
+      ],
+      "dimensions": [
+        "cpu:x86-64-avx2",
+        "gpu:none",
+        "os:Ubuntu-14.04",
+        "pool:Skia"
+      ],
+      "extra_args": [
+        "--workdir",
+        "../../..",
+        "upload_dm_results",
+        "repository=<(REPO)",
+        "buildername=Test-Ubuntu16-Clang-NUCDE3815TYKHE-GPU-IntelBayTrail-x86_64-Release",
+        "mastername=fake-master",
+        "buildnumber=2",
+        "slavename=fake-buildslave",
+        "nobuildbot=True",
+        "swarm_out_dir=${ISOLATED_OUTDIR}",
+        "revision=<(REVISION)",
+        "patch_storage=<(PATCH_STORAGE)",
+        "patch_issue=<(ISSUE)",
+        "patch_set=<(PATCHSET)",
+        "gs_bucket=skia-infra-gm"
+      ],
+      "isolate": "upload_dm_results.isolate",
+      "priority": 0.8
+    },
     "Upload-Test-Win10-MSVC-Golo-GPU-GT610-x86_64-Release": {
       "dependencies": [
         "Test-Win10-MSVC-Golo-GPU-GT610-x86_64-Release"
@@ -17320,66 +18744,6 @@
         "upload_dm_results",
         "repository=<(REPO)",
         "buildername=Test-Win10-MSVC-ShuttleC-GPU-GTX960-x86_64-Release-ANGLE",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)",
-        "gs_bucket=skia-infra-gm"
-      ],
-      "isolate": "upload_dm_results.isolate",
-      "priority": 0.8
-    },
-    "Upload-Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug": {
-      "dependencies": [
-        "Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug"
-      ],
-      "dimensions": [
-        "cpu:x86-64-avx2",
-        "gpu:none",
-        "os:Ubuntu-14.04",
-        "pool:Skia"
-      ],
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "upload_dm_results",
-        "repository=<(REPO)",
-        "buildername=Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Debug",
-        "mastername=fake-master",
-        "buildnumber=2",
-        "slavename=fake-buildslave",
-        "nobuildbot=True",
-        "swarm_out_dir=${ISOLATED_OUTDIR}",
-        "revision=<(REVISION)",
-        "patch_storage=<(PATCH_STORAGE)",
-        "patch_issue=<(ISSUE)",
-        "patch_set=<(PATCHSET)",
-        "gs_bucket=skia-infra-gm"
-      ],
-      "isolate": "upload_dm_results.isolate",
-      "priority": 0.8
-    },
-    "Upload-Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release": {
-      "dependencies": [
-        "Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release"
-      ],
-      "dimensions": [
-        "cpu:x86-64-avx2",
-        "gpu:none",
-        "os:Ubuntu-14.04",
-        "pool:Skia"
-      ],
-      "extra_args": [
-        "--workdir",
-        "../../..",
-        "upload_dm_results",
-        "repository=<(REPO)",
-        "buildername=Test-Win10-MSVC-ShuttleC-GPU-iHD530-x86_64-Release",
         "mastername=fake-master",
         "buildnumber=2",
         "slavename=fake-buildslave",

@@ -84,12 +84,17 @@ protected:
     }
 
     int onGetUPEM() const override {
-        SkASSERT(0);  // don't expect to get here
-        return 1;
+        return 2048;
     }
 
     void onGetFamilyName(SkString* familyName) const override;
     SkTypeface::LocalizedStrings* onCreateFamilyNameIterator() const override;
+
+    int onGetVariationDesignPosition(SkFontArguments::VariationPosition::Coordinate coordinates[],
+                                     int coordinateCount) const override
+    {
+        return 0;
+    }
 
     int onGetTableTags(SkFontTableTag tags[]) const override {
         return 0;

@@ -20,7 +20,9 @@ TEST_BUILDERS = {
     'skiabot-linux-swarm-000': [
       'Test-Android-Clang-AndroidOne-CPU-MT6582-arm-Release-GN_Android',
       'Test-Android-Clang-AndroidOne-GPU-Mali400MP2-arm-Release-GN_Android',
-      'Test-Android-Clang-GalaxyS7-GPU-Adreno530-arm64-Debug-GN_Android',
+      'Test-Android-Clang-GalaxyJ5-GPU-Adreno306-arm-Release-Android',
+      'Test-Android-Clang-GalaxyS6-GPU-MaliT760-arm64-Debug-Android',
+      'Test-Android-Clang-GalaxyS7_G930A-GPU-Adreno530-arm64-Debug-Android',
       'Test-Android-Clang-GalaxyTab3-GPU-Vivante-arm-Debug-Android',
       'Test-Android-Clang-NVIDIA_Shield-GPU-TegraX1-arm64-Debug-GN_Android',
       'Test-Android-Clang-Nexus10-GPU-MaliT604-arm-Release-GN_Android',
@@ -46,6 +48,7 @@ TEST_BUILDERS = {
        '_AbandonGpuContext'),
       ('Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind' +
        '_PreAbandonGpuContext'),
+      'Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug',
       'Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Debug-Vulkan',
       'Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release',
       'Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug-ANGLE',
@@ -117,7 +120,7 @@ def GenTests(api):
                                      'svg', 'VERSION'),
         api.path['start_dir'].join('tmp', 'uninteresting_hashes.txt')
     ) +
-    api.step_data('dm', retcode=1)
+    api.step_data('symbolized dm', retcode=1)
   )
 
   builder = 'Test-Android-Clang-Nexus7-GPU-Tegra3-arm-Debug-GN_Android'

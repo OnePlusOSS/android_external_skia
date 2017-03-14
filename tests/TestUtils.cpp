@@ -11,6 +11,7 @@
 
 #include "GrSurfaceContext.h"
 #include "GrSurfaceProxy.h"
+#include "GrTextureProxy.h"
 
 void test_read_pixels(skiatest::Reporter* reporter, GrContext* context,
                       GrSurfaceContext* srcContext, uint32_t expectedPixelValues[],
@@ -106,8 +107,8 @@ void test_copy_to_surface(skiatest::Reporter* reporter, GrContext* context,
     for (auto flags : { kNone_GrSurfaceFlags, kRenderTarget_GrSurfaceFlag }) {
         copySrcDesc.fFlags = flags;
 
-        sk_sp<GrSurfaceProxy> src(GrSurfaceProxy::MakeDeferred(*context->caps(),
-                                                               context->textureProvider(),
+        sk_sp<GrTextureProxy> src(GrSurfaceProxy::MakeDeferred(*context->caps(),
+                                                               context->resourceProvider(),
                                                                copySrcDesc,
                                                                SkBudgeted::kYes, pixels.get(), 0));
         dstContext->copy(src.get());

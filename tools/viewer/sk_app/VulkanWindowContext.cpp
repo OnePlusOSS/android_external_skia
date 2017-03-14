@@ -61,7 +61,8 @@ VulkanWindowContext::VulkanWindowContext(const DisplayParams& params,
     GET_DEV_PROC(AcquireNextImageKHR);
     GET_DEV_PROC(QueuePresentKHR);
 
-    fContext = GrContext::Create(kVulkan_GrBackend, (GrBackendContext) fBackendContext.get());
+    fContext = GrContext::Create(kVulkan_GrBackend, (GrBackendContext) fBackendContext.get(),
+                                 params.fGrContextOptions);
 
     fSurface = createVkSurface(instance);
     if (VK_NULL_HANDLE == fSurface) {
@@ -183,6 +184,8 @@ bool VulkanWindowContext::createSwapchain(int width, int height,
         }
     }
     fDisplayParams = params;
+    fSampleCount = params.fMSAASampleCount;
+    fStencilBits = 8;
 
     if (VK_FORMAT_UNDEFINED == surfaceFormat) {
         return false;
@@ -272,8 +275,8 @@ void VulkanWindowContext::createBuffers(VkFormat format) {
         desc.fHeight = fHeight;
         desc.fConfig = fPixelConfig;
         desc.fOrigin = kTopLeft_GrSurfaceOrigin;
-        desc.fSampleCnt = 0;
-        desc.fStencilBits = 0;
+        desc.fSampleCnt = fSampleCount;
+        desc.fStencilBits = fStencilBits;
         desc.fRenderTargetHandle = (GrBackendObject) &info;
 
         fSurfaces[i] = SkSurface::MakeFromBackendRenderTarget(fContext, desc,

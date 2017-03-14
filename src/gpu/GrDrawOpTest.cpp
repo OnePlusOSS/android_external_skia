@@ -6,14 +6,14 @@
  */
 
 #include "GrDrawOpTest.h"
-#include "ops/GrDrawOp.h"
 #include "SkRandom.h"
 #include "SkTypes.h"
+#include "ops/GrMeshDrawOp.h"
 
 #if GR_TEST_UTILS
 
 #define DRAW_OP_TEST_EXTERN(Op) \
-    extern std::unique_ptr<GrDrawOp> Op##__Test(SkRandom*, GrContext* context);
+    extern std::unique_ptr<GrMeshDrawOp> Op##__Test(SkRandom*, GrContext* context);
 
 #define DRAW_OP_TEST_ENTRY(Op) Op##__Test
 
@@ -32,14 +32,13 @@ DRAW_OP_TEST_EXTERN(DIEllipseOp);
 DRAW_OP_TEST_EXTERN(EllipseOp);
 DRAW_OP_TEST_EXTERN(GrDrawAtlasOp);
 DRAW_OP_TEST_EXTERN(NonAAStrokeRectOp);
-DRAW_OP_TEST_EXTERN(PLSPathOp);
 DRAW_OP_TEST_EXTERN(RRectOp);
 DRAW_OP_TEST_EXTERN(TesselatingPathOp);
 DRAW_OP_TEST_EXTERN(TextBlobOp);
 DRAW_OP_TEST_EXTERN(VerticesOp);
 
-std::unique_ptr<GrDrawOp> GrRandomDrawOp(SkRandom* random, GrContext* context) {
-    using MakeTestDrawOpFn = std::unique_ptr<GrDrawOp>(SkRandom* random, GrContext* context);
+std::unique_ptr<GrMeshDrawOp> GrRandomDrawOp(SkRandom* random, GrContext* context) {
+    using MakeTestDrawOpFn = std::unique_ptr<GrMeshDrawOp>(SkRandom* random, GrContext* context);
     static constexpr MakeTestDrawOpFn* gFactories[] = {
         DRAW_OP_TEST_ENTRY(AAConvexPathOp),
         DRAW_OP_TEST_ENTRY(AADistanceFieldPathOp),
@@ -56,8 +55,6 @@ std::unique_ptr<GrDrawOp> GrRandomDrawOp(SkRandom* random, GrContext* context) {
         DRAW_OP_TEST_ENTRY(EllipseOp),
         DRAW_OP_TEST_ENTRY(GrDrawAtlasOp),
         DRAW_OP_TEST_ENTRY(NonAAStrokeRectOp),
-        // This currently hits an assert when the GrDisableColorXPFactory is randomly selected.
-        // DRAW_OP_TEST_ENTRY(PLSPathOp),
         DRAW_OP_TEST_ENTRY(RRectOp),
         DRAW_OP_TEST_ENTRY(TesselatingPathOp),
         DRAW_OP_TEST_ENTRY(TextBlobOp),

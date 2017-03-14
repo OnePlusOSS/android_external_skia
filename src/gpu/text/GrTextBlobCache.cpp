@@ -8,19 +8,19 @@
 #include "GrTextBlobCache.h"
 
 GrTextBlobCache::~GrTextBlobCache() {
-    this->freeAll();
+    SkDEBUGCODE(this->freeAll();)
 }
 
 void GrTextBlobCache::freeAll() {
-    SkTDynamicHash<GrAtlasTextBlob, GrAtlasTextBlob::Key>::Iter iter(&fCache);
-    while (!iter.done()) {
-        GrAtlasTextBlob* blob = &(*iter);
-        fBlobList.remove(blob);
-        blob->unref();
-        ++iter;
-    }
-    fCache.rewind();
+    fBlobIDCache.foreach([this](uint32_t, BlobIDCacheEntry* entry) {
+        for (const auto& blob : entry->fBlobs) {
+            fBlobList.remove(blob.get());
+        }
+    });
+
+    fBlobIDCache.reset();
 
     // There should be no allocations in the memory pool at this point
     SkASSERT(fPool.isEmpty());
+    SkASSERT(fBlobList.isEmpty());
 }

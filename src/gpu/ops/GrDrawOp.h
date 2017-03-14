@@ -54,10 +54,11 @@ public:
 
     class Target;
 
-    GrDrawOp(uint32_t classID);
-    ~GrDrawOp() override;
+    GrDrawOp(uint32_t classID) : INHERITED(classID) {}
 
-    bool installPipeline(const GrPipeline::CreateArgs&);
+    void initPipeline(const GrPipeline::InitArgs& args) {
+        this->applyPipelineOptimizations(fPipeline.init(args));
+    }
 
     /**
      * Performs analysis of the fragment processors in GrProcessorSet and GrAppliedClip using the
@@ -69,8 +70,7 @@ public:
                            const GrCaps& caps) const {
         FragmentProcessorAnalysisInputs input;
         this->getFragmentProcessorAnalysisInputs(&input);
-        analysis->reset(*input.colorInput(), *input.coverageInput(), processors,
-                        input.usesPLSDstRead(), appliedClip, caps);
+        analysis->reset(*input.colorInput(), *input.coverageInput(), processors, appliedClip, caps);
     }
 
 protected:
@@ -106,8 +106,8 @@ protected:
     }
 
     const GrPipeline* pipeline() const {
-        SkASSERT(fPipelineInstalled);
-        return reinterpret_cast<const GrPipeline*>(fPipelineStorage.get());
+        SkASSERT(fPipeline.isInitialized());
+        return &fPipeline;
     }
 
     /**
@@ -120,14 +120,9 @@ protected:
         GrPipelineInput* colorInput() { return &fColorInput; }
         GrPipelineInput* coverageInput() { return &fCoverageInput; }
 
-        void setUsesPLSDstRead() { fUsesPLSDstRead = true; }
-
-        bool usesPLSDstRead() const { return fUsesPLSDstRead; }
-
     private:
         GrPipelineInput fColorInput;
         GrPipelineInput fCoverageInput;
-        bool fUsesPLSDstRead = false;
     };
 
 private:
@@ -155,8 +150,7 @@ protected:
     SkTArray<QueuedUpload>                          fInlineUploads;
 
 private:
-    SkAlignedSTStorage<1, GrPipeline>               fPipelineStorage;
-    bool                                            fPipelineInstalled;
+    GrPipeline fPipeline;
     typedef GrOp INHERITED;
 };
 

@@ -285,6 +285,10 @@ bool SkColorSpace::gammaIsLinear() const {
     return as_CSB(this)->onGammaIsLinear();
 }
 
+bool SkColorSpace::isNumericalTransferFn(SkColorSpaceTransferFn* fn) const {
+    return as_CSB(this)->onIsNumericalTransferFn(fn);
+}
+
 bool SkColorSpace::toXYZD50(SkMatrix44* toXYZD50) const {
     const SkMatrix44* matrix = as_CSB(this)->toXYZD50();
     if (matrix) {
@@ -293,6 +297,10 @@ bool SkColorSpace::toXYZD50(SkMatrix44* toXYZD50) const {
     }
 
     return false;
+}
+
+bool SkColorSpace::isSRGB() const {
+    return gSRGB == this || gSRGBNonLinearBlending == this;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -306,6 +314,21 @@ sk_sp<SkColorSpace> SkColorSpace_Base::makeWithoutFlags() {
     SkColorSpaceTransferFn fn;
     SkAssertResult(this->onIsNumericalTransferFn(&fn));
     return SkColorSpace::MakeRGB(fn, *this->toXYZD50(), 0);
+}
+
+sk_sp<SkColorSpace> SkColorSpace_Base::makeWithNonLinearBlending() {
+    if (SkToBool(SkColorSpace::kNonLinearBlending_ColorSpaceFlag & fFlags)) {
+        return sk_ref_sp(this);
+    }
+
+    // This should only be called on XYZ color spaces.  A2B color spaces are never
+    // allowed to be destinations - which means that this flag does not make any
+    // sense for them.
+    SkASSERT(Type::kXYZ == this->type());
+    SkColorSpaceTransferFn fn;
+    SkAssertResult(this->onIsNumericalTransferFn(&fn));
+    return SkColorSpace::MakeRGB(fn, *this->toXYZD50(),
+                                 SkColorSpace::kNonLinearBlending_ColorSpaceFlag);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

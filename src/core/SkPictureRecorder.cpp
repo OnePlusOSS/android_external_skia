@@ -9,7 +9,6 @@
 #include "SkData.h"
 #include "SkDrawable.h"
 #include "SkPictureRecorder.h"
-#include "SkPictureUtils.h"
 #include "SkRecord.h"
 #include "SkRecordDraw.h"
 #include "SkRecordOpts.h"
@@ -19,14 +18,16 @@
 
 SkPictureRecorder::SkPictureRecorder() {
     fActivelyRecording = false;
-    fRecorder.reset(new SkRecorder(nullptr, SkRect::MakeWH(0, 0), &fMiniRecorder));
+    fRecorder.reset(new SkRecorder(nullptr, SkRect::MakeEmpty(), &fMiniRecorder));
 }
 
 SkPictureRecorder::~SkPictureRecorder() {}
 
-SkCanvas* SkPictureRecorder::beginRecording(const SkRect& cullRect,
+SkCanvas* SkPictureRecorder::beginRecording(const SkRect& userCullRect,
                                             SkBBHFactory* bbhFactory /* = nullptr */,
                                             uint32_t recordFlags /* = 0 */) {
+    const SkRect cullRect = userCullRect.isEmpty() ? SkRect::MakeEmpty() : userCullRect;
+
     fCullRect = cullRect;
     fFlags = recordFlags;
 
@@ -89,7 +90,7 @@ sk_sp<SkPicture> SkPictureRecorder::finishRecordingAsPicture(uint32_t finishFlag
 
     size_t subPictureBytes = fRecorder->approxBytesUsedBySubPictures();
     for (int i = 0; pictList && i < pictList->count(); i++) {
-        subPictureBytes += SkPictureUtils::ApproximateBytesUsed(pictList->begin()[i]);
+        subPictureBytes += pictList->begin()[i]->approximateBytesUsed();
     }
     return sk_make_sp<SkBigPicture>(fCullRect, fRecord.release(), pictList, fBBH.release(),
                                     subPictureBytes);

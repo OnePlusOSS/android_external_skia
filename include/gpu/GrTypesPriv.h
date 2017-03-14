@@ -12,7 +12,7 @@
 #include "SkRefCnt.h"
 
 /** This enum indicates the type of antialiasing to be performed. */
-enum class GrAAType {
+enum class GrAAType : unsigned {
     /** No antialiasing */
     kNone,
     /** Use fragment shader code to compute a fractional pixel coverage. */
@@ -566,6 +566,6 @@ template <typename T> T * const * sk_sp_address_as_pointer_address(sk_sp<T> cons
 /*
  * Object for CPU-GPU synchronization
  */
-typedef intptr_t GrFence;
+typedef uint64_t GrFence;
 
 #endif

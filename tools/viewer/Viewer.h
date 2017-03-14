@@ -23,6 +23,7 @@ public:
     Viewer(int argc, char** argv, void* platformData);
     ~Viewer() override;
 
+    void onBackendCreated();
     void onPaint(SkCanvas* canvas);
     void onIdle() override;
     bool onTouch(intptr_t owner, sk_app::Window::InputState state, float x, float y);
@@ -31,9 +32,17 @@ public:
     bool onChar(SkUnichar c, uint32_t modifiers);
 
 private:
+    enum class ColorMode {
+        kLegacy,                                 // N32, no color management
+        kColorManagedSRGB8888_NonLinearBlending, // N32, sRGB transfer function, nonlinear blending
+        kColorManagedSRGB8888,                   // N32, sRGB transfer function, linear blending
+        kColorManagedLinearF16,                  // F16, linear transfer function, linear blending
+    };
+
     void initSlides();
     void updateTitle();
-    void setColorMode(SkColorType, sk_sp<SkColorSpace>);
+    void setBackend(sk_app::Window::BackendType);
+    void setColorMode(ColorMode);
     void setStartupSlide();
     void setupCurrentSlide(int previousSlide);
     void listNames();
@@ -58,12 +67,12 @@ private:
     SkAnimTimer            fAnimTimer;
     SkTArray<sk_sp<Slide>> fSlides;
     int                    fCurrentSlide;
-    bool                   fSetupFirstFrame;
 
     bool                   fDisplayStats;
     bool                   fRefresh; // whether to continuously refresh for measuring render time
 
     SkPaint                fImGuiFontPaint;
+    SkPaint                fImGuiGamutPaint;
     bool                   fShowImGuiDebugWindow;
     bool                   fShowImGuiTestWindow;
 
@@ -73,8 +82,8 @@ private:
     sk_app::Window::BackendType fBackendType;
 
     // Color properties for slide rendering
-    SkColorType            fColorType;
-    sk_sp<SkColorSpace>    fColorSpace;
+    ColorMode              fColorMode;
+    SkColorSpacePrimaries  fColorSpacePrimaries;
 
     // transform data
     SkScalar               fZoomCenterX;
@@ -89,6 +98,8 @@ private:
     // identity unless the window initially scales the content to fit the screen.
     SkMatrix               fDefaultMatrix;
     SkMatrix               fDefaultMatrixInv;
+
+    SkTArray<std::function<void(void)>> fDeferredActions;
 
     Json::Value            fAllSlideNames; // cache all slide names for fast updateUIState
 };

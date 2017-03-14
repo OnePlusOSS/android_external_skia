@@ -763,9 +763,11 @@ void SkGradientShaderBase::commonAsAGradient(GradientInfo* info, bool flipGrad) 
         if (info->fColorCount >= fColorCount) {
             SkColor* colorLoc;
             Rec*     recLoc;
+            SkAutoSTArray<8, SkColor> colorStorage;
+            SkAutoSTArray<8, Rec> recStorage;
             if (flipGrad && (info->fColors || info->fColorOffsets)) {
-                SkAutoSTArray<8, SkColor> colorStorage(fColorCount);
-                SkAutoSTArray<8, Rec> recStorage(fColorCount);
+                colorStorage.reset(fColorCount);
+                recStorage.reset(fColorCount);
                 colorLoc = colorStorage.get();
                 recLoc = recStorage.get();
                 FlipGradientColors(colorLoc, recLoc, fOrigColors, fRecs, fColorCount);
@@ -1342,7 +1344,7 @@ void GrGradientEffect::GLSLProcessor::onSetData(const GrGLSLProgramDataManager& 
                 fCachedYCoord = yCoord;
             }
             if (SkToBool(e.fColorSpaceXform)) {
-                pdman.setSkMatrix44(fColorSpaceXformUni, e.fColorSpaceXform->srcToDst());
+                fColorSpaceHelper.setData(pdman, e.fColorSpaceXform.get());
             }
             break;
         }
@@ -1580,15 +1582,14 @@ void GrGradientEffect::GLSLProcessor::emitColor(GrGLSLFPFragmentBuilder* fragBui
         }
 
         case kTexture_ColorType: {
-            GrGLSLColorSpaceXformHelper colorSpaceHelper(uniformHandler, ge.fColorSpaceXform.get(),
-                                                         &fColorSpaceXformUni);
+            fColorSpaceHelper.emitCode(uniformHandler, ge.fColorSpaceXform.get());
 
             const char* fsyuni = uniformHandler->getUniformCStr(fFSYUni);
 
             fragBuilder->codeAppendf("vec2 coord = vec2(%s, %s);", gradientTValue, fsyuni);
             fragBuilder->codeAppendf("%s = ", outputColor);
             fragBuilder->appendTextureLookupAndModulate(inputColor, texSamplers[0], "coord",
-                                                        kVec2f_GrSLType, &colorSpaceHelper);
+                                                        kVec2f_GrSLType, &fColorSpaceHelper);
             fragBuilder->codeAppend(";");
 
             break;
@@ -1674,6 +1675,8 @@ GrGradientEffect::GrGradientEffect(const CreateArgs& args, bool isOpaque)
 
             SkBitmap bitmap;
             shader.getGradientTableBitmap(&bitmap, bitmapType);
+            SkASSERT(1 == bitmap.height() && SkIsPow2(bitmap.width()));
+
 
             GrTextureStripAtlas::Desc desc;
             desc.fWidth  = bitmap.width();
@@ -1694,18 +1697,28 @@ GrGradientEffect::GrGradientEffect(const CreateArgs& args, bool isOpaque)
             if (-1 != fRow) {
                 fYCoord = fAtlas->getYOffset(fRow)+SK_ScalarHalf*fAtlas->getNormalizedTexelHeight();
                 // This is 1/2 places where auto-normalization is disabled
-                fCoordTransform.reset(*args.fMatrix, fAtlas->getTexture(),
+                fCoordTransform.reset(args.fContext, *args.fMatrix,
+                                      fAtlas->asTextureProxyRef().get(),
                                       params.filterMode(), false);
-                fTextureSampler.reset(fAtlas->getTexture(), params);
+                fTextureSampler.reset(args.fContext->resourceProvider(),
+                                      fAtlas->asTextureProxyRef(), params);
             } else {
-                sk_sp<GrTexture> texture(GrRefCachedBitmapTexture(args.fContext, bitmap,
-                                                                  params, nullptr));
-                if (!texture) {
+                // In this instance we know the params are:
+                //   clampY, bilerp
+                // and the proxy is:
+                //   exact fit, power of two in both dimensions
+                // Only the x-tileMode is unknown. However, given all the other knowns we know
+                // that GrMakeCachedBitmapProxy is sufficient (i.e., it won't need to be
+                // extracted to a subset or mipmapped).
+                sk_sp<GrTextureProxy> proxy = GrMakeCachedBitmapProxy(args.fContext, bitmap);
+                if (!proxy) {
                     return;
                 }
                 // This is 2/2 places where auto-normalization is disabled
-                fCoordTransform.reset(*args.fMatrix, texture.get(), params.filterMode(), false);
-                fTextureSampler.reset(texture.get(), params);
+                fCoordTransform.reset(args.fContext, *args.fMatrix,
+                                      proxy.get(), params.filterMode(), false);
+                fTextureSampler.reset(args.fContext->resourceProvider(),
+                                      std::move(proxy), params);
                 fYCoord = SK_ScalarHalf;
             }
 

@@ -10,8 +10,9 @@
 #include "GrContext.h"
 #include "GrGpu.h"
 #include "GrGpuResourcePriv.h"
+#include "GrResourceProvider.h"
 #include "GrTexture.h"
-#include "SkGrPriv.h"
+#include "SkGr.h"
 
 GrTextureAdjuster::GrTextureAdjuster(GrTexture* original, SkAlphaType alphaType,
                                      const SkIRect& contentArea, uint32_t uniqueID,
@@ -48,7 +49,7 @@ GrTexture* GrTextureAdjuster::refCopy(const CopyParams& copyParams) {
     GrUniqueKey key;
     this->makeCopyKey(copyParams, &key, nullptr);
     if (key.isValid()) {
-        GrTexture* cachedCopy = context->textureProvider()->findAndRefTextureByUniqueKey(key);
+        GrTexture* cachedCopy = context->resourceProvider()->findAndRefTextureByUniqueKey(key);
         if (cachedCopy) {
             return cachedCopy;
         }
@@ -56,7 +57,7 @@ GrTexture* GrTextureAdjuster::refCopy(const CopyParams& copyParams) {
     GrTexture* copy = CopyOnGpu(texture, contentArea, copyParams);
     if (copy) {
         if (key.isValid()) {
-            copy->resourcePriv().setUniqueKey(key);
+            context->resourceProvider()->assignUniqueKeyToTexture(key, copy);
             this->didCacheCopy(key);
         }
     }

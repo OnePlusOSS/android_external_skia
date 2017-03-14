@@ -22,7 +22,7 @@
 class GrContext;
 class GrCoordTransform;
 class GrInvariantOutput;
-class GrTextureProvider;
+class GrResourceProvider;
 class GrTextureProxy;
 
 /**
@@ -205,23 +205,26 @@ public:
     TextureSampler();
 
     TextureSampler(GrTexture*, const GrSamplerParams&);
-
     explicit TextureSampler(GrTexture*,
                             GrSamplerParams::FilterMode = GrSamplerParams::kNone_FilterMode,
                             SkShader::TileMode tileXAndY = SkShader::kClamp_TileMode,
                             GrShaderFlags visibility = kFragment_GrShaderFlag);
-
-    TextureSampler(GrTextureProvider*, sk_sp<GrTextureProxy>, const GrSamplerParams&);
-
-    // MDB TODO: ultimately we shouldn't need the texProvider parameter
-    explicit TextureSampler(GrTextureProvider*, sk_sp<GrTextureProxy>,
-                            GrSamplerParams::FilterMode = GrSamplerParams::kNone_FilterMode,
-                            SkShader::TileMode tileXAndY = SkShader::kClamp_TileMode,
-                            GrShaderFlags visibility = kFragment_GrShaderFlag);
-
     void reset(GrTexture*, const GrSamplerParams&,
                GrShaderFlags visibility = kFragment_GrShaderFlag);
     void reset(GrTexture*,
+               GrSamplerParams::FilterMode = GrSamplerParams::kNone_FilterMode,
+               SkShader::TileMode tileXAndY = SkShader::kClamp_TileMode,
+               GrShaderFlags visibility = kFragment_GrShaderFlag);
+
+    // MDB TODO: ultimately we shouldn't need the resource provider parameter
+    TextureSampler(GrResourceProvider*, sk_sp<GrTextureProxy>, const GrSamplerParams&);
+    explicit TextureSampler(GrResourceProvider*, sk_sp<GrTextureProxy>,
+                            GrSamplerParams::FilterMode = GrSamplerParams::kNone_FilterMode,
+                            SkShader::TileMode tileXAndY = SkShader::kClamp_TileMode,
+                            GrShaderFlags visibility = kFragment_GrShaderFlag);
+    void reset(GrResourceProvider*, sk_sp<GrTextureProxy>, const GrSamplerParams&,
+               GrShaderFlags visibility = kFragment_GrShaderFlag);
+    void reset(GrResourceProvider*, sk_sp<GrTextureProxy>,
                GrSamplerParams::FilterMode = GrSamplerParams::kNone_FilterMode,
                SkShader::TileMode tileXAndY = SkShader::kClamp_TileMode,
                GrShaderFlags visibility = kFragment_GrShaderFlag);

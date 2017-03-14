@@ -25,6 +25,7 @@
 #include "GrVkPipelineState.h"
 #include "GrVkRenderPass.h"
 #include "GrVkResourceProvider.h"
+#include "GrVkSemaphore.h"
 #include "GrVkTexture.h"
 #include "GrVkTextureRenderTarget.h"
 #include "GrVkTransferBuffer.h"
@@ -181,6 +182,11 @@ GrVkGpu::~GrVkGpu() {
     SkASSERT(VK_SUCCESS == res || VK_ERROR_DEVICE_LOST == res);
 #endif
 
+    for (int i = 0; i < fSemaphoresToWaitOn.count(); ++i) {
+        fSemaphoresToWaitOn[i]->unref(this);
+    }
+    fSemaphoresToWaitOn.reset();
+
     fCopyManager.destroyResources(this);
 
     // must call this just before we destroy the command pool and VkDevice
@@ -206,11 +212,18 @@ GrGpuCommandBuffer* GrVkGpu::createCommandBuffer(
     return new GrVkGpuCommandBuffer(this, colorInfo, stencilInfo);
 }
 
-void GrVkGpu::submitCommandBuffer(SyncQueue sync) {
+void GrVkGpu::submitCommandBuffer(SyncQueue sync,
+                                  const GrVkSemaphore::Resource* signalSemaphore) {
     SkASSERT(fCurrentCmdBuffer);
     fCurrentCmdBuffer->end(this);
 
-    fCurrentCmdBuffer->submitToQueue(this, fQueue, sync);
+    fCurrentCmdBuffer->submitToQueue(this, fQueue, sync, signalSemaphore, fSemaphoresToWaitOn);
+
+    for (int i = 0; i < fSemaphoresToWaitOn.count(); ++i) {
+        fSemaphoresToWaitOn[i]->unref(this);
+    }
+    fSemaphoresToWaitOn.reset();
+
     fResourceProvider.checkCommandBuffers();
 
     // Release old command buffer and create a new one
@@ -405,17 +418,21 @@ void GrVkGpu::resolveImage(GrVkRenderTarget* dst, GrVkRenderTarget* src, const S
     fCurrentCmdBuffer->resolveImage(this, *src->msaaImage(), *dst, 1, &resolveInfo);
 }
 
-void GrVkGpu::onResolveRenderTarget(GrRenderTarget* target) {
+void GrVkGpu::internalResolveRenderTarget(GrRenderTarget* target, bool requiresSubmit) {
     if (target->needsResolve()) {
         SkASSERT(target->numColorSamples() > 1);
         GrVkRenderTarget* rt = static_cast<GrVkRenderTarget*>(target);
         SkASSERT(rt->msaaImage());
-        
+
         const SkIRect& srcRect = rt->getResolveRect();
 
         this->resolveImage(rt, rt, srcRect, SkIPoint::Make(srcRect.fLeft, srcRect.fTop));
 
         rt->flagAsResolved();
+
+        if (requiresSubmit) {
+            this->submitCommandBuffer(kSkip_SyncQueue);
+        }
     }
 }
 
@@ -772,13 +789,11 @@ sk_sp<GrTexture> GrVkGpu::onWrapBackendTexture(const GrBackendTextureDesc& desc,
     return GrVkTextureRenderTarget::MakeWrappedTextureRenderTarget(this, surfDesc, ownership, info);
 }
 
-sk_sp<GrRenderTarget> GrVkGpu::onWrapBackendRenderTarget(const GrBackendRenderTargetDesc& wrapDesc,
-                                                         GrWrapOwnership ownership) {
+sk_sp<GrRenderTarget> GrVkGpu::onWrapBackendRenderTarget(const GrBackendRenderTargetDesc& wrapDesc){
 
     const GrVkImageInfo* info =
         reinterpret_cast<const GrVkImageInfo*>(wrapDesc.fRenderTargetHandle);
-    if (VK_NULL_HANDLE == info->fImage ||
-        (VK_NULL_HANDLE == info->fAlloc.fMemory && kAdopt_GrWrapOwnership == ownership)) {
+    if (VK_NULL_HANDLE == info->fImage) {
         return nullptr;
     }
 
@@ -791,8 +806,7 @@ sk_sp<GrRenderTarget> GrVkGpu::onWrapBackendRenderTarget(const GrBackendRenderTa
 
     desc.fOrigin = resolve_origin(wrapDesc.fOrigin);
 
-    sk_sp<GrVkRenderTarget> tgt = GrVkRenderTarget::MakeWrappedRenderTarget(this, desc,
-                                                                            ownership, info);
+    sk_sp<GrVkRenderTarget> tgt = GrVkRenderTarget::MakeWrappedRenderTarget(this, desc, info);
     if (tgt && wrapDesc.fStencilBits) {
         if (!createStencilAttachmentForRenderTarget(tgt.get(), desc.fWidth, desc.fHeight)) {
             return nullptr;
@@ -823,7 +837,7 @@ void GrVkGpu::generateMipmap(GrVkTexture* tex) {
     // We may need to resolve the texture first if it is also a render target
     GrVkRenderTarget* texRT = static_cast<GrVkRenderTarget*>(tex->asRenderTarget());
     if (texRT) {
-        this->onResolveRenderTarget(texRT);
+        this->internalResolveRenderTarget(texRT, false);
     }
 
     int width = tex->width();
@@ -1573,23 +1587,6 @@ bool GrVkGpu::onCopySurface(GrSurface* dst,
     return false;
 }
 
-bool GrVkGpu::initDescForDstCopy(const GrRenderTarget* src, GrSurfaceDesc* desc) const {
-    // We can always succeed here with either a CopyImage (none msaa src) or ResolveImage (msaa).
-    // For CopyImage we can make a simple texture, for ResolveImage we require the dst to be a
-    // render target as well.
-    desc->fOrigin = src->origin();
-    desc->fConfig = src->config();
-    if (src->numColorSamples() > 1 ||
-        (src->asTexture() && this->vkCaps().supportsCopiesAsDraws())) {
-        desc->fFlags = kRenderTarget_GrSurfaceFlag;
-    } else {
-        // Just going to use CopyImage here
-        desc->fFlags = kNone_GrSurfaceFlags;
-    }
-
-    return true;
-}
-
 void GrVkGpu::onQueryMultisampleSpecs(GrRenderTarget* rt, const GrStencilSettings&,
                                       int* effectiveSampleCnt, SamplePattern*) {
     // TODO: stub.
@@ -1652,7 +1649,7 @@ bool GrVkGpu::onReadPixels(GrSurface* surface,
             case GrVkRenderTarget::kAutoResolves_ResolveType:
                 break;
             case GrVkRenderTarget::kCanResolve_ResolveType:
-                this->onResolveRenderTarget(rt);
+                this->internalResolveRenderTarget(rt, false);
                 break;
             default:
                 SkFAIL("Unknown resolve type");
@@ -1828,31 +1825,50 @@ void GrVkGpu::submitSecondaryCommandBuffer(GrVkSecondaryCommandBuffer* buffer,
     this->didWriteToSurface(target, &bounds);
 }
 
-GrFence SK_WARN_UNUSED_RESULT GrVkGpu::insertFence() const {
+GrFence SK_WARN_UNUSED_RESULT GrVkGpu::insertFence() {
     VkFenceCreateInfo createInfo;
     memset(&createInfo, 0, sizeof(VkFenceCreateInfo));
     createInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     createInfo.pNext = nullptr;
     createInfo.flags = 0;
     VkFence fence = VK_NULL_HANDLE;
-    VkResult result = GR_VK_CALL(this->vkInterface(), CreateFence(this->device(), &createInfo,
-                                                                  nullptr, &fence));
-    // TODO: verify that all QueueSubmits before this will finish before this fence signals
-    if (VK_SUCCESS == result) {
-        GR_VK_CALL(this->vkInterface(), QueueSubmit(this->queue(), 0, nullptr, fence));
-    }
+
+    VK_CALL_ERRCHECK(CreateFence(this->device(), &createInfo, nullptr, &fence));
+    VK_CALL(QueueSubmit(this->queue(), 0, nullptr, fence));
+
+    GR_STATIC_ASSERT(sizeof(GrFence) >= sizeof(VkFence));
     return (GrFence)fence;
 }
 
-bool GrVkGpu::waitFence(GrFence fence, uint64_t timeout) const {
-    VkResult result = GR_VK_CALL(this->vkInterface(), WaitForFences(this->device(), 1,
-                                                                    (VkFence*)&fence,
-                                                                    VK_TRUE,
-                                                                    timeout));
+bool GrVkGpu::waitFence(GrFence fence, uint64_t timeout) {
+    SkASSERT(VK_NULL_HANDLE != (VkFence)fence);
+
+    VkResult result = VK_CALL(WaitForFences(this->device(), 1, (VkFence*)&fence, VK_TRUE, timeout));
     return (VK_SUCCESS == result);
 }
 
 void GrVkGpu::deleteFence(GrFence fence) const {
-    GR_VK_CALL(this->vkInterface(), DestroyFence(this->device(), (VkFence)fence, nullptr));
+    VK_CALL(DestroyFence(this->device(), (VkFence)fence, nullptr));
 }
 
+sk_sp<GrSemaphore> SK_WARN_UNUSED_RESULT GrVkGpu::makeSemaphore() {
+    return GrVkSemaphore::Make(this);
+}
+
+void GrVkGpu::insertSemaphore(sk_sp<GrSemaphore> semaphore) {
+    GrVkSemaphore* vkSem = static_cast<GrVkSemaphore*>(semaphore.get());
+
+    this->submitCommandBuffer(kSkip_SyncQueue, vkSem->getResource());
+}
+
+void GrVkGpu::waitSemaphore(sk_sp<GrSemaphore> semaphore) {
+    GrVkSemaphore* vkSem = static_cast<GrVkSemaphore*>(semaphore.get());
+
+    const GrVkSemaphore::Resource* resource = vkSem->getResource();
+    resource->ref();
+    fSemaphoresToWaitOn.push_back(resource);
+}
+
+void GrVkGpu::flush() {
+    // We submit the command buffer to the queue whenever Ganesh is flushed, so nothing is needed
+}

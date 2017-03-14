@@ -5,16 +5,15 @@
  * found in the LICENSE file.
  */
 
-
 #include "GrGLCaps.h"
-
 #include "GrContextOptions.h"
 #include "GrGLContext.h"
 #include "GrGLRenderTarget.h"
+#include "GrGLTexture.h"
 #include "GrShaderCaps.h"
-#include "instanced/GLInstancedRendering.h"
 #include "SkTSearch.h"
 #include "SkTSort.h"
+#include "instanced/GLInstancedRendering.h"
 
 GrGLCaps::GrGLCaps(const GrContextOptions& contextOptions,
                    const GrGLContextInfo& ctxInfo,
@@ -258,7 +257,9 @@ void GrGLCaps::init(const GrContextOptions& contextOptions,
     this->initGLSL(ctxInfo);
     GrShaderCaps* shaderCaps = fShaderCaps.get();
 
-    shaderCaps->fPathRenderingSupport = this->hasPathRenderingSupport(ctxInfo, gli);
+    if (!contextOptions.fSuppressPathRendering) {
+        shaderCaps->fPathRenderingSupport = this->hasPathRenderingSupport(ctxInfo, gli);
+    }
 
     // For now these two are equivalent but we could have dst read in shader via some other method.
     // Before setting this, initGLSL() must have been called.
@@ -286,17 +287,6 @@ void GrGLCaps::init(const GrContextOptions& contextOptions,
 
         shaderCaps->fIntegerSupport = ctxInfo.version() >= GR_GL_VER(3, 0) &&
             ctxInfo.glslGeneration() >= k330_GrGLSLGeneration; // We use this value for GLSL ES 3.0.
-    }
-
-    if (ctxInfo.hasExtension("GL_EXT_shader_pixel_local_storage")) {
-        #define GL_MAX_SHADER_PIXEL_LOCAL_STORAGE_FAST_SIZE_EXT 0x8F63
-        GR_GL_GetIntegerv(gli, GL_MAX_SHADER_PIXEL_LOCAL_STORAGE_FAST_SIZE_EXT,
-                          &shaderCaps->fPixelLocalStorageSize);
-        shaderCaps->fPLSPathRenderingSupport = shaderCaps->fFBFetchSupport;
-    }
-    else {
-        shaderCaps->fPixelLocalStorageSize = 0;
-        shaderCaps->fPLSPathRenderingSupport = false;
     }
 
     // Protect ourselves against tracking huge amounts of texture state.
@@ -354,10 +344,12 @@ void GrGLCaps::init(const GrContextOptions& contextOptions,
      **************************************************************************/
 
     // We need dual source blending and the ability to disable multisample in order to support mixed
-    // samples in every corner case.
+    // samples in every corner case. We only use mixed samples if the stencil-and-cover path
+    // renderer is available and enabled; no other path renderers support this feature.
     if (fMultisampleDisableSupport &&
         shaderCaps->dualSourceBlendingSupport() &&
-        fShaderCaps->pathRenderingSupport()) {
+        fShaderCaps->pathRenderingSupport() &&
+        (contextOptions.fGpuPathRenderers & GrContextOptions::GpuPathRenderers::kStencilAndCover)) {
         fUsesMixedSamples = ctxInfo.hasExtension("GL_NV_framebuffer_mixed_samples") ||
                 ctxInfo.hasExtension("GL_CHROMIUM_framebuffer_mixed_samples");
         // Workaround NVIDIA bug related to glInvalidateFramebuffer and mixed samples.
@@ -598,6 +590,15 @@ void GrGLCaps::init(const GrContextOptions& contextOptions,
     } else if (version >= GR_GL_VER(3, 0)) {
         fFenceSyncSupport = true;
     }
+
+    // Safely moving textures between contexts requires fences. The Windows Intel driver has a
+    // bug with deleting and reusing texture IDs across contexts, so disallow this feature.
+    fCrossContextTextureSupport = fFenceSyncSupport;
+#ifdef SK_BUILD_FOR_WIN
+    if (kIntel_GrGLVendor == ctxInfo.vendor()) {
+        fCrossContextTextureSupport = false;
+    }
+#endif
 
     // We support manual mip-map generation (via iterative downsampling draw calls). This fixes
     // bugs on some cards/drivers that produce incorrect mip-maps for sRGB textures when using
@@ -2064,6 +2065,62 @@ void GrGLCaps::initConfigTable(const GrContextOptions& contextOptions,
         SkASSERT(defaultEntry.fFormats.fExternalType != fConfigTable[i].fFormats.fExternalType);
     }
 #endif
+}
+
+bool GrGLCaps::initDescForDstCopy(const GrRenderTarget* src, GrSurfaceDesc* desc) const {
+    // If the src is a texture, we can implement the blit as a draw assuming the config is
+    // renderable.
+    if (src->asTexture() && this->isConfigRenderable(src->config(), false)) {
+        desc->fOrigin = kDefault_GrSurfaceOrigin;
+        desc->fFlags = kRenderTarget_GrSurfaceFlag;
+        desc->fConfig = src->config();
+        return true;
+    }
+
+    const GrGLTexture* srcTexture = static_cast<const GrGLTexture*>(src->asTexture());
+    if (srcTexture && srcTexture->target() != GR_GL_TEXTURE_2D) {
+        // Not supported for FBO blit or CopyTexSubImage
+        return false;
+    }
+
+    // We look for opportunities to use CopyTexSubImage, or fbo blit. If neither are
+    // possible and we return false to fallback to creating a render target dst for render-to-
+    // texture. This code prefers CopyTexSubImage to fbo blit and avoids triggering temporary fbo
+    // creation. It isn't clear that avoiding temporary fbo creation is actually optimal.
+    GrSurfaceOrigin originForBlitFramebuffer = kDefault_GrSurfaceOrigin;
+    if (this->blitFramebufferSupportFlags() & kNoScalingOrMirroring_BlitFramebufferFlag) {
+        originForBlitFramebuffer = src->origin();
+    }
+
+    // Check for format issues with glCopyTexSubImage2D
+    if (this->bgraIsInternalFormat() && kBGRA_8888_GrPixelConfig == src->config()) {
+        // glCopyTexSubImage2D doesn't work with this config. If the bgra can be used with fbo blit
+        // then we set up for that, otherwise fail.
+        if (this->canConfigBeFBOColorAttachment(kBGRA_8888_GrPixelConfig)) {
+            desc->fOrigin = originForBlitFramebuffer;
+            desc->fConfig = kBGRA_8888_GrPixelConfig;
+            return true;
+        }
+        return false;
+    }
+
+    const GrGLRenderTarget* srcRT = static_cast<const GrGLRenderTarget*>(src);
+    if (srcRT->renderFBOID() != srcRT->textureFBOID()) {
+        // It's illegal to call CopyTexSubImage2D on a MSAA renderbuffer. Set up for FBO blit or
+        // fail.
+        if (this->canConfigBeFBOColorAttachment(src->config())) {
+            desc->fOrigin = originForBlitFramebuffer;
+            desc->fConfig = src->config();
+            return true;
+        }
+        return false;
+    }
+
+    // We'll do a CopyTexSubImage. Make the dst a plain old texture.
+    desc->fConfig = src->config();
+    desc->fOrigin = src->origin();
+    desc->fFlags = kNone_GrSurfaceFlags;
+    return true;
 }
 
 void GrGLCaps::onApplyOptionsOverrides(const GrContextOptions& options) {

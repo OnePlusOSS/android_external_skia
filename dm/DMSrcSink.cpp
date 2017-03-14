@@ -880,7 +880,9 @@ ImageGenSrc::ImageGenSrc(Path path, Mode mode, SkAlphaType alphaType, bool isGpu
 
 bool ImageGenSrc::veto(SinkFlags flags) const {
     if (fIsGpu) {
-        return flags.type != SinkFlags::kGPU || flags.approach != SinkFlags::kDirect;
+        // MSAA runs tend to run out of memory and tests the same code paths as regular gpu configs.
+        return flags.type != SinkFlags::kGPU || flags.approach != SinkFlags::kDirect ||
+               flags.multisampled == SinkFlags::kMultisampled;
     }
 
     return flags.type != SinkFlags::kRaster || flags.approach != SinkFlags::kDirect;
@@ -949,7 +951,17 @@ Error ImageGenSrc::draw(SkCanvas* canvas) const {
     int colorCount = 256;
 
     if (!gen->getPixels(decodeInfo, pixels.get(), rowBytes, colorPtr, &colorCount)) {
-        return SkStringPrintf("Image generator could not getPixels() for %s\n", fPath.c_str());
+        SkString err =
+                SkStringPrintf("Image generator could not getPixels() for %s\n", fPath.c_str());
+
+#if defined(SK_BUILD_FOR_WIN)
+        if (kPlatform_Mode == fMode) {
+            // Do not issue a fatal error for WIC flakiness.
+            return Error::Nonfatal(err);
+        }
+#endif
+
+        return err;
     }
 
     draw_to_canvas(canvas, decodeInfo, pixels.get(), rowBytes, colorPtr, colorCount,
@@ -1245,7 +1257,6 @@ DEFINE_int32(opLookahead, -1, "Maximum GrOp lookahead for combining, negative me
 Error GPUSink::draw(const Src& src, SkBitmap* dst, SkWStream*, SkString* log) const {
     GrContextOptions grOptions;
     grOptions.fImmediateMode = FLAGS_imm;
-    grOptions.fClipDrawOpsToBounds = FLAGS_drawOpClip;
     grOptions.fMaxOpCombineLookback = FLAGS_opLookback;
     grOptions.fMaxOpCombineLookahead = FLAGS_opLookahead;
 
@@ -1813,18 +1824,17 @@ Error ViaSingletonPictures::draw(
 
 Error ViaLite::draw(const Src& src, SkBitmap* bitmap, SkWStream* stream, SkString* log) const {
     auto size = src.size();
-    SkRect bounds = {0,0, (SkScalar)size.width(), (SkScalar)size.height()};
+    SkIRect bounds = {0,0, size.width(), size.height()};
     return draw_to_canvas(fSink.get(), bitmap, stream, log, size, [&](SkCanvas* canvas) -> Error {
-        sk_sp<SkLiteDL> dl = SkLiteDL::New(bounds);
-
+        SkLiteDL dl;
         SkLiteRecorder rec;
-        rec.reset(dl.get());
+        rec.reset(&dl, bounds);
 
         Error err = src.draw(&rec);
         if (!err.isEmpty()) {
             return err;
         }
-        dl->draw(canvas);
+        dl.draw(canvas);
         return check_against_reference(bitmap, src, fSink.get());
     });
 }

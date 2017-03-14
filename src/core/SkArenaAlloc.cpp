@@ -100,7 +100,9 @@ void SkArenaAlloc::ensureSpace(uint32_t size, uint32_t alignment) {
         objSizeAndOverhead += alignment - 1;
     }
 
-    uint32_t allocationSize = std::max(objSizeAndOverhead, fExtraSize);
+    uint32_t allocationSize = std::max(objSizeAndOverhead, fExtraSize * fFib0);
+    fFib0 += fFib1;
+    std::swap(fFib0, fFib1);
 
     // Round up to a nice size. If > 32K align to 4K boundary else up to max_align_t. The > 32K
     // heuristic is from the JEMalloc behavior.
@@ -129,8 +131,7 @@ char* SkArenaAlloc::allocObject(uint32_t size, uint32_t alignment) {
 }
 
 char* SkArenaAlloc::allocObjectWithFooter(uint32_t sizeIncludingFooter, uint32_t alignment) {
-    // Must be uint64 to mask 64-bit pointers properly.
-    uint64_t mask = alignment - 1;
+    uintptr_t mask = alignment - 1;
 
 restart:
     uint32_t skipOverhead = 0;

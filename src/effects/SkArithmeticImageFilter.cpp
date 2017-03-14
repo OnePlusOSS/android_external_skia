@@ -15,11 +15,11 @@
 #include "SkWriteBuffer.h"
 #include "SkXfermodeImageFilter.h"
 #if SK_SUPPORT_GPU
+#include "GrClip.h"
 #include "GrContext.h"
 #include "GrRenderTargetContext.h"
 #include "GrTextureProxy.h"
 #include "SkGr.h"
-#include "SkGrPriv.h"
 #include "effects/GrConstColorProcessor.h"
 #include "effects/GrTextureDomain.h"
 #include "glsl/GrGLSLFragmentProcessor.h"

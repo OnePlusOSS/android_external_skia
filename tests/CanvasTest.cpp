@@ -93,6 +93,14 @@ DEF_TEST(canvas_clipbounds, reporter) {
     REPORTER_ASSERT(reporter, rect == SkRect::MakeEmpty());
     REPORTER_ASSERT(reporter, !canvas.getLocalClipBounds(&rect2));
     REPORTER_ASSERT(reporter, rect == rect2);
+
+    // Test for wacky sizes that we (historically) have guarded against
+    {
+        SkCanvas c(-10, -20);
+        REPORTER_ASSERT(reporter, c.getBaseLayerSize() == SkISize::MakeEmpty());
+
+        SkPictureRecorder().beginRecording({ 5, 5, 4, 4 });
+    }
 }
 
 static const int kWidth = 2, kHeight = 2;
@@ -812,4 +820,39 @@ DEF_TEST(CanvasStack, r) {
     // Now assert that the death of the canvasstack has also killed the sub-canvases
     REPORTER_ASSERT(r, !life[0]);
     REPORTER_ASSERT(r, !life[1]);
+}
+
+static void test_cliptype(SkCanvas* canvas, skiatest::Reporter* r) {
+    REPORTER_ASSERT(r, !canvas->isClipEmpty());
+    REPORTER_ASSERT(r, canvas->isClipRect());
+
+    canvas->save();
+    canvas->clipRect({0, 0, 0, 0});
+    REPORTER_ASSERT(r, canvas->isClipEmpty());
+    REPORTER_ASSERT(r, !canvas->isClipRect());
+    canvas->restore();
+
+    canvas->save();
+    canvas->clipRect({2, 2, 6, 6});
+    REPORTER_ASSERT(r, !canvas->isClipEmpty());
+    REPORTER_ASSERT(r, canvas->isClipRect());
+    canvas->restore();
+
+    canvas->save();
+    canvas->clipRect({2, 2, 6, 6}, SkClipOp::kDifference);  // punch a hole in the clip
+    REPORTER_ASSERT(r, !canvas->isClipEmpty());
+    REPORTER_ASSERT(r, !canvas->isClipRect());
+    canvas->restore();
+
+    REPORTER_ASSERT(r, !canvas->isClipEmpty());
+    REPORTER_ASSERT(r, canvas->isClipRect());
+}
+
+DEF_TEST(CanvasClipType, r) {
+    // test rasterclip backend
+    test_cliptype(SkSurface::MakeRasterN32Premul(10, 10)->getCanvas(), r);
+
+    // test clipstack backend
+    SkDynamicMemoryWStream stream;
+    test_cliptype(SkDocument::MakePDF(&stream)->beginPage(100, 100), r);
 }

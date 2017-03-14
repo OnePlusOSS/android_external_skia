@@ -106,6 +106,19 @@
   },
   {
     "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[build::file]/resources/fileutil.py",
+      "rmtree",
+      "[CUSTOM_/_B_WORK]/flutter/src/out/android_release"
+    ],
+    "env": {
+      "PYTHONPATH": "[START_DIR]/skia/infra/bots/.recipe_deps/build/scripts"
+    },
+    "name": "rmtree android_release"
+  },
+  {
+    "cmd": [
       "flutter/tools/gn",
       "--runtime-mode=release",
       "--android"

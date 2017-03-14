@@ -26,7 +26,13 @@ public:
         return fCache.info().alphaType();
     }
 
-    bool onReadPixels(const SkImageInfo&, void*, size_t, int srcX, int srcY, CachingHint) const override;
+    bool onReadPixels(const SkImageInfo&, void*, size_t, int srcX, int srcY,
+                      CachingHint) const override;
+#if SK_SUPPORT_GPU
+    sk_sp<GrTextureProxy> asTextureProxyRef(GrContext*, const GrSamplerParams&,
+                                            SkColorSpace*, sk_sp<SkColorSpace>*,
+                                            SkScalar scaleAdjust[2]) const override;
+#endif
     SkImageCacherator* peekCacherator() const override { return &fCache; }
     SkData* onRefEncoded(GrContext*) const override;
     sk_sp<SkImage> onMakeSubset(const SkIRect&) const override;
@@ -74,8 +80,24 @@ SkData* SkImage_Generator::onRefEncoded(GrContext* ctx) const {
 
 bool SkImage_Generator::getROPixels(SkBitmap* bitmap, SkColorSpace* dstColorSpace,
                                     CachingHint chint) const {
-    return fCache.lockAsBitmap(bitmap, this, dstColorSpace, chint);
+    return fCache.lockAsBitmap(nullptr, bitmap, this, dstColorSpace, chint);
 }
+
+#if SK_SUPPORT_GPU
+sk_sp<GrTextureProxy> SkImage_Generator::asTextureProxyRef(GrContext* context,
+                                                           const GrSamplerParams& params,
+                                                           SkColorSpace* dstColorSpace,
+                                                           sk_sp<SkColorSpace>* texColorSpace,
+                                                           SkScalar scaleAdjust[2]) const {
+    sk_sp<GrTexture> tex(fCache.lockAsTexture(context, params, dstColorSpace,
+                                              texColorSpace, this, scaleAdjust));
+    if (!tex) {
+        return nullptr;
+    }
+
+    return GrSurfaceProxy::MakeWrapped(std::move(tex));
+}
+#endif
 
 GrTexture* SkImage_Generator::asTextureRef(GrContext* ctx, const GrSamplerParams& params,
                                            SkColorSpace* dstColorSpace,

@@ -16,6 +16,7 @@
 #include "GrClipStackClip.h"
 #include "GrReducedClip.h"
 #include "GrResourceCache.h"
+#include "GrTextureProxy.h"
 typedef GrReducedClip::ElementList ElementList;
 typedef GrReducedClip::InitialState InitialState;
 #endif
@@ -1413,7 +1414,7 @@ DEF_TEST(ClipStack, reporter) {
 //////////////////////////////////////////////////////////////////////////////
 
 #if SK_SUPPORT_GPU
-sk_sp<GrTexture> GrClipStackClip::testingOnly_createClipMask(GrContext* context) const {
+sk_sp<GrTextureProxy> GrClipStackClip::testingOnly_createClipMask(GrContext* context) const {
     const GrReducedClip reducedClip(*fStack, SkRect::MakeWH(512, 512), 0);
     return this->createSoftwareClipMask(context, reducedClip);
 }
@@ -1440,8 +1441,9 @@ DEF_GPUTEST_FOR_ALL_CONTEXTS(ClipMaskCache, reporter, ctxInfo) {
         m.setTranslate(0.5, 0.5);
         stack.save();
         stack.clipPath(path, m, SkClipOp::kIntersect, true);
-        auto mask = GrClipStackClip(&stack).testingOnly_createClipMask(context);
-        REPORTER_ASSERT(reporter, 0 == strcmp(mask->getUniqueKey().tag(), kTag));
+        sk_sp<GrTextureProxy> mask = GrClipStackClip(&stack).testingOnly_createClipMask(context);
+        GrTexture* tex = mask->instantiate(context->resourceProvider());
+        REPORTER_ASSERT(reporter, 0 == strcmp(tex->getUniqueKey().tag(), kTag));
         // Make sure mask isn't pinned in cache.
         mask.reset(nullptr);
         context->flush();

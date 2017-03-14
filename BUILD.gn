@@ -9,6 +9,7 @@ import("gn/shared_sources.gni")
 if (!defined(is_skia_standalone)) {
   is_skia_standalone = false
 }
+is_skia_dev_build = is_skia_standalone && !is_official_build
 
 declare_args() {
   skia_use_angle = false
@@ -29,11 +30,11 @@ declare_args() {
   skia_enable_android_framework_defines = false
   skia_enable_discrete_gpu = true
   skia_enable_effects = true
-  skia_enable_jumper = is_skia_standalone
+  skia_enable_jumper = is_skia_dev_build
   skia_enable_gpu = true
   skia_enable_pdf = true
-  skia_enable_tools = is_skia_standalone
-  skia_enable_vulkan_debug_layers = is_skia_standalone && is_debug
+  skia_enable_tools = is_skia_dev_build
+  skia_enable_vulkan_debug_layers = is_skia_dev_build && is_debug
   skia_vulkan_sdk = getenv("VULKAN_SDK")
 }
 declare_args() {
@@ -99,7 +100,6 @@ config("skia_private") {
     "src/effects",
     "src/effects/gradients",
     "src/fonts",
-    "src/gpu",
     "src/image",
     "src/images",
     "src/lazy",
@@ -147,6 +147,9 @@ config("skia_private") {
     } else {
       libs += [ "vulkan" ]
     }
+  }
+  if (skia_enable_gpu) {
+    include_dirs += [ "src/gpu" ]
   }
   if (skia_use_angle) {
     defines += [ "SK_ANGLE" ]
@@ -333,8 +336,8 @@ optional("fontmgr_android") {
   enabled = fontmgr_android_enabled
 
   deps = [
+    ":typeface_freetype",
     "//third_party/expat",
-    "//third_party/freetype2",
   ]
   sources = [
     "src/ports/SkFontMgr_android.cpp",
@@ -347,7 +350,7 @@ optional("fontmgr_custom") {
   enabled = is_linux && skia_use_freetype && !skia_use_fontconfig
 
   deps = [
-    "//third_party/freetype2",
+    ":typeface_freetype",
   ]
   sources = [
     "src/ports/SkFontMgr_custom.cpp",
@@ -363,8 +366,8 @@ optional("fontmgr_fontconfig") {
   enabled = skia_use_freetype && skia_use_fontconfig
 
   deps = [
+    ":typeface_freetype",
     "//third_party:fontconfig",
-    "//third_party/freetype2",
   ]
   sources = [
     "src/ports/SkFontConfigInterface.cpp",
@@ -380,7 +383,7 @@ optional("fontmgr_fuchsia") {
   enabled = is_fuchsia && skia_use_freetype
 
   deps = [
-    "//third_party/freetype2",
+    ":typeface_freetype",
   ]
   sources = [
     "src/ports/SkFontMgr_custom.cpp",
@@ -407,6 +410,10 @@ optional("gpu") {
     sources += [ "src/gpu/gl/android/GrGLCreateNativeInterface_android.cpp" ]
   } else if (is_linux) {
     sources += [ "src/gpu/gl/glx/GrGLCreateNativeInterface_glx.cpp" ]
+    libs += [
+      "GL",
+      "GLU",
+    ]
   } else if (is_mac) {
     sources += [ "src/gpu/gl/mac/GrGLCreateNativeInterface_mac.cpp" ]
   } else if (is_ios) {
@@ -498,13 +505,9 @@ optional("jumper") {
   public_defines = [ "SK_JUMPER" ]
   sources = [
     "src/jumper/SkJumper.cpp",
+    "src/jumper/SkJumper_generated.cpp",
     "src/jumper/SkJumper_stages.cpp",
   ]
-  if (is_win && target_cpu == "x64") {
-    sources += [ "src/jumper/SkJumper_generated_win.S" ]
-  } else if (!is_win) {
-    sources += [ "src/jumper/SkJumper_generated.S" ]
-  }
 }
 
 optional("typeface_freetype") {
@@ -575,7 +578,6 @@ component("skia") {
     ":sse41",
     ":sse42",
     ":ssse3",
-    ":typeface_freetype",
     ":webp",
     ":xml",
   ]
@@ -662,7 +664,7 @@ component("skia") {
 
   if (is_android) {
     deps += [ "//third_party/expat" ]
-    if (is_skia_standalone && ndk != "") {
+    if (defined(ndk) && ndk != "") {
       deps += [ "//third_party/cpu-features" ]
     }
     sources += [ "src/ports/SkDebug_android.cpp" ]
@@ -674,11 +676,6 @@ component("skia") {
   }
 
   if (is_linux) {
-    libs += [
-      "GL",
-      "GLU",
-      "X11",
-    ]
     sources += [ "src/ports/SkDebug_stdio.cpp" ]
   }
 
@@ -857,6 +854,7 @@ if (skia_enable_tools) {
         libs += [ "OpenGLES.framework" ]
       } else if (is_linux) {
         sources += [ "tools/gpu/gl/glx/CreatePlatformGLTestContext_glx.cpp" ]
+        libs += [ "X11" ]
       } else if (is_mac) {
         sources += [ "tools/gpu/gl/mac/CreatePlatformGLTestContext_mac.cpp" ]
       } else if (is_win) {
@@ -1032,6 +1030,10 @@ if (skia_enable_tools) {
       sources += [
         "src/views/unix/SkOSWindow_Unix.cpp",
         "src/views/unix/keysym2ucs.c",
+      ]
+      libs += [
+        "GL",
+        "X11",
       ]
     } else if (is_mac) {
       sources += [
@@ -1301,6 +1303,7 @@ if (skia_enable_tools) {
   test_app("fuzz") {
     sources = [
       "fuzz/FilterFuzz.cpp",
+      "fuzz/FuzzCanvas.cpp",
       "fuzz/FuzzDrawFunctions.cpp",
       "fuzz/FuzzGradients.cpp",
       "fuzz/FuzzParsePath.cpp",
@@ -1443,7 +1446,7 @@ if (skia_enable_tools) {
     }
   }
 
-  if (is_android && is_skia_standalone && ndk != "") {
+  if (is_android && defined(ndk) && ndk != "") {
     copy("gdbserver") {
       sources = [
         "$ndk/$ndk_gdbserver",
@@ -1451,17 +1454,6 @@ if (skia_enable_tools) {
       outputs = [
         "$root_out_dir/gdbserver",
       ]
-    }
-    if (ndk_simpleperf != "") {
-      copy("simpleperf") {
-        sources = [
-          "$ndk/$ndk_simpleperf",
-          "$ndk/simpleperf/simpleperf_report.py",
-        ]
-        outputs = [
-          "$root_out_dir/{{source_file_part}}",
-        ]
-      }
     }
   }
 

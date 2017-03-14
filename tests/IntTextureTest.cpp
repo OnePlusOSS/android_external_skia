@@ -8,8 +8,10 @@
 #include "Test.h"
 
 #if SK_SUPPORT_GPU
+#include "GrClip.h"
 #include "GrContext.h"
 #include "GrRenderTargetContext.h"
+#include "GrResourceProvider.h"
 #include "GrTexture.h"
 #include "effects/GrSimpleTextureEffect.h"
 
@@ -62,24 +64,24 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(IntTexture, reporter, ctxInfo) {
         levels[1].fPixels = testData.get();
         levels[1].fRowBytes = (kS / 2) * sizeof(int32_t);
 
-        sk_sp<GrTexture> temp(context->textureProvider()->createMipMappedTexture(desc,
-                                                                                 SkBudgeted::kYes,
-                                                                                 levels, 2));
+        sk_sp<GrTexture> temp(context->resourceProvider()->createMipMappedTexture(desc,
+                                                                                  SkBudgeted::kYes,
+                                                                                  levels, 2));
         REPORTER_ASSERT(reporter, !temp);
     }
 
     // Test that we can create an integer texture.
-    sk_sp<GrSurfaceProxy> proxy = GrSurfaceProxy::MakeDeferred(*context->caps(),
-                                                                context->textureProvider(),
-                                                                desc, SkBudgeted::kYes,
-                                                                testData.get(),
-                                                                kRowBytes);
+    sk_sp<GrTextureProxy> proxy = GrSurfaceProxy::MakeDeferred(*context->caps(),
+                                                               context->resourceProvider(),
+                                                               desc, SkBudgeted::kYes,
+                                                               testData.get(),
+                                                               kRowBytes);
     REPORTER_ASSERT(reporter, proxy);
-    if (!proxy || !proxy->asTextureProxy()) {
+    if (!proxy) {
         return;
     }
 
-    GrTexture* texture = proxy->asTextureProxy()->instantiate(context->textureProvider());
+    GrTexture* texture = proxy->instantiate(context->resourceProvider());
     REPORTER_ASSERT(reporter, texture);
     if (!texture) {
         return;
@@ -125,7 +127,7 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(IntTexture, reporter, ctxInfo) {
         }
 
         GrSurface* copySurface = dstContext->asTextureProxy()->instantiate(
-                                                                    context->textureProvider());
+                                                                    context->resourceProvider());
         REPORTER_ASSERT(reporter, copySurface);
         if (!copySurface) {
             return;
@@ -255,8 +257,8 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(IntTexture, reporter, ctxInfo) {
         // No rendering to integer textures.
         GrSurfaceDesc intRTDesc = desc;
         intRTDesc.fFlags = kRenderTarget_GrSurfaceFlag;
-        sk_sp<GrTexture> temp(context->textureProvider()->createTexture(intRTDesc,
-                                                                        SkBudgeted::kYes));
+        sk_sp<GrTexture> temp(context->resourceProvider()->createTexture(intRTDesc,
+                                                                         SkBudgeted::kYes));
         REPORTER_ASSERT(reporter, !temp);
     }
 }

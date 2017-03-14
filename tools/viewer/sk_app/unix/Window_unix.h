@@ -24,16 +24,17 @@ public:
                   , fDisplay(nullptr)
                   , fWindow(0)
                   , fGC(nullptr)
+                  , fFBConfig(nullptr)
                   , fVisualInfo(nullptr)
                   , fMSAASampleCount(0) {}
     ~Window_unix() override { this->closeWindow(); }
 
-    bool initWindow(Display* display, const DisplayParams* params);
+    bool initWindow(Display* display);
 
     void setTitle(const char*) override;
     void show() override;
 
-    bool attach(BackendType attachType, const DisplayParams& params) override;
+    bool attach(BackendType) override;
 
     void onInval() override;
 
@@ -58,7 +59,7 @@ public:
     }
 
     void markPendingResize(int width, int height) {
-        if (width != fWidth || height != fHeight){
+        if (width != this->width() || height != this->height()){
             fPendingResize = true;
             fPendingWidth = width;
             fPendingHeight = height;
@@ -77,6 +78,7 @@ private:
     Display*     fDisplay;
     XWindow      fWindow;
     GC           fGC;
+    GLXFBConfig* fFBConfig;
     XVisualInfo* fVisualInfo;
     int          fMSAASampleCount;
 

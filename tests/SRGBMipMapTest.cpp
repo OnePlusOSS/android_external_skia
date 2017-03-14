@@ -8,11 +8,13 @@
 #include "Test.h"
 #if SK_SUPPORT_GPU
 #include "GrCaps.h"
+#include "GrClip.h"
 #include "GrContext.h"
 #include "GrRenderTargetContext.h"
-#include "gl/GrGLGpu.h"
+#include "GrResourceProvider.h"
 #include "SkCanvas.h"
 #include "SkSurface.h"
+#include "gl/GrGLGpu.h"
 
 // using anonymous namespace because these functions are used as template params.
 namespace {
@@ -117,8 +119,10 @@ DEF_GPUTEST_FOR_GL_RENDERING_CONTEXTS(SRGBMipMaps, reporter, ctxInfo) {
     desc.fWidth = texS;
     desc.fHeight = texS;
 
-    GrTextureProvider* texProvider = context->textureProvider();
-    sk_sp<GrTexture> texture(texProvider->createTexture(desc, SkBudgeted::kNo, texData, 0));
+    GrResourceProvider* resourceProvider = context->resourceProvider();
+    sk_sp<GrTextureProxy> proxy = GrSurfaceProxy::MakeDeferred(*context->caps(), resourceProvider,
+                                                               desc, SkBudgeted::kNo,
+                                                               texData, 0);
 
     // Create two render target contexts (L32 and S32)
     sk_sp<SkColorSpace> srgbColorSpace = SkColorSpace::MakeSRGB();
@@ -132,7 +136,8 @@ DEF_GPUTEST_FOR_GL_RENDERING_CONTEXTS(SRGBMipMaps, reporter, ctxInfo) {
     GrPaint paint;
     paint.setPorterDuffXPFactory(SkBlendMode::kSrc);
     GrSamplerParams mipMapParams(SkShader::kRepeat_TileMode, GrSamplerParams::kMipMap_FilterMode);
-    paint.addColorTextureProcessor(texture.get(), nullptr, SkMatrix::MakeScale(rtS), mipMapParams);
+    paint.addColorTextureProcessor(context, std::move(proxy),
+                                   nullptr, SkMatrix::MakeScale(rtS), mipMapParams);
 
     // 1) Draw texture to S32 surface (should generate/use sRGB mips)
     paint.setGammaCorrect(true);

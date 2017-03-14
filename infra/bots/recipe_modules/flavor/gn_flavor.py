@@ -80,11 +80,10 @@ class GNFlavorUtils(default_flavor.DefaultFlavorUtils):
     if extra_config == 'Mini':
       args.update({
         'is_component_build':     'true',   # Proves we can link a coherent .so.
-        'is_official_build':      'true',   # No debug symbols.
+        'is_official_build':      'true',   # No debug symbols, no tools.
         'skia_enable_effects':    'false',
         'skia_enable_gpu':        'false',
         'skia_enable_pdf':        'false',
-        'skia_enable_tools':      'false',  # Some tools need GPU or effects.
         'skia_use_expat':         'false',
         'skia_use_libjpeg_turbo': 'false',
         'skia_use_libpng':        'false',
@@ -161,7 +160,7 @@ class GNFlavorUtils(default_flavor.DefaultFlavorUtils):
       env['LD_LIBRARY_PATH'] = clang_linux + '/msan'
 
     to_symbolize = ['dm', 'nanobench']
-    if name in to_symbolize and 'Ubuntu16' == self.m.vars.builder_cfg['os']:
+    if name in to_symbolize and 'Ubuntu' in self.m.vars.builder_cfg['os']:
       # Convert path objects or placeholders into strings such that they can
       # be passed to symbolize_stack_trace.py
       args = [self.m.vars.slave_dir] + [str(x) for x in cmd]

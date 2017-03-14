@@ -15,6 +15,7 @@
 #include "SkSpecialSurface.h"
 #include "SkWriteBuffer.h"
 #if SK_SUPPORT_GPU
+#include "GrClip.h"
 #include "GrContext.h"
 #include "GrRenderTargetContext.h"
 #include "GrTextureProxy.h"
@@ -23,7 +24,6 @@
 #include "effects/GrTextureDomain.h"
 #include "effects/GrSimpleTextureEffect.h"
 #include "SkGr.h"
-#include "SkGrPriv.h"
 #endif
 #include "SkClipOpPriv.h"
 

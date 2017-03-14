@@ -58,7 +58,6 @@ enum {
 
 enum {
     kNone_OptFlags                    = GrXferProcessor::kNone_OptFlags,
-    kSkipDraw_OptFlag                 = GrXferProcessor::kSkipDraw_OptFlag,
     kIgnoreColor_OptFlag              = GrXferProcessor::kIgnoreColor_OptFlag,
     kCanTweakAlphaForCoverage_OptFlag = GrXferProcessor::kCanTweakAlphaForCoverage_OptFlag
 };
@@ -72,8 +71,7 @@ public:
             fReadsDst = GrXPFactory::WillReadDst(xpf, analysis);
             sk_sp<GrXferProcessor> xp(xpf->createXferProcessor(analysis, false, nullptr, caps));
             TEST_ASSERT(!GrXPFactory::WillNeedDstTexture(xpf, caps, analysis));
-            GrColor ignoredOverrideColor;
-            fOptFlags = xp->getOptimizations(analysis, false, &ignoredOverrideColor, caps);
+            fOptFlags = xp->getOptimizations(analysis);
             GetXPOutputTypes(xp.get(), &fPrimaryOutputType, &fSecondaryOutputType);
             xp->getBlendInfo(&fBlendInfo);
             TEST_ASSERT(!xp->willReadDstColor());
@@ -127,8 +125,7 @@ static void test_lcd_coverage(skiatest::Reporter* reporter, const GrCaps& caps) 
                 break;
             case SkBlendMode::kDst:
                 TEST_ASSERT(xpi.fReadsDst);
-                TEST_ASSERT((kSkipDraw_OptFlag |
-                             kIgnoreColor_OptFlag |
+                TEST_ASSERT((kIgnoreColor_OptFlag |
                              kCanTweakAlphaForCoverage_OptFlag) == xpi.fOptFlags);
                 TEST_ASSERT(kNone_OutputType == xpi.fPrimaryOutputType);
                 TEST_ASSERT(kNone_OutputType == xpi.fSecondaryOutputType);
@@ -297,8 +294,7 @@ static void test_color_unknown_with_coverage(skiatest::Reporter* reporter, const
                 break;
             case SkBlendMode::kDst:
                 TEST_ASSERT(xpi.fReadsDst);
-                TEST_ASSERT((kSkipDraw_OptFlag |
-                             kIgnoreColor_OptFlag |
+                TEST_ASSERT((kIgnoreColor_OptFlag |
                              kCanTweakAlphaForCoverage_OptFlag) == xpi.fOptFlags);
                 TEST_ASSERT(kNone_OutputType == xpi.fPrimaryOutputType);
                 TEST_ASSERT(kNone_OutputType == xpi.fSecondaryOutputType);
@@ -468,8 +464,7 @@ static void test_color_unknown_no_coverage(skiatest::Reporter* reporter, const G
                 break;
             case SkBlendMode::kDst:
                 TEST_ASSERT(xpi.fReadsDst);
-                TEST_ASSERT((kSkipDraw_OptFlag |
-                             kIgnoreColor_OptFlag |
+                TEST_ASSERT((kIgnoreColor_OptFlag |
                              kCanTweakAlphaForCoverage_OptFlag) == xpi.fOptFlags);
                 TEST_ASSERT(kNone_OutputType == xpi.fPrimaryOutputType);
                 TEST_ASSERT(kNone_OutputType == xpi.fSecondaryOutputType);
@@ -640,8 +635,7 @@ static void test_color_opaque_with_coverage(skiatest::Reporter* reporter, const 
                 break;
             case SkBlendMode::kDst:
                 TEST_ASSERT(xpi.fReadsDst);
-                TEST_ASSERT((kSkipDraw_OptFlag |
-                             kIgnoreColor_OptFlag |
+                TEST_ASSERT((kIgnoreColor_OptFlag |
                              kCanTweakAlphaForCoverage_OptFlag) == xpi.fOptFlags);
                 TEST_ASSERT(kNone_OutputType == xpi.fPrimaryOutputType);
                 TEST_ASSERT(kNone_OutputType == xpi.fSecondaryOutputType);
@@ -682,8 +676,7 @@ static void test_color_opaque_with_coverage(skiatest::Reporter* reporter, const 
                 break;
             case SkBlendMode::kDstIn:
                 TEST_ASSERT(xpi.fReadsDst);
-                TEST_ASSERT((kSkipDraw_OptFlag |
-                             kIgnoreColor_OptFlag |
+                TEST_ASSERT((kIgnoreColor_OptFlag |
                              kCanTweakAlphaForCoverage_OptFlag) == xpi.fOptFlags);
                 TEST_ASSERT(kNone_OutputType == xpi.fPrimaryOutputType);
                 TEST_ASSERT(kNone_OutputType == xpi.fSecondaryOutputType);
@@ -814,8 +807,7 @@ static void test_color_opaque_no_coverage(skiatest::Reporter* reporter, const Gr
                 break;
             case SkBlendMode::kDst:
                 TEST_ASSERT(xpi.fReadsDst);
-                TEST_ASSERT((kSkipDraw_OptFlag |
-                             kIgnoreColor_OptFlag |
+                TEST_ASSERT((kIgnoreColor_OptFlag |
                              kCanTweakAlphaForCoverage_OptFlag) == xpi.fOptFlags);
                 TEST_ASSERT(kNone_OutputType == xpi.fPrimaryOutputType);
                 TEST_ASSERT(kNone_OutputType == xpi.fSecondaryOutputType);
@@ -856,8 +848,7 @@ static void test_color_opaque_no_coverage(skiatest::Reporter* reporter, const Gr
                 break;
             case SkBlendMode::kDstIn:
                 TEST_ASSERT(xpi.fReadsDst);
-                TEST_ASSERT((kSkipDraw_OptFlag |
-                             kIgnoreColor_OptFlag |
+                TEST_ASSERT((kIgnoreColor_OptFlag |
                              kCanTweakAlphaForCoverage_OptFlag) == xpi.fOptFlags);
                 TEST_ASSERT(kNone_OutputType == xpi.fPrimaryOutputType);
                 TEST_ASSERT(kNone_OutputType == xpi.fSecondaryOutputType);
@@ -994,8 +985,7 @@ static void test_lcd_coverage_fallback_case(skiatest::Reporter* reporter, const 
 
     TEST_ASSERT(GrXPFactory::WillReadDst(xpf, analysis));
 
-    GrColor overrideColor;
-    xp->getOptimizations(analysis, false, &overrideColor, caps);
+    xp->getOptimizations(analysis);
 
     GrXferProcessor::BlendInfo blendInfo;
     xp->getBlendInfo(&blendInfo);
@@ -1026,7 +1016,7 @@ DEF_GPUTEST(PorterDuffNoDualSourceBlending, reporter, /*factory*/) {
     fakeDesc.fTextureHandle = backendTex;
     GrXferProcessor::DstTexture fakeDstTexture;
     fakeDstTexture.setTexture(
-        ctx->textureProvider()->wrapBackendTexture(fakeDesc, kBorrow_GrWrapOwnership));
+        ctx->resourceProvider()->wrapBackendTexture(fakeDesc, kBorrow_GrWrapOwnership));
 
     static const GrPipelineInput colorInputs[] = {GrPipelineInput(),
                                                   GrPipelineInput(GrPipelineInput::Opaque::kYes),
@@ -1055,8 +1045,7 @@ DEF_GPUTEST(PorterDuffNoDualSourceBlending, reporter, /*factory*/) {
                     return;
                 }
                 TEST_ASSERT(!xp->hasSecondaryOutput());
-                GrColor ignoredOverrideColor;
-                xp->getOptimizations(analysis, false, &ignoredOverrideColor, caps);
+                xp->getOptimizations(analysis);
                 TEST_ASSERT(!xp->hasSecondaryOutput());
             }
         }

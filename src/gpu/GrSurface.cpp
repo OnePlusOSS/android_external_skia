@@ -9,8 +9,9 @@
 #include "GrContext.h"
 #include "GrOpList.h"
 #include "GrSurfacePriv.h"
+#include "GrTexture.h"
 
-#include "SkGrPriv.h"
+#include "SkGr.h"
 #include "SkMathPriv.h"
 
 GrSurface::~GrSurface() {

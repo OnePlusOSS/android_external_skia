@@ -12,12 +12,15 @@
 #include "SkRandom.h"
 #include "SkResourceCache.h"
 #include "SkShadowTessellator.h"
+#include "SkString.h"
 #include "SkTLazy.h"
 #include "SkVertices.h"
 #if SK_SUPPORT_GPU
 #include "GrShape.h"
 #include "effects/GrBlurredEdgeFragmentProcessor.h"
 #endif
+#include "../../src/effects/shadows/SkAmbientShadowMaskFilter.h"
+#include "../../src/effects/shadows/SkSpotShadowMaskFilter.h"
 
 /**
 *  Gaussian color filter -- produces a Gaussian ramp based on the color's B value,
@@ -375,7 +378,8 @@ static void* kNamespace;
  * they are first found in SkResourceCache.
  */
 template <typename FACTORY>
-void draw_shadow(const FACTORY& factory, SkCanvas* canvas, ShadowedPath& path, SkColor color) {
+void draw_shadow(const FACTORY& factory, SkCanvas* canvas, ShadowedPath& path, SkColor color,
+                 SkResourceCache* cache) {
     FindContext<FACTORY> context(&path.viewMatrix(), &factory);
 
     SkResourceCache::Key* key = nullptr;
@@ -386,7 +390,11 @@ void draw_shadow(const FACTORY& factory, SkCanvas* canvas, ShadowedPath& path, S
         key = new (keyStorage.begin()) SkResourceCache::Key();
         path.writeKey((uint32_t*)(keyStorage.begin() + sizeof(*key)));
         key->init(&kNamespace, resource_cache_shared_id(), keyDataBytes);
-        SkResourceCache::Find(*key, FindVisitor<FACTORY>, &context);
+        if (cache) {
+            cache->find(*key, FindVisitor<FACTORY>, &context);
+        } else {
+            SkResourceCache::Find(*key, FindVisitor<FACTORY>, &context);
+        }
     }
 
     sk_sp<SkVertices> vertices;
@@ -410,7 +418,12 @@ void draw_shadow(const FACTORY& factory, SkCanvas* canvas, ShadowedPath& path, S
             if (!vertices) {
                 return;
             }
-            SkResourceCache::Add(new CachedTessellationsRec(*key, std::move(tessellations)));
+            auto rec = new CachedTessellationsRec(*key, std::move(tessellations));
+            if (cache) {
+                cache->add(rec);
+            } else {
+                SkResourceCache::Add(rec);
+            }
         } else {
             vertices = factory.makeVertices(path.path(), path.viewMatrix());
             if (!vertices) {
@@ -444,9 +457,29 @@ static const float kGeomFactor = 64.0f;
 void SkShadowUtils::DrawShadow(SkCanvas* canvas, const SkPath& path, SkScalar occluderHeight,
                                const SkPoint3& devLightPos, SkScalar lightRadius,
                                SkScalar ambientAlpha, SkScalar spotAlpha, SkColor color,
-                               uint32_t flags) {
+                               uint32_t flags, SkResourceCache* cache) {
     SkAutoCanvasRestore acr(canvas, true);
     SkMatrix viewMatrix = canvas->getTotalMatrix();
+
+    // try circular fast path
+    SkRect rect;
+    if (viewMatrix.isSimilarity() &&
+        path.isOval(&rect) && rect.width() == rect.height()) {
+        SkPaint newPaint;
+        newPaint.setColor(color);
+        if (ambientAlpha > 0) {
+            newPaint.setMaskFilter(SkAmbientShadowMaskFilter::Make(occluderHeight, ambientAlpha,
+                                                                   flags));
+            canvas->drawPath(path, newPaint);
+        }
+        if (spotAlpha > 0) {
+            newPaint.setMaskFilter(SkSpotShadowMaskFilter::Make(occluderHeight, devLightPos,
+                                                                lightRadius, spotAlpha, flags));
+            canvas->drawPath(path, newPaint);
+        }
+        return;
+    }
+
     canvas->resetMatrix();
 
     ShadowedPath shadowedPath(&path, &viewMatrix);
@@ -467,7 +500,7 @@ void SkShadowUtils::DrawShadow(SkCanvas* canvas, const SkPath& path, SkScalar oc
         factory.fPenumbraColor = SkColorSetARGB(255, 0, ambientAlpha * 255.9999f, 0);
         factory.fTransparent = transparent;
 
-        draw_shadow(factory, canvas, shadowedPath, color);
+        draw_shadow(factory, canvas, shadowedPath, color, cache);
     }
 
     if (spotAlpha > 0) {
@@ -523,8 +556,6 @@ void SkShadowUtils::DrawShadow(SkCanvas* canvas, const SkPath& path, SkScalar oc
         if (factory.fOccluderType == SpotVerticesFactory::OccluderType::kOpaque) {
             factory.fOccluderType = SpotVerticesFactory::OccluderType::kTransparent;
         }
-        draw_shadow(factory, canvas, shadowedPath, color);
+        draw_shadow(factory, canvas, shadowedPath, color, cache);
     }
 }
-
-void SkShadowUtils::ClearCache() { SkResourceCache::PostPurgeSharedID(resource_cache_shared_id()); }

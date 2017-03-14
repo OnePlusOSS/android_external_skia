@@ -8,23 +8,22 @@
 #ifndef SkImage_Gpu_DEFINED
 #define SkImage_Gpu_DEFINED
 
-#include "SkAtomics.h"
-#include "GrTexture.h"
+#include "GrClip.h"
 #include "GrGpuResourcePriv.h"
+#include "GrSurfaceProxyPriv.h"
+#include "GrTexture.h"
+#include "SkAtomics.h"
 #include "SkBitmap.h"
 #include "SkGr.h"
-#include "SkImage_Base.h"
 #include "SkImagePriv.h"
+#include "SkImage_Base.h"
 #include "SkSurface.h"
 
 class SkImage_Gpu : public SkImage_Base {
 public:
-    /**
-     *  An "image" can be a subset/window into a larger texture, so we explicit take the
-     *  width and height.
-     */
-    SkImage_Gpu(int w, int h, uint32_t uniqueID, SkAlphaType, sk_sp<GrTexture>, sk_sp<SkColorSpace>,
-                SkBudgeted);
+    SkImage_Gpu(uint32_t uniqueID, SkAlphaType, sk_sp<GrTexture>, sk_sp<SkColorSpace>, SkBudgeted);
+    SkImage_Gpu(GrContext*, uint32_t uniqueID, SkAlphaType, sk_sp<GrTextureProxy>,
+                sk_sp<SkColorSpace>, SkBudgeted);
     ~SkImage_Gpu() override;
 
     SkImageInfo onImageInfo() const override;
@@ -32,31 +31,43 @@ public:
 
     void applyBudgetDecision() const {
         if (SkBudgeted::kYes == fBudgeted) {
-            fTexture->resourcePriv().makeBudgeted();
+            fProxy->priv().makeBudgeted();
         } else {
-            fTexture->resourcePriv().makeUnbudgeted();
+            fProxy->priv().makeUnbudgeted();
         }
     }
 
     bool getROPixels(SkBitmap*, SkColorSpace* dstColorSpace, CachingHint) const override;
-    GrTexture* asTextureRef(GrContext* ctx, const GrSamplerParams& params, SkColorSpace*,
+    GrTexture* asTextureRef(GrContext*, const GrSamplerParams&, SkColorSpace*,
                             sk_sp<SkColorSpace>*, SkScalar scaleAdjust[2]) const override;
     sk_sp<SkImage> onMakeSubset(const SkIRect&) const override;
 
-    GrTexture* peekTexture() const override { return fTexture.get(); }
-    sk_sp<GrTextureProxy> asTextureProxyRef() const override;
+    GrTexture* peekTexture() const override {
+        return fProxy->instantiate(fContext->resourceProvider());
+    }
+    sk_sp<GrTextureProxy> asTextureProxyRef() const override {
+        return fProxy;
+    }
+    sk_sp<GrTextureProxy> asTextureProxyRef(GrContext*, const GrSamplerParams&, SkColorSpace*,
+                                            sk_sp<SkColorSpace>*,
+                                            SkScalar scaleAdjust[2]) const override;
     sk_sp<GrTexture> refPinnedTexture(uint32_t* uniqueID) const override {
         *uniqueID = this->uniqueID();
-        return fTexture;
+        return sk_ref_sp(this->peekTexture());
     }
+
+    bool onReadYUV8Planes(const SkISize sizes[3], void* const planes[3],
+                          const size_t rowBytes[3], SkYUVColorSpace colorSpace) const override;
+
     bool onReadPixels(const SkImageInfo&, void* dstPixels, size_t dstRowBytes,
                       int srcX, int srcY, CachingHint) const override;
 
-    GrContext* context() { return fTexture->getContext(); }
+    GrContext* context() { return fContext; }
     sk_sp<SkColorSpace> refColorSpace() { return fColorSpace; }
 
 private:
-    sk_sp<GrTexture>       fTexture;
+    GrContext*             fContext;
+    sk_sp<GrTextureProxy>  fProxy;
     const SkAlphaType      fAlphaType;
     const SkBudgeted       fBudgeted;
     sk_sp<SkColorSpace>    fColorSpace;

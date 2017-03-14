@@ -9,8 +9,9 @@
 
 #include "GrContext.h"
 #include "GrGpuResourcePriv.h"
+#include "GrResourceProvider.h"
 #include "SkBitmap.h"
-#include "SkGrPriv.h"
+#include "SkGr.h"
 #include "SkPixelRef.h"
 
 static bool bmp_is_alpha_only(const SkBitmap& bm) { return kAlpha_8_SkColorType == bm.colorType(); }
@@ -31,7 +32,7 @@ GrTexture* GrBitmapTextureMaker::refOriginalTexture(bool willBeMipped,
     GrTexture* tex = nullptr;
 
     if (fOriginalKey.isValid()) {
-        tex = this->context()->textureProvider()->findAndRefTextureByUniqueKey(fOriginalKey);
+        tex = this->context()->resourceProvider()->findAndRefTextureByUniqueKey(fOriginalKey);
         if (tex) {
             return tex;
         }
@@ -43,7 +44,7 @@ GrTexture* GrBitmapTextureMaker::refOriginalTexture(bool willBeMipped,
         tex = GrUploadBitmapToTexture(this->context(), fBitmap);
     }
     if (tex && fOriginalKey.isValid()) {
-        tex->resourcePriv().setUniqueKey(fOriginalKey);
+        this->context()->resourceProvider()->assignUniqueKeyToTexture(fOriginalKey, tex);
         GrInstallBitmapUniqueKeyInvalidator(fOriginalKey, fBitmap.pixelRef());
     }
     return tex;
@@ -67,5 +68,5 @@ SkAlphaType GrBitmapTextureMaker::alphaType() const {
 
 sk_sp<SkColorSpace> GrBitmapTextureMaker::getColorSpace(SkColorSpace* dstColorSpace) {
     // Color space doesn't depend on destination color space - it's just whatever is in the bitmap
-    return sk_ref_sp(fBitmap.colorSpace());
+    return fBitmap.refColorSpace();
 }

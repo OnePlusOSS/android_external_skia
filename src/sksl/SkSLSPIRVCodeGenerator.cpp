@@ -2540,6 +2540,9 @@ SpvId SPIRVCodeGenerator::writeInterfaceBlock(const InterfaceBlock& intf) {
     this->writeInstruction(SpvOpVariable, ptrType, result, storageClass, fConstantBuffer);
     this->writeLayout(intf.fVariable.fModifiers.fLayout, result);
     fVariableMap[&intf.fVariable] = result;
+    if (fProgram.fInputs.fRTHeight) {
+        delete type;
+    }
     return result;
 }
 
@@ -2817,7 +2820,7 @@ void SPIRVCodeGenerator::writeReturnStatement(const ReturnStatement& r, SkWStrea
 void SPIRVCodeGenerator::writeInstructions(const Program& program, SkWStream& out) {
     fGLSLExtendedInstructions = this->nextId();
     SkDynamicMemoryWStream body;
-    std::vector<SpvId> interfaceVars;
+    std::set<SpvId> interfaceVars;
     // assign IDs to functions
     for (size_t i = 0; i < program.fElements.size(); i++) {
         if (program.fElements[i]->fKind == ProgramElement::kFunction_Kind) {
@@ -2831,7 +2834,7 @@ void SPIRVCodeGenerator::writeInstructions(const Program& program, SkWStream& ou
             SpvId id = this->writeInterfaceBlock(intf);
             if ((intf.fVariable.fModifiers.fFlags & Modifiers::kIn_Flag) ||
                 (intf.fVariable.fModifiers.fFlags & Modifiers::kOut_Flag)) {
-                interfaceVars.push_back(id);
+                interfaceVars.insert(id);
             }
         }
     }
@@ -2858,7 +2861,7 @@ void SPIRVCodeGenerator::writeInstructions(const Program& program, SkWStream& ou
         if (var->fStorage == Variable::kGlobal_Storage &&
                 ((var->fModifiers.fFlags & Modifiers::kIn_Flag) ||
                  (var->fModifiers.fFlags & Modifiers::kOut_Flag))) {
-            interfaceVars.push_back(entry.second);
+            interfaceVars.insert(entry.second);
         }
     }
     this->writeCapabilities(out);
