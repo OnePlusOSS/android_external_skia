@@ -49,7 +49,9 @@ public:
      */
     GrTexture* createMipMappedTexture(const GrSurfaceDesc& desc, SkBudgeted budgeted,
                                       const GrMipLevel* texels, int mipLevelCount,
-                                      uint32_t flags = 0);
+                                      uint32_t flags = 0,
+                                      SkDestinationSurfaceColorMode mipColorMode =
+                                                        SkDestinationSurfaceColorMode::kLegacy);
 
     /**
      * This function is a shim which creates a SkTArray<GrMipLevel> of size 1.
@@ -77,6 +79,10 @@ public:
 
     /** Finds a texture by unique key. If the texture is found it is ref'ed and returned. */
     GrTexture* findAndRefTextureByUniqueKey(const GrUniqueKey& key);
+
+    void assignUniqueKeyToProxy(const GrUniqueKey& key, GrTextureProxy*);
+
+    sk_sp<GrTextureProxy> findProxyByUniqueKey(const GrUniqueKey& key);
 
     /**
      * Finds a texture that approximately matches the descriptor. Will be at least as large in width
@@ -239,9 +245,15 @@ public:
     void releaseOwnershipOfSemaphore(sk_sp<GrSemaphore>);
 
     void abandon() {
-        fCache = NULL;
-        fGpu = NULL;
+        fCache = nullptr;
+        fGpu = nullptr;
     }
+
+    // 'Proxy' is about to be used as a texture src. This query can be used to determine if
+    // it is going to need a texture domain.
+    static bool IsFunctionallyExact(GrTextureProxy* proxy);
+
+    const GrCaps* caps() const { return fCaps.get(); }
 
 private:
     GrTexture* internalCreateApproxTexture(const GrSurfaceDesc& desc, uint32_t scratchTextureFlags);
@@ -267,9 +279,10 @@ private:
 
     const GrBuffer* createQuadIndexBuffer();
 
-    GrResourceCache* fCache;
-    GrGpu* fGpu;
-    GrUniqueKey fQuadIndexBufferKey;
+    GrResourceCache*    fCache;
+    GrGpu*              fGpu;
+    sk_sp<const GrCaps> fCaps;
+    GrUniqueKey         fQuadIndexBufferKey;
 
     // In debug builds we guard against improper thread handling
     SkDEBUGCODE(mutable GrSingleOwner* fSingleOwner;)

@@ -15,8 +15,17 @@
 #include "GrXferProcessor.h"
 #include "SkSpinlock.h"
 
-#if SK_ALLOW_STATIC_GLOBAL_INITIALIZERS
 #if GR_TEST_UTILS
+
+GrResourceProvider* GrProcessorTestData::resourceProvider() {
+    return fContext->resourceProvider();
+}
+
+const GrCaps* GrProcessorTestData::caps() {
+    return fContext->caps();
+}
+
+#if SK_ALLOW_STATIC_GLOBAL_INITIALIZERS
 class GrFragmentProcessor;
 class GrGeometryProcessor;
 
@@ -48,7 +57,7 @@ SkTArray<GrXPFactoryTestFactory*, true>* GrXPFactoryTestFactory::GetFactories() 
  * we verify the count is as expected.  If a new factory is added, then these numbers must be
  * manually adjusted.
  */
-static const int kFPFactoryCount = 40;
+static const int kFPFactoryCount = 41;
 static const int kGPFactoryCount = 14;
 static const int kXPFactoryCount = 4;
 

@@ -75,6 +75,8 @@ class GNFlavorUtils(default_flavor.DefaultFlavorUtils):
       args['skia_use_gdi'] = 'true'
     if extra_config == 'MSAN':
       args['skia_use_fontconfig'] = 'false'
+    if extra_config == 'ASAN':
+      args['skia_enable_spirv_validation'] = 'false'
     if extra_config == 'Mesa':
       args['skia_use_mesa'] = 'true'
     if extra_config == 'Mini':
@@ -95,6 +97,7 @@ class GNFlavorUtils(default_flavor.DefaultFlavorUtils):
     if extra_config == 'Shared':
       args['is_component_build'] = 'true'
     if extra_config == 'Vulkan':
+      args['skia_enable_vulkan_debug_layers'] = 'false'
       if os == 'Ubuntu':
         args['skia_vulkan_sdk'] = '"%s"' % linux_vulkan_sdk
       if 'Win' in os:

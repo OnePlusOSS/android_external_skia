@@ -712,9 +712,9 @@ void GrRenderTargetContextPriv::stencilPath(const GrClip& clip,
     SkRect bounds = SkRect::MakeIWH(fRenderTargetContext->width(), fRenderTargetContext->height());
 
     // Setup clip
-    GrAppliedClip appliedClip(bounds);
+    GrAppliedClip appliedClip;
     if (!clip.apply(fRenderTargetContext->fContext, fRenderTargetContext, useHWAA, true,
-                    &appliedClip)) {
+                    &appliedClip, &bounds)) {
         return;
     }
 
@@ -741,7 +741,7 @@ void GrRenderTargetContextPriv::stencilPath(const GrClip& clip,
                                                      appliedClip.scissorState(),
                                                      fRenderTargetContext->accessRenderTarget(),
                                                      path);
-    op->setClippedBounds(appliedClip.clippedDrawBounds());
+    op->setClippedBounds(bounds);
     fRenderTargetContext->getOpList()->recordOp(std::move(op), fRenderTargetContext);
 }
 
@@ -951,8 +951,7 @@ void GrRenderTargetContext::drawVertices(const GrClip& clip,
 void GrRenderTargetContext::drawVertices(const GrClip& clip,
                                          GrPaint&& paint,
                                          const SkMatrix& viewMatrix,
-                                         sk_sp<SkVertices> vertices,
-                                         uint32_t flags) {
+                                         sk_sp<SkVertices> vertices) {
     ASSERT_SINGLE_OWNER
     RETURN_IF_ABANDONED
     SkDEBUGCODE(this->validate();)
@@ -962,7 +961,7 @@ void GrRenderTargetContext::drawVertices(const GrClip& clip,
 
     SkASSERT(vertices);
     std::unique_ptr<GrMeshDrawOp> op =
-            GrDrawVerticesOp::Make(paint.getColor(), std::move(vertices), viewMatrix, flags);
+            GrDrawVerticesOp::Make(paint.getColor(), std::move(vertices), viewMatrix);
     if (!op) {
         return;
     }
@@ -1692,9 +1691,9 @@ uint32_t GrRenderTargetContext::addDrawOp(const GrPipelineBuilder& pipelineBuild
     // Setup clip
     SkRect bounds;
     op_bounds(&bounds, op.get());
-    GrAppliedClip appliedClip(bounds);
+    GrAppliedClip appliedClip;
     if (!clip.apply(fContext, this, pipelineBuilder.isHWAntialias(),
-                    pipelineBuilder.hasUserStencilSettings(), &appliedClip)) {
+                    pipelineBuilder.hasUserStencilSettings(), &appliedClip, &bounds)) {
         return SK_InvalidUniqueID;
     }
 
@@ -1714,7 +1713,7 @@ uint32_t GrRenderTargetContext::addDrawOp(const GrPipelineBuilder& pipelineBuild
     }
 
     GrProcessorSet::FragmentProcessorAnalysis analysis;
-    op->analyzeProcessors(&analysis, pipelineBuilder.processors(), appliedClip, *this->caps());
+    op->analyzeProcessors(&analysis, pipelineBuilder.processors(), &appliedClip, *this->caps());
 
     GrPipeline::InitArgs args;
     pipelineBuilder.getPipelineInitArgs(&args);
@@ -1731,7 +1730,7 @@ uint32_t GrRenderTargetContext::addDrawOp(const GrPipelineBuilder& pipelineBuild
     }
     op->initPipeline(args);
     // TODO: We need to add pipeline dependencies on textures, etc before recording this op.
-    op->setClippedBounds(appliedClip.clippedDrawBounds());
+    op->setClippedBounds(bounds);
     return this->getOpList()->addOp(std::move(op), this);
 }
 
@@ -1753,6 +1752,8 @@ void GrRenderTargetContext::setupDstTexture(GrRenderTarget* rt, const GrClip& cl
 
     SkIRect drawIBounds;
     opBounds.roundOut(&drawIBounds);
+    // Cover up for any precision issues by outsetting the op bounds a pixel in each direction.
+    drawIBounds.outset(1, 1);
     if (!copyRect.intersect(drawIBounds)) {
 #ifdef SK_DEBUG
         GrCapsDebugf(this->caps(), "Missed an early reject. "

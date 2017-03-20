@@ -20,6 +20,7 @@
 #include "glsl/GrGLSLFragmentShaderBuilder.h"
 #include "ops/GrNonAAFillRectOp.h"
 #include "ops/GrTestMeshDrawOp.h"
+#include <random>
 
 namespace {
 class TestOp : public GrTestMeshDrawOp {
@@ -142,7 +143,7 @@ DEF_GPUTEST_FOR_ALL_CONTEXTS(ProcessorRefTest, reporter, ctxInfo) {
             bool texelBufferSupport = context->caps()->shaderCaps()->texelBufferSupport();
             bool imageLoadStoreSupport = context->caps()->shaderCaps()->imageLoadStoreSupport();
             sk_sp<GrTextureProxy> proxy1(GrSurfaceProxy::MakeDeferred(context->resourceProvider(),
-                                                                      *context->caps(), desc,
+                                                                      desc,
                                                                       SkBackingFit::kExact,
                                                                       SkBudgeted::kYes));
             sk_sp<GrTexture> texture2(
@@ -256,10 +257,13 @@ static GrColor texel_color(int i, int j) {
 
 static GrColor4f texel_color4f(int i, int j) { return GrColor4f::FromGrColor(texel_color(i, j)); }
 
-void test_draw_op(GrContext* context, GrRenderTargetContext* rtc, sk_sp<GrFragmentProcessor> fp,
+void test_draw_op(GrRenderTargetContext* rtc, sk_sp<GrFragmentProcessor> fp,
                   sk_sp<GrTextureProxy> inputDataProxy) {
+    GrResourceProvider* resourceProvider = rtc->resourceProvider();
+
     GrPaint paint;
-    paint.addColorTextureProcessor(context, std::move(inputDataProxy), nullptr, SkMatrix::I());
+    paint.addColorTextureProcessor(resourceProvider, std::move(inputDataProxy),
+                                   nullptr, SkMatrix::I());
     paint.addColorFragmentProcessor(std::move(fp));
     paint.setPorterDuffXPFactory(SkBlendMode::kSrc);
     GrPipelineBuilder pb(std::move(paint), GrAAType::kNone);
@@ -269,11 +273,23 @@ void test_draw_op(GrContext* context, GrRenderTargetContext* rtc, sk_sp<GrFragme
     rtc->addMeshDrawOp(pb, GrNoClip(), std::move(op));
 }
 
+#include "SkCommandLineFlags.h"
+DEFINE_bool(randomProcessorTest, false, "Use non-deterministic seed for random processor tests?");
+
 #if GR_TEST_UTILS
 DEF_GPUTEST_FOR_GL_RENDERING_CONTEXTS(ProcessorOptimizationValidationTest, reporter, ctxInfo) {
     GrContext* context = ctxInfo.grContext();
     using FPFactory = GrProcessorTestFactory<GrFragmentProcessor>;
-    SkRandom random;
+
+    uint32_t seed = 0;
+    if (FLAGS_randomProcessorTest) {
+        std::random_device rd;
+        seed = rd();
+    }
+    // If a non-deterministic bot fails this test, check the output to see what seed it used, then
+    // hard-code that value here:
+    SkRandom random(seed);
+
     sk_sp<GrRenderTargetContext> rtc = context->makeRenderTargetContext(
             SkBackingFit::kExact, 256, 256, kRGBA_8888_GrPixelConfig, nullptr);
     GrSurfaceDesc desc;
@@ -315,8 +331,7 @@ DEF_GPUTEST_FOR_GL_RENDERING_CONTEXTS(ProcessorOptimizationValidationTest, repor
     }
     desc.fConfig = kRGBA_8888_GrPixelConfig;
 
-    sk_sp<GrTextureProxy> dataProxy = GrSurfaceProxy::MakeDeferred(*context->caps(),
-                                                                   context->resourceProvider(),
+    sk_sp<GrTextureProxy> dataProxy = GrSurfaceProxy::MakeDeferred(context->resourceProvider(),
                                                                    desc, SkBudgeted::kYes,
                                                                    rgbaData.get(),
                                                                    256 * sizeof(GrColor));
@@ -338,7 +353,7 @@ DEF_GPUTEST_FOR_GL_RENDERING_CONTEXTS(ProcessorOptimizationValidationTest, repor
                 !fp->compatibleWithCoverageAsAlpha()) {
                 continue;
             }
-            test_draw_op(context, rtc.get(), fp, dataProxy);
+            test_draw_op(rtc.get(), fp, dataProxy);
             memset(rgbaData.get(), 0x0, sizeof(GrColor) * 256 * 256);
             rtc->readPixels(
                     SkImageInfo::Make(256, 256, kRGBA_8888_SkColorType, kPremul_SkAlphaType),
@@ -375,7 +390,7 @@ DEF_GPUTEST_FOR_GL_RENDERING_CONTEXTS(ProcessorOptimizationValidationTest, repor
                         if (!legalColorModulation && !legalAlphaModulation) {
                             ERRORF(reporter,
                                    "\"Modulating\" processor %s made color/alpha value larger. "
-                                   "Input: 0x%0x8, Output: 0x%08x.",
+                                   "Input: 0x%08x, Output: 0x%08x.",
                                    fp->name(), input, output);
                             passing = false;
                         }
@@ -406,9 +421,13 @@ DEF_GPUTEST_FOR_GL_RENDERING_CONTEXTS(ProcessorOptimizationValidationTest, repor
                         !GrColorIsOpaque(output)) {
                         ERRORF(reporter,
                                "Processor %s claimed opaqueness is preserved but it is not. Input: "
-                               "0x%0x8, Output: 0x%08x.",
+                               "0x%08x, Output: 0x%08x.",
                                fp->name(), input, output);
                         passing = false;
+                    }
+                    if (!passing) {
+                        ERRORF(reporter, "Seed: 0x%08x, Processor details: %s",
+                               seed, fp->dumpInfo().c_str());
                     }
                 }
             }

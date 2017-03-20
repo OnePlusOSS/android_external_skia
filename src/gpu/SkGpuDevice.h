@@ -89,11 +89,7 @@ public:
                      int scalarsPerPos, const SkPoint& offset, const SkPaint&) override;
     void drawTextBlob(const SkTextBlob*, SkScalar x, SkScalar y,
                       const SkPaint& paint, SkDrawFilter* drawFilter) override;
-    void drawVertices(SkCanvas::VertexMode, int vertexCount, const SkPoint verts[],
-                      const SkPoint texs[], const SkColor colors[], SkBlendMode,
-                      const uint16_t indices[], int indexCount, const SkPaint&) override;
-    void drawVerticesObject(sk_sp<SkVertices>, SkBlendMode, const SkPaint&,
-                            uint32_t flags) override;
+    void drawVertices(const SkVertices*, SkBlendMode, const SkPaint&) override;
     void drawAtlas(const SkImage* atlas, const SkRSXform[], const SkRect[],
                    const SkColor[], int count, SkBlendMode, const SkPaint&) override;
     void drawDevice(SkBaseDevice*, int x, int y, const SkPaint&) override;
@@ -132,8 +128,6 @@ private:
     sk_sp<GrContext>             fContext;
     sk_sp<GrRenderTargetContext> fRenderTargetContext;
 
-    SkIPoint                     fClipOrigin;
-    GrClipStackClip              fClip;
     SkISize                      fSize;
     bool                         fOpaque;
 
@@ -155,8 +149,7 @@ private:
 
     bool forceConservativeRasterClip() const override { return true; }
 
-    // sets the render target and clip on context
-    void prepareDraw();
+    GrClipStackClip clip() const { return GrClipStackClip(&this->cs()); }
 
     /**
      * Helper functions called by drawBitmapCommon. By the time these are called the SkDraw's
@@ -234,6 +227,9 @@ private:
 
     bool drawDashLine(const SkPoint pts[2], const SkPaint& paint);
     void drawStrokedLine(const SkPoint pts[2], const SkPaint&);
+
+    void wireframeVertices(SkCanvas::VertexMode, int vertexCount, const SkPoint verts[],
+                           SkBlendMode, const uint16_t indices[], int indexCount, const SkPaint&);
 
     static sk_sp<GrRenderTargetContext> MakeRenderTargetContext(GrContext*,
                                                                 SkBudgeted,

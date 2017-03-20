@@ -22,8 +22,6 @@ class GrSurfaceProxyPriv;
 class GrTextureOpList;
 class GrTextureProxy;
 
-//#define SK_DISABLE_DEFERRED_PROXIES 1
-
 // This class replicates the functionality GrIORef<GrSurface> but tracks the
 // utilitization for later resource allocation (for the deferred case) and
 // forwards on the utilization in the wrapped case
@@ -172,19 +170,17 @@ public:
     static sk_sp<GrSurfaceProxy> MakeWrapped(sk_sp<GrSurface>);
     static sk_sp<GrTextureProxy> MakeWrapped(sk_sp<GrTexture>);
 
-    static sk_sp<GrTextureProxy> MakeDeferred(GrResourceProvider*, const GrCaps&,
+    static sk_sp<GrTextureProxy> MakeDeferred(GrResourceProvider*,
                                               const GrSurfaceDesc&, SkBackingFit,
                                               SkBudgeted, uint32_t flags = 0);
 
     // TODO: need to refine ownership semantics of 'srcData' if we're in completely
     // deferred mode
-    static sk_sp<GrTextureProxy> MakeDeferred(const GrCaps&, GrResourceProvider*,
+    static sk_sp<GrTextureProxy> MakeDeferred(GrResourceProvider*,
                                               const GrSurfaceDesc&, SkBudgeted,
                                               const void* srcData, size_t rowBytes);
 
-    static sk_sp<GrSurfaceProxy> MakeWrappedBackend(
-                                            GrContext*,
-                                            GrBackendTextureDesc&);
+    static sk_sp<GrSurfaceProxy> MakeWrappedBackend(GrContext*, GrBackendTextureDesc&);
 
     const GrSurfaceDesc& desc() const { return fDesc; }
 
@@ -311,6 +307,8 @@ protected:
         , fFit(fit)
         , fBudgeted(budgeted)
         , fFlags(flags)
+        // fMipColorMode is only valid for texturable proxies
+        , fMipColorMode(SkDestinationSurfaceColorMode::kLegacy)
         , fGpuMemorySize(kInvalidGpuMemorySize)
         , fLastOpList(nullptr) {
         // Note: this ctor pulls a new uniqueID from the same pool at the GrGpuResources
@@ -334,6 +332,9 @@ protected:
     mutable SkBudgeted   fBudgeted; // set from the backing resource for wrapped resources
                                     // mutable bc of SkSurface/SkImage wishy-washiness
     const uint32_t       fFlags;
+
+    SkDestinationSurfaceColorMode fMipColorMode;
+
     const UniqueID       fUniqueID; // set from the backing resource for wrapped resources
 
     static const size_t kInvalidGpuMemorySize = ~static_cast<size_t>(0);

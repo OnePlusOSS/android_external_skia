@@ -376,11 +376,14 @@ public:
     void copyTo(void* dst) const;
     void writeToStream(SkWStream* dst) const;
 
+    /** Equivalent to copyTo() followed by reset(), but may save memory use. */
+    void copyToAndReset(void* dst);
+
     /** Return the contents as SkData, and then reset the stream. */
     sk_sp<SkData> detachAsData();
 
     /** Reset, returning a reader stream with the current content. */
-    SkStreamAsset* detachAsStream();
+    std::unique_ptr<SkStreamAsset> detachAsStream();
 
     /** Reset the stream to its original, empty, state. */
     void reset();

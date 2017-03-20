@@ -90,8 +90,7 @@ protected:
         desc.fHeight = fBmp.height();
         desc.fConfig = SkImageInfo2GrPixelConfig(fBmp.info(), *context->caps());
 
-        sk_sp<GrTextureProxy> proxy(GrSurfaceProxy::MakeDeferred(*context->caps(),
-                                                                 context->resourceProvider(),
+        sk_sp<GrTextureProxy> proxy(GrSurfaceProxy::MakeDeferred(context->resourceProvider(),
                                                                  desc, SkBudgeted::kYes,
                                                                  fBmp.getPixels(),
                                                                  fBmp.rowBytes()));
@@ -124,7 +123,7 @@ protected:
                     grPaint.setXPFactory(GrPorterDuffXPFactory::Get(SkBlendMode::kSrc));
                     sk_sp<GrFragmentProcessor> fp(
                         GrTextureDomainEffect::Make(
-                                   context, proxy,
+                                   context->resourceProvider(), proxy,
                                    nullptr, textureMatrices[tm],
                                    GrTextureDomain::MakeTexelDomainForMode(texelDomains[d], mode),
                                    mode, GrSamplerParams::kNone_FilterMode));

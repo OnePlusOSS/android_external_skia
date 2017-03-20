@@ -8,6 +8,7 @@
 #include "SkBitmap.h"
 #include "SkBitmapCache.h"
 #include "SkCanvas.h"
+#include "SkColorSpace_Base.h"
 #include "SkCrossContextImageData.h"
 #include "SkData.h"
 #include "SkImageEncoder.h"
@@ -310,6 +311,21 @@ bool SkImage::isLazyGenerated() const {
 
 bool SkImage::isAlphaOnly() const {
     return as_IB(this)->onImageInfo().colorType() == kAlpha_8_SkColorType;
+}
+
+sk_sp<SkImage> SkImage_Base::makeColorSpace(sk_sp<SkColorSpace> target) const {
+    SkColorSpaceTransferFn fn;
+    if (!target || !target->isNumericalTransferFn(&fn)) {
+        return nullptr;
+    }
+
+    // Be sure to treat nullptr srcs as "equal to" sRGB.
+    if ((!this->colorSpace() && target->isSRGB()) ||
+            SkColorSpace_Base::EqualsIgnoreFlags(this->colorSpace(), target.get())) {
+        return sk_ref_sp(const_cast<SkImage_Base*>(this));
+    }
+
+    return this->onMakeColorSpace(std::move(target));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

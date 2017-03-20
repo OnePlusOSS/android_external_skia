@@ -129,13 +129,9 @@ void SkBaseDevice::drawPatch(const SkPoint cubics[12], const SkColor colors[4],
     SkPatchUtils::VertexData data;
 
     SkISize lod = SkPatchUtils::GetLevelOfDetail(cubics, &this->ctm());
-
-    // It automatically adjusts lodX and lodY in case it exceeds the number of indices.
-    // If it fails to generate the vertices, then we do not draw.
-    if (SkPatchUtils::getVertexData(&data, cubics, colors, texCoords, lod.width(), lod.height())) {
-        this->drawVertices(SkCanvas::kTriangles_VertexMode, data.fVertexCount, data.fPoints,
-                           data.fTexCoords, data.fColors, bmode, data.fIndices, data.fIndexCount,
-                           paint);
+    auto vertices = SkPatchUtils::MakeVertices(cubics, colors, texCoords, lod.width(), lod.height());
+    if (vertices) {
+        this->drawVertices(vertices.get(), bmode, paint);
     }
 }
 
@@ -274,16 +270,6 @@ void SkBaseDevice::drawAtlas(const SkImage* atlas, const SkRSXform xform[],
         path.setConvexity(SkPath::kConvex_Convexity);
         this->drawPath(path, pnt, nullptr, true);
     }
-}
-
-void SkBaseDevice::drawVerticesObject(sk_sp<SkVertices> vertices,
-                                      SkBlendMode mode, const SkPaint& paint, uint32_t flags) {
-    const SkPoint* texs =
-            (flags & SkCanvas::kIgnoreTexCoords_VerticesFlag) ? nullptr : vertices->texCoords();
-    const SkColor* colors =
-            (flags & SkCanvas::kIgnoreColors_VerticesFlag) ? nullptr : vertices->colors();
-    this->drawVertices(vertices->mode(), vertices->vertexCount(), vertices->positions(), texs,
-                       colors, mode, vertices->indices(), vertices->indexCount(), paint);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

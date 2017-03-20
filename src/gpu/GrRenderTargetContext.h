@@ -53,6 +53,8 @@ class SK_API GrRenderTargetContext : public GrSurfaceContext {
 public:
     ~GrRenderTargetContext() override;
 
+    GrResourceProvider* resourceProvider() { return fContext->resourceProvider(); }
+
     // We use SkPaint rather than GrPaint here for two reasons:
     //    * The SkPaint carries extra text settings. If these were extracted to a lighter object
     //      we could use GrPaint except that
@@ -243,8 +245,7 @@ public:
     void drawVertices(const GrClip&,
                       GrPaint&& paint,
                       const SkMatrix& viewMatrix,
-                      sk_sp<SkVertices> vertices,
-                      uint32_t flags);
+                      sk_sp<SkVertices> vertices);
 
     /**
      * Draws textured sprites from an atlas with a paint. This currently does not support AA for the
@@ -428,13 +429,13 @@ private:
     friend class GrDashLinePathRenderer;             // for access to add[Mesh]DrawOp
     friend class GrAAHairLinePathRenderer;           // for access to add[Mesh]DrawOp
     friend class GrAALinearizingConvexPathRenderer;  // for access to add[Mesh]DrawOp
-    friend class GrAADistanceFieldPathRenderer;      // for access to add[Mesh]DrawOp
+    friend class GrSmallPathRenderer;                // for access to add[Mesh]DrawOp
     friend class GrDefaultPathRenderer;              // for access to add[Mesh]DrawOp
     friend class GrMSAAPathRenderer;                 // for access to add[Mesh]DrawOp
     friend class GrStencilAndCoverPathRenderer;      // for access to add[Mesh]DrawOp
     friend class GrTessellatingPathRenderer;         // for access to add[Mesh]DrawOp
     // for a unit test
-    friend void test_draw_op(GrContext*, GrRenderTargetContext*,
+    friend void test_draw_op(GrRenderTargetContext*,
                              sk_sp<GrFragmentProcessor>, sk_sp<GrTextureProxy>);
 
     void internalClear(const GrFixedClip&, const GrColor, bool canIgnoreClip);

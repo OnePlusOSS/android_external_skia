@@ -278,10 +278,8 @@ struct SkSVGDevice::MxCp {
     const SkMatrix* fMatrix;
     const SkClipStack*  fClipStack;
 
-    MxCp(SkSVGDevice* device) {
-        fMatrix = &device->ctm();
-        fClipStack = &device->cs();
-    }
+    MxCp(const SkMatrix* mx, const SkClipStack* cs) : fMatrix(mx), fClipStack(cs) {}
+    MxCp(SkSVGDevice* device) : fMatrix(&device->ctm()), fClipStack(&device->cs()) {}
 };
 
 class SkSVGDevice::AutoElement : ::SkNoncopyable {
@@ -729,24 +727,20 @@ void SkSVGDevice::drawSprite(const SkBitmap& bitmap,
 void SkSVGDevice::drawBitmapRect(const SkBitmap& bm, const SkRect* srcOrNull,
                                  const SkRect& dst, const SkPaint& paint,
                                  SkCanvas::SrcRectConstraint) {
-    MxCp mc(this);
-
-    SkClipStack adjustedClipStack;
+    SkClipStack* cs = &this->cs();
+    SkClipStack::AutoRestore ar(cs, false);
     if (srcOrNull && *srcOrNull != SkRect::Make(bm.bounds())) {
-        adjustedClipStack = *mc.fClipStack;
-        adjustedClipStack.clipRect(dst, *mc.fMatrix, kIntersect_SkClipOp,
-                                   paint.isAntiAlias());
-        mc.fClipStack = &adjustedClipStack;
+        cs->save();
+        cs->clipRect(dst, this->ctm(), kIntersect_SkClipOp, paint.isAntiAlias());
     }
 
     SkMatrix adjustedMatrix;
     adjustedMatrix.setRectToRect(srcOrNull ? *srcOrNull : SkRect::Make(bm.bounds()),
                                  dst,
                                  SkMatrix::kFill_ScaleToFit);
-    adjustedMatrix.postConcat(*mc.fMatrix);
-    mc.fMatrix = &adjustedMatrix;
+    adjustedMatrix.postConcat(this->ctm());
 
-    drawBitmapCommon(mc, bm, paint);
+    drawBitmapCommon(MxCp(&adjustedMatrix, cs), bm, paint);
 }
 
 void SkSVGDevice::drawText(const void* text, size_t len,
@@ -811,11 +805,7 @@ void SkSVGDevice::drawTextOnPath(const void* text, size_t len, const SkPath& pat
     }
 }
 
-void SkSVGDevice::drawVertices(SkCanvas::VertexMode, int vertexCount,
-                               const SkPoint verts[], const SkPoint texs[],
-                               const SkColor colors[], SkBlendMode,
-                               const uint16_t indices[], int indexCount,
-                               const SkPaint& paint) {
+void SkSVGDevice::drawVertices(const SkVertices*, SkBlendMode, const SkPaint&) {
     // todo
     SkDebugf("unsupported operation: drawVertices()\n");
 }

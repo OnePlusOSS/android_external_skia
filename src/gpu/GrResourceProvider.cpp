@@ -9,6 +9,7 @@
 
 #include "GrBuffer.h"
 #include "GrCaps.h"
+#include "GrContext.h"
 #include "GrGpu.h"
 #include "GrPathRendering.h"
 #include "GrRenderTarget.h"
@@ -17,6 +18,7 @@
 #include "GrResourceKey.h"
 #include "GrSemaphore.h"
 #include "GrStencilAttachment.h"
+#include "GrSurfaceProxyPriv.h"
 #include "GrTexturePriv.h"
 #include "../private/GrSingleOwner.h"
 #include "SkMathPriv.h"
@@ -35,14 +37,20 @@ GrResourceProvider::GrResourceProvider(GrGpu* gpu, GrResourceCache* cache, GrSin
         , fSingleOwner(owner)
 #endif
         {
+    fCaps = sk_ref_sp(fGpu->caps());
+
     GR_DEFINE_STATIC_UNIQUE_KEY(gQuadIndexBufferKey);
     fQuadIndexBufferKey = gQuadIndexBufferKey;
 }
 
+bool GrResourceProvider::IsFunctionallyExact(GrTextureProxy* proxy) {
+    return proxy->priv().isExact() || (SkIsPow2(proxy->width()) && SkIsPow2(proxy->height()));
+}
 
 GrTexture* GrResourceProvider::createMipMappedTexture(const GrSurfaceDesc& desc,
                                                       SkBudgeted budgeted, const GrMipLevel* texels,
-                                                      int mipLevelCount, uint32_t flags) {
+                                                      int mipLevelCount, uint32_t flags,
+                                                      SkDestinationSurfaceColorMode mipColorMode) {
     ASSERT_SINGLE_OWNER
 
     if (this->isAbandoned()) {
@@ -73,6 +81,7 @@ GrTexture* GrResourceProvider::createMipMappedTexture(const GrSurfaceDesc& desc,
                     if (SkBudgeted::kNo == budgeted) {
                         texture->resourcePriv().makeUnbudgeted();
                     }
+                    texture->texturePriv().setMipColorMode(mipColorMode);
                     return texture;
                 }
                 texture->unref();
@@ -84,7 +93,11 @@ GrTexture* GrResourceProvider::createMipMappedTexture(const GrSurfaceDesc& desc,
     for (int i = 0; i < mipLevelCount; ++i) {
         texelsShallowCopy.push_back(texels[i]);
     }
-    return fGpu->createTexture(desc, budgeted, texelsShallowCopy);
+    GrTexture* texture = fGpu->createTexture(desc, budgeted, texelsShallowCopy);
+    if (texture) {
+        texture->texturePriv().setMipColorMode(mipColorMode);
+    }
+    return texture;
 }
 
 GrTexture* GrResourceProvider::createTexture(const GrSurfaceDesc& desc, SkBudgeted budgeted,
@@ -206,6 +219,34 @@ GrTexture* GrResourceProvider::findAndRefTextureByUniqueKey(const GrUniqueKey& k
         return texture;
     }
     return NULL;
+}
+
+// MDB TODO (caching): this side-steps the issue of texture proxies with unique IDs
+void GrResourceProvider::assignUniqueKeyToProxy(const GrUniqueKey& key, GrTextureProxy* proxy) {
+    ASSERT_SINGLE_OWNER
+    SkASSERT(key.isValid());
+    if (this->isAbandoned() || !proxy) {
+        return;
+    }
+
+    GrTexture* texture = proxy->instantiate(this);
+    if (!texture) {
+        return;
+    }
+
+    this->assignUniqueKeyToResource(key, texture);
+}
+
+// MDB TODO (caching): this side-steps the issue of texture proxies with unique IDs
+sk_sp<GrTextureProxy> GrResourceProvider::findProxyByUniqueKey(const GrUniqueKey& key) {
+    ASSERT_SINGLE_OWNER
+
+    sk_sp<GrTexture> texture(this->findAndRefTextureByUniqueKey(key));
+    if (!texture) {
+        return nullptr;
+    }
+
+    return GrSurfaceProxy::MakeWrapped(std::move(texture));
 }
 
 const GrBuffer* GrResourceProvider::createInstancedIndexBuffer(const uint16_t* pattern,
@@ -384,5 +425,3 @@ void GrResourceProvider::takeOwnershipOfSemaphore(sk_sp<GrSemaphore> semaphore) 
 void GrResourceProvider::releaseOwnershipOfSemaphore(sk_sp<GrSemaphore> semaphore) {
     semaphore->resetGpu(nullptr);
 }
-
-

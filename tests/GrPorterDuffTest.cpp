@@ -968,8 +968,8 @@ static void test_lcd_coverage_fallback_case(skiatest::Reporter* reporter, const 
     } testLCDCoverageOp;
 
     GrProcessorSet::FragmentProcessorAnalysis analysis;
-    GrAppliedClip clip(SkRect::MakeLargest());
-    testLCDCoverageOp.analyzeProcessors(&analysis, GrProcessorSet(GrPaint()), clip, caps);
+    GrAppliedClip clip;
+    testLCDCoverageOp.analyzeProcessors(&analysis, GrProcessorSet(GrPaint()), &clip, caps);
 
     SkASSERT(analysis.hasKnownOutputColor());
     SkASSERT(analysis.hasLCDCoverage());

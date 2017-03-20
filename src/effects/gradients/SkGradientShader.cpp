@@ -1697,7 +1697,7 @@ GrGradientEffect::GrGradientEffect(const CreateArgs& args, bool isOpaque)
             if (-1 != fRow) {
                 fYCoord = fAtlas->getYOffset(fRow)+SK_ScalarHalf*fAtlas->getNormalizedTexelHeight();
                 // This is 1/2 places where auto-normalization is disabled
-                fCoordTransform.reset(args.fContext, *args.fMatrix,
+                fCoordTransform.reset(args.fContext->resourceProvider(), *args.fMatrix,
                                       fAtlas->asTextureProxyRef().get(),
                                       params.filterMode(), false);
                 fTextureSampler.reset(args.fContext->resourceProvider(),
@@ -1710,12 +1710,14 @@ GrGradientEffect::GrGradientEffect(const CreateArgs& args, bool isOpaque)
                 // Only the x-tileMode is unknown. However, given all the other knowns we know
                 // that GrMakeCachedBitmapProxy is sufficient (i.e., it won't need to be
                 // extracted to a subset or mipmapped).
-                sk_sp<GrTextureProxy> proxy = GrMakeCachedBitmapProxy(args.fContext, bitmap);
+                sk_sp<GrTextureProxy> proxy = GrMakeCachedBitmapProxy(
+                                                                args.fContext->resourceProvider(),
+                                                                bitmap);
                 if (!proxy) {
                     return;
                 }
                 // This is 2/2 places where auto-normalization is disabled
-                fCoordTransform.reset(args.fContext, *args.fMatrix,
+                fCoordTransform.reset(args.fContext->resourceProvider(), *args.fMatrix,
                                       proxy.get(), params.filterMode(), false);
                 fTextureSampler.reset(args.fContext->resourceProvider(),
                                       std::move(proxy), params);

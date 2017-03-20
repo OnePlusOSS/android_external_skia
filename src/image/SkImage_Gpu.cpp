@@ -23,6 +23,7 @@
 #include "GrTexturePriv.h"
 #include "GrTextureProxy.h"
 #include "GrTextureToYUVPlanes.h"
+#include "effects/GrNonlinearColorSpaceXformEffect.h"
 #include "effects/GrYUVEffect.h"
 #include "SkCanvas.h"
 #include "SkCrossContextImageData.h"
@@ -144,7 +145,7 @@ GrTexture* SkImage_Gpu::asTextureRef(GrContext* ctx, const GrSamplerParams& para
         return nullptr;
     }
 
-    GrTextureAdjuster adjuster(texture, this->alphaType(), this->bounds(),
+    GrTextureAdjuster adjuster(fContext, texture, this->alphaType(), this->bounds(),
                                this->uniqueID(), this->fColorSpace.get());
     return adjuster.refTextureSafeForParams(params, nullptr, scaleAdjust);
 }
@@ -264,7 +265,8 @@ static sk_sp<SkImage> new_wrapped_texture_common(GrContext* ctx, const GrBackend
         tex->setRelease(releaseProc, releaseCtx);
     }
 
-    const SkBudgeted budgeted = SkBudgeted::kNo;
+    const SkBudgeted budgeted = (kAdoptAndCache_GrWrapOwnership == ownership)
+            ? SkBudgeted::kYes : SkBudgeted::kNo;
     return sk_make_sp<SkImage_Gpu>(kNeedNewImageUniqueID,
                                    at, std::move(tex), std::move(colorSpace), budgeted);
 }
@@ -355,7 +357,7 @@ static sk_sp<SkImage> make_from_yuv_textures_copy(GrContext* ctx, SkYUVColorSpac
     GrPaint paint;
     paint.setPorterDuffXPFactory(SkBlendMode::kSrc);
     paint.addColorFragmentProcessor(
-        GrYUVEffect::MakeYUVToRGB(ctx,
+        GrYUVEffect::MakeYUVToRGB(ctx->resourceProvider(),
                                   sk_ref_sp(yProxy->asTextureProxy()),
                                   sk_ref_sp(uProxy->asTextureProxy()),
                                   sk_ref_sp(vProxy->asTextureProxy()), yuvSizes, colorSpace, nv12));
@@ -476,8 +478,11 @@ sk_sp<SkImage> SkImage::MakeFromCrossContextImageData(
         ccid->fTextureData->attachToContext(context);
     }
 
-    return MakeFromAdoptedTexture(context, ccid->fDesc, ccid->fAlphaType,
-                                  std::move(ccid->fColorSpace));
+    // This texture was created by Ganesh on another thread (see MakeFromEncoded, above).
+    // Thus, we can import it back into our cache and treat it as our own (again).
+    GrWrapOwnership ownership = kAdoptAndCache_GrWrapOwnership;
+    return new_wrapped_texture_common(context, ccid->fDesc, ccid->fAlphaType,
+                                      std::move(ccid->fColorSpace), ownership, nullptr, nullptr);
 }
 
 sk_sp<SkImage> SkImage::makeNonTextureImage() const {
@@ -833,12 +838,44 @@ sk_sp<SkImage> SkImage::MakeTextureFromMipMap(GrContext* ctx, const SkImageInfo&
     if (!ctx) {
         return nullptr;
     }
-    sk_sp<GrTexture> texture(GrUploadMipMapToTexture(ctx, info, texels, mipLevelCount));
+    sk_sp<GrTexture> texture(GrUploadMipMapToTexture(ctx, info, texels, mipLevelCount, colorMode));
     if (!texture) {
         return nullptr;
     }
-    texture->texturePriv().setMipColorMode(colorMode);
     return sk_make_sp<SkImage_Gpu>(kNeedNewImageUniqueID,
                                    info.alphaType(), std::move(texture),
                                    sk_ref_sp(info.colorSpace()), budgeted);
+}
+
+sk_sp<SkImage> SkImage_Gpu::onMakeColorSpace(sk_sp<SkColorSpace> colorSpace) const {
+    sk_sp<SkColorSpace> srcSpace = fColorSpace ? fColorSpace : SkColorSpace::MakeSRGB();
+    auto xform = GrNonlinearColorSpaceXformEffect::Make(srcSpace.get(), colorSpace.get());
+    if (!xform) {
+        return sk_ref_sp(const_cast<SkImage_Gpu*>(this));
+    }
+
+    sk_sp<GrRenderTargetContext> renderTargetContext(fContext->makeRenderTargetContext(
+        SkBackingFit::kExact, this->width(), this->height(), kRGBA_8888_GrPixelConfig, nullptr));
+    if (!renderTargetContext) {
+        return nullptr;
+    }
+
+    GrPaint paint;
+    paint.setPorterDuffXPFactory(SkBlendMode::kSrc);
+    paint.addColorTextureProcessor(fContext->resourceProvider(), fProxy, nullptr, SkMatrix::I());
+    paint.addColorFragmentProcessor(std::move(xform));
+
+    const SkRect rect = SkRect::MakeIWH(this->width(), this->height());
+
+    renderTargetContext->drawRect(GrNoClip(), std::move(paint), GrAA::kNo, SkMatrix::I(), rect);
+
+    if (!renderTargetContext->accessRenderTarget()) {
+        return nullptr;
+    }
+
+    // MDB: this call is okay bc we know 'renderTargetContext' was exact
+    return sk_make_sp<SkImage_Gpu>(fContext, kNeedNewImageUniqueID,
+                                   fAlphaType, renderTargetContext->asTextureProxyRef(),
+                                   std::move(colorSpace), fBudgeted);
+
 }

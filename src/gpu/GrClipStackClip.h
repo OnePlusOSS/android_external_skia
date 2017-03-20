@@ -20,21 +20,16 @@ class GrTextureProxy;
  */
 class GrClipStackClip final : public GrClip {
 public:
-    GrClipStackClip(const SkClipStack* stack = nullptr, const SkIPoint* origin = nullptr) {
-        this->reset(stack, origin);
-    }
+    GrClipStackClip(const SkClipStack* stack = nullptr) { this->reset(stack); }
 
-    void reset(const SkClipStack* stack = nullptr, const SkIPoint* origin = nullptr) {
-        fOrigin = origin ? *origin : SkIPoint::Make(0, 0);
-        fStack = stack;
-    }
+    void reset(const SkClipStack* stack) { fStack = stack; }
 
     bool quickContains(const SkRect&) const final;
     bool quickContains(const SkRRect&) const final;
     void getConservativeBounds(int width, int height, SkIRect* devResult,
                                bool* isIntersectionOfRects) const final;
     bool apply(GrContext*, GrRenderTargetContext*, bool useHWAA, bool hasUserStencilSettings,
-               GrAppliedClip* out) const final;
+               GrAppliedClip* out, SkRect* bounds) const final;
 
     bool isRRect(const SkRect& rtBounds, SkRRect* rr, GrAA* aa) const override;
 
@@ -62,7 +57,6 @@ private:
                               const GrRenderTargetContext*,
                               const GrReducedClip&);
 
-    SkIPoint            fOrigin;
     const SkClipStack*  fStack;
 };
 

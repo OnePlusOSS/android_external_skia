@@ -15,46 +15,15 @@ std::unique_ptr<GrMeshDrawOp> GrDrawVerticesOp::Make(
         const SkPoint* positions, int vertexCount, const uint16_t* indices, int indexCount,
         const uint32_t* colors, const SkPoint* localCoords, const SkRect& bounds,
         GrRenderTargetContext::ColorArrayType colorArrayType) {
+    static constexpr SkCanvas::VertexMode kIgnoredMode = SkCanvas::kTriangles_VertexMode;
     SkASSERT(positions);
-    std::unique_ptr<SkPoint[]> pos(new SkPoint[vertexCount]);
-    memcpy(pos.get(), positions, sizeof(SkPoint) * vertexCount);
-    std::unique_ptr<SkColor[]> col;
-    if (colors) {
-        col.reset(new SkColor[vertexCount]);
-        memcpy(col.get(), colors, sizeof(SkColor) * vertexCount);
-    } else {
+    if (!colors) {
         // When we tessellate we will fill a color array with the GrColor value passed above as
         // 'color'.
         colorArrayType = GrRenderTargetContext::ColorArrayType::kPremulGrColor;
     }
-    std::unique_ptr<SkPoint[]> lc;
-    if (localCoords) {
-        lc.reset(new SkPoint[vertexCount]);
-        memcpy(lc.get(), localCoords, sizeof(SkPoint) * vertexCount);
-    }
-    std::unique_ptr<uint16_t[]> idx;
-    if (indexCount) {
-        idx.reset(new uint16_t[indexCount]);
-        memcpy(idx.get(), indices, sizeof(uint16_t) * indexCount);
-    }
-    static constexpr SkCanvas::VertexMode kIgnoredMode = SkCanvas::kTriangles_VertexMode;
-    sk_sp<SkVertices> vertices;
-    // Older libstdc++ does not allow moving a std::unique_ptr<T[]> into a
-    // std::unique_ptr<const T[]>. Hence the release() calls below.
-    if (indices) {
-        vertices = SkVertices::MakeIndexed(
-                kIgnoredMode, std::unique_ptr<const SkPoint[]>((const SkPoint*)pos.release()),
-                std::unique_ptr<const SkColor[]>((const SkColor*)col.release()),
-                std::unique_ptr<const SkPoint[]>((const SkPoint*)lc.release()), vertexCount,
-                std::unique_ptr<const uint16_t[]>((const uint16_t*)idx.release()), indexCount,
-                bounds);
-    } else {
-        vertices = SkVertices::Make(kIgnoredMode,
-                                    std::unique_ptr<const SkPoint[]>((const SkPoint*)pos.release()),
-                                    std::unique_ptr<const SkColor[]>((const SkColor*)col.release()),
-                                    std::unique_ptr<const SkPoint[]>((const SkPoint*)lc.release()),
-                                    vertexCount, bounds);
-    }
+    sk_sp<SkVertices> vertices = SkVertices::MakeCopy(kIgnoredMode, vertexCount, positions,
+                                                      localCoords, colors, indexCount, indices);
     if (!vertices) {
         return nullptr;
     }
@@ -63,12 +32,12 @@ std::unique_ptr<GrMeshDrawOp> GrDrawVerticesOp::Make(
 }
 
 std::unique_ptr<GrMeshDrawOp> GrDrawVerticesOp::Make(GrColor color, sk_sp<SkVertices> vertices,
-                                                     const SkMatrix& viewMatrix, uint32_t flags) {
+                                                     const SkMatrix& viewMatrix) {
     SkASSERT(vertices);
     GrPrimitiveType primType = SkVertexModeToGrPrimitiveType(vertices->mode());
     return std::unique_ptr<GrMeshDrawOp>(new GrDrawVerticesOp(
             std::move(vertices), primType, color, GrRenderTargetContext::ColorArrayType::kSkColor,
-            viewMatrix, flags));
+            viewMatrix));
 }
 
 GrDrawVerticesOp::GrDrawVerticesOp(sk_sp<SkVertices> vertices, GrPrimitiveType primitiveType,
@@ -120,14 +89,14 @@ void GrDrawVerticesOp::applyPipelineOptimizations(const GrPipelineOptimizations&
     GrColor overrideColor;
     if (optimizations.getOverrideColorIfSet(&overrideColor)) {
         fMeshes[0].fColor = overrideColor;
-        fMeshes[0].fFlags |= SkCanvas::kIgnoreColors_VerticesFlag;
+        fMeshes[0].fFlags |= kIgnoreColors_VerticesFlag;
         fFlags &= ~kRequiresPerVertexColors_Flag;
         fColorArrayType = GrRenderTargetContext::ColorArrayType::kPremulGrColor;
     }
     if (optimizations.readsLocalCoords()) {
         fFlags |= kPipelineRequiresLocalCoords_Flag;
     } else {
-        fFlags |= SkCanvas::kIgnoreTexCoords_VerticesFlag;
+        fFlags |= kIgnoreTexCoords_VerticesFlag;
         fFlags &= ~kAnyMeshHasExplicitLocalCoords;
     }
 }
@@ -288,7 +257,7 @@ bool GrDrawVerticesOp::onCombineIfPossible(GrOp* t, const GrCaps& caps) {
         return false;
     }
 
-    if (fMeshes[0].fVertices->isIndexed() != that->fMeshes[0].fVertices->isIndexed()) {
+    if (fMeshes[0].fVertices->hasIndices() != that->fMeshes[0].fVertices->hasIndices()) {
         return false;
     }
 

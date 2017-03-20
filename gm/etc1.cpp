@@ -79,8 +79,7 @@ protected:
         desc.fWidth = kTexWidth;
         desc.fHeight = kTexHeight;
 
-        sk_sp<GrTextureProxy> proxy = GrSurfaceProxy::MakeDeferred(*context->caps(),
-                                                                   context->resourceProvider(),
+        sk_sp<GrTextureProxy> proxy = GrSurfaceProxy::MakeDeferred(context->resourceProvider(),
                                                                    desc, SkBudgeted::kYes,
                                                                    fETC1Data.get(), 0);
         if (!proxy) {
@@ -89,7 +88,7 @@ protected:
 
         const SkMatrix trans = SkMatrix::MakeTrans(-kPad, -kPad);
 
-        sk_sp<GrFragmentProcessor> fp = GrSimpleTextureEffect::Make(context,
+        sk_sp<GrFragmentProcessor> fp = GrSimpleTextureEffect::Make(context->resourceProvider(),
                                                                     std::move(proxy),
                                                                     nullptr, trans);
 

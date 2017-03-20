@@ -27,6 +27,7 @@ class GrContext;
 class GrRenderTargetContext;
 class GrFragmentProcessor;
 class GrPaint;
+class GrResourceProvider;
 class GrTexture;
 class GrTextureProxy;
 class GrUniqueKey;
@@ -213,19 +214,27 @@ GrTexture* GrRefCachedBitmapTexture(GrContext*, const SkBitmap&,
  */
 GrTexture* GrUploadBitmapToTexture(GrContext*, const SkBitmap&);
 
+sk_sp<GrTextureProxy> GrUploadBitmapToTextureProxy(GrResourceProvider*, const SkBitmap&);
+
 GrTexture* GrGenerateMipMapsAndUploadToTexture(GrContext*, const SkBitmap&,
                                                SkColorSpace* dstColorSpace);
+
+sk_sp<GrTextureProxy> GrGenerateMipMapsAndUploadToTextureProxy(GrContext*, const SkBitmap&,
+                                                               SkColorSpace* dstColorSpace);
 
 /**
  * Creates a new texture for the pixmap.
  */
-GrTexture* GrUploadPixmapToTexture(GrContext*, const SkPixmap&, SkBudgeted budgeted);
+GrTexture* GrUploadPixmapToTexture(GrContext*, const SkPixmap&, SkBudgeted);
+
+sk_sp<GrTextureProxy> GrUploadPixmapToTextureProxy(GrResourceProvider*,
+                                                   const SkPixmap&, SkBudgeted);
 
 /**
  * Creates a new texture populated with the mipmap levels.
  */
 GrTexture* GrUploadMipMapToTexture(GrContext*, const SkImageInfo&, const GrMipLevel* texels,
-                                   int mipLevelCount);
+                                   int mipLevelCount, SkDestinationSurfaceColorMode colorMode);
 
 sk_sp<GrTexture> GrMakeCachedBitmapTexture(GrContext*, const SkBitmap&,
                                            const GrSamplerParams&, SkScalar scaleAdjust[2]);
@@ -241,7 +250,7 @@ sk_sp<GrTexture> GrMakeCachedBitmapTexture(GrContext*, const SkBitmap&,
 //    if (!texture) {
 //        return nullptr;
 //    }
-sk_sp<GrTextureProxy> GrMakeCachedBitmapProxy(GrContext* context, const SkBitmap& bitmap);
+sk_sp<GrTextureProxy> GrMakeCachedBitmapProxy(GrResourceProvider*, const SkBitmap& bitmap);
 
 
 /**

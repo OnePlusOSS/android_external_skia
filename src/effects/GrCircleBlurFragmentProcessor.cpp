@@ -299,8 +299,7 @@ static sk_sp<GrTextureProxy> create_profile_texture(GrResourceProvider* resource
     builder[0] = sigmaToCircleRRatioFixed;
     builder.finish();
 
-    // MDB TODO (caching): this side-steps the issue of texture proxies with unique IDs
-    sk_sp<GrTexture> blurProfile(resourceProvider->findAndRefTextureByUniqueKey(key));
+    sk_sp<GrTextureProxy> blurProfile = resourceProvider->findProxyByUniqueKey(key);
     if (!blurProfile) {
         static constexpr int kProfileTextureWidth = 512;
         GrSurfaceDesc texDesc;
@@ -318,16 +317,16 @@ static sk_sp<GrTextureProxy> create_profile_texture(GrResourceProvider* resource
                                                 kProfileTextureWidth));
         }
 
-        blurProfile.reset(resourceProvider->createTexture(texDesc, SkBudgeted::kYes,
-                                                         profile.get(), 0));
+        blurProfile = GrSurfaceProxy::MakeDeferred(resourceProvider,
+                                                   texDesc, SkBudgeted::kYes, profile.get(), 0);
         if (!blurProfile) {
             return nullptr;
         }
 
-        resourceProvider->assignUniqueKeyToTexture(key, blurProfile.get());
+        resourceProvider->assignUniqueKeyToProxy(key, blurProfile.get());
     }
 
-    return GrSurfaceProxy::MakeWrapped(std::move(blurProfile));
+    return blurProfile;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -356,7 +355,7 @@ sk_sp<GrFragmentProcessor> GrCircleBlurFragmentProcessor::TestCreate(GrProcessor
     SkScalar wh = d->fRandom->nextRangeScalar(100.f, 1000.f);
     SkScalar sigma = d->fRandom->nextRangeF(1.f,10.f);
     SkRect circle = SkRect::MakeWH(wh, wh);
-    return GrCircleBlurFragmentProcessor::Make(d->context()->resourceProvider(), circle, sigma);
+    return GrCircleBlurFragmentProcessor::Make(d->resourceProvider(), circle, sigma);
 }
 #endif
 

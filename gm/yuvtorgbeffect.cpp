@@ -92,8 +92,7 @@ protected:
                 desc.fHeight = fBmp[i].height();
                 desc.fConfig = SkImageInfo2GrPixelConfig(fBmp[i].info(), *context->caps());
 
-                proxy[i] = GrSurfaceProxy::MakeDeferred(*context->caps(),
-                                                        context->resourceProvider(),
+                proxy[i] = GrSurfaceProxy::MakeDeferred(context->resourceProvider(),
                                                         desc, SkBudgeted::kYes,
                                                         fBmp[i].getPixels(), fBmp[i].rowBytes());
                 if (!proxy[i]) {
@@ -120,7 +119,7 @@ protected:
 
             for (int i = 0; i < 6; ++i) {
                 sk_sp<GrFragmentProcessor> fp(
-                        GrYUVEffect::MakeYUVToRGB(context,
+                        GrYUVEffect::MakeYUVToRGB(context->resourceProvider(),
                                                   proxy[indices[i][0]],
                                                   proxy[indices[i][1]],
                                                   proxy[indices[i][2]],
@@ -225,8 +224,7 @@ protected:
                 desc.fHeight = fBmp[index].height();
                 desc.fConfig = SkImageInfo2GrPixelConfig(fBmp[index].info(), *context->caps());
 
-                proxy[i] = GrSurfaceProxy::MakeDeferred(*context->caps(),
-                                                        context->resourceProvider(),
+                proxy[i] = GrSurfaceProxy::MakeDeferred(context->resourceProvider(),
                                                         desc, SkBudgeted::kYes,
                                                         fBmp[index].getPixels(),
                                                         fBmp[index].rowBytes());
@@ -252,8 +250,9 @@ protected:
             GrPaint grPaint;
             grPaint.setXPFactory(GrPorterDuffXPFactory::Get(SkBlendMode::kSrc));
             sk_sp<GrFragmentProcessor> fp(
-                GrYUVEffect::MakeYUVToRGB(context, proxy[0], proxy[1], proxy[2],
-                                          sizes, static_cast<SkYUVColorSpace>(space), true));
+                GrYUVEffect::MakeYUVToRGB(context->resourceProvider(),
+                                          proxy[0], proxy[1], proxy[2], sizes,
+                                          static_cast<SkYUVColorSpace>(space), true));
             if (fp) {
                 SkMatrix viewMatrix;
                 viewMatrix.setTranslate(x, y);

@@ -7,8 +7,8 @@
 
 #include "effects/GrCustomXfermode.h"
 
+#include "GrCaps.h"
 #include "GrCoordTransform.h"
-#include "GrContext.h"
 #include "GrFragmentProcessor.h"
 #include "GrPipeline.h"
 #include "GrProcessor.h"
@@ -330,6 +330,8 @@ private:
     bool willReadsDst(const FragmentProcessorAnalysis&) const override { return true; }
 
     bool willReadDstInShader(const GrCaps&, const FragmentProcessorAnalysis&) const override;
+
+    bool compatibleWithCoverageAsAlpha(bool colorIsOpaque) const override { return true; }
 
     GR_DECLARE_XP_FACTORY_TEST;
 

@@ -12,7 +12,6 @@
 #include "GrPipelineBuilder.h"
 #include "GrResourceProvider.h"
 #include "GrSWMaskHelper.h"
-#include "GrSurfaceContextPriv.h"
 #include "ops/GrRectOpFactory.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -204,22 +203,21 @@ bool GrSoftwarePathRenderer::onDrawPath(const DrawPathArgs& args) {
         // should always be true, though.
     }
 
-    sk_sp<GrTexture> texture;
+    sk_sp<GrTextureProxy> proxy;
     if (useCache) {
-        texture.reset(fResourceProvider->findAndRefTextureByUniqueKey(maskKey));
+        proxy = fResourceProvider->findProxyByUniqueKey(maskKey);
     }
-    if (!texture) {
+    if (!proxy) {
         SkBackingFit fit = useCache ? SkBackingFit::kExact : SkBackingFit::kApprox;
         GrAA aa = GrAAType::kCoverage == args.fAAType ? GrAA::kYes : GrAA::kNo;
-        GrContext* context = args.fRenderTargetContext->surfPriv().getContext();
-        texture = GrSWMaskHelper::DrawShapeMaskToTexture(context, *args.fShape,
-                                                         *boundsForMask, aa,
-                                                         fit, args.fViewMatrix);
-        if (!texture) {
+        proxy = GrSWMaskHelper::DrawShapeMaskToTexture(args.fContext, *args.fShape,
+                                                       *boundsForMask, aa,
+                                                       fit, args.fViewMatrix);
+        if (!proxy) {
             return false;
         }
         if (useCache) {
-            fResourceProvider->assignUniqueKeyToTexture(maskKey, texture.get());
+            fResourceProvider->assignUniqueKeyToProxy(maskKey, proxy.get());
         }
     }
     if (inverseFilled) {
@@ -228,7 +226,7 @@ bool GrSoftwarePathRenderer::onDrawPath(const DrawPathArgs& args) {
                           unclippedDevShapeBounds);
     }
     GrSWMaskHelper::DrawToTargetWithShapeMask(
-            texture.get(), args.fRenderTargetContext, std::move(args.fPaint),
+            std::move(proxy), args.fRenderTargetContext, std::move(args.fPaint),
             *args.fUserStencilSettings, *args.fClip, *args.fViewMatrix,
             SkIPoint{boundsForMask->fLeft, boundsForMask->fTop}, *boundsForMask);
 

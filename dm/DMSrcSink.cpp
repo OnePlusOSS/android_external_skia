@@ -13,6 +13,7 @@
 #include "SkCodecImageGenerator.h"
 #include "SkColorSpace.h"
 #include "SkColorSpaceXform.h"
+#include "SkColorSpaceXformCanvas.h"
 #include "SkColorSpace_XYZ.h"
 #include "SkCommonFlags.h"
 #include "SkData.h"
@@ -1836,6 +1837,46 @@ Error ViaLite::draw(const Src& src, SkBitmap* bitmap, SkWStream* stream, SkStrin
         }
         dl.draw(canvas);
         return check_against_reference(bitmap, src, fSink.get());
+    });
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+ViaCSXform::ViaCSXform(Sink* sink, sk_sp<SkColorSpace> cs, bool colorSpin)
+    : Via(sink)
+    , fCS(std::move(cs))
+    , fColorSpin(colorSpin) {}
+
+Error ViaCSXform::draw(const Src& src, SkBitmap* bitmap, SkWStream* stream, SkString* log) const {
+    return draw_to_canvas(fSink.get(), bitmap, stream, log, src.size(),
+                          [&](SkCanvas* canvas) -> Error {
+        auto proxy = SkCreateColorSpaceXformCanvas(canvas, fCS);
+        Error err = src.draw(proxy.get());
+        if (!err.isEmpty()) {
+            return err;
+        }
+
+        // Undo the color spin, so we can look at the pixels in Gold.
+        if (fColorSpin) {
+            SkBitmap pixels;
+            pixels.allocPixels(canvas->imageInfo());
+            canvas->readPixels(&pixels, 0, 0);
+            for (int y = 0; y < pixels.height(); y++) {
+                for (int x = 0; x < pixels.width(); x++) {
+                    uint32_t pixel = *pixels.getAddr32(x, y);
+                    uint8_t r = SkGetPackedR32(pixel);
+                    uint8_t g = SkGetPackedG32(pixel);
+                    uint8_t b = SkGetPackedB32(pixel);
+                    uint8_t a = SkGetPackedA32(pixel);
+                    *pixels.getAddr32(x, y) =
+                            SkSwizzle_RGBA_to_PMColor(b << 0 | r << 8 | g << 16 | a << 24);
+                }
+            }
+
+            canvas->writePixels(pixels, 0, 0);
+        }
+
+        return "";
     });
 }
 
