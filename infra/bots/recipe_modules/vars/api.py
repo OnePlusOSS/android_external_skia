@@ -31,7 +31,11 @@ class SkiaVarsApi(recipe_api.RecipeApi):
 
     self.slave_dir = self.m.path['start_dir']
     self.checkout_root = self.slave_dir
-    self.default_env = {}
+    self.default_env = self.m.step.get_from_context('env', {})
+    self.default_env['PATH'] = self.m.path.pathsep.join([
+        self.default_env.get('PATH', '%(PATH)s'),
+        str(self.m.bot_update._module.PACKAGE_REPO_ROOT),
+    ])
     self.gclient_env = {}
     self.is_compile_bot = self.builder_name.startswith('Build-')
     self.no_buildbot = self.m.properties.get('nobuildbot', '') == 'True'
@@ -158,6 +162,11 @@ class SkiaVarsApi(recipe_api.RecipeApi):
     self.android_data_dir = '/sdcard/revenge_of_the_skiabot/'
     # Executables go under _bin_dir, which, well, allows executable files.
     self.android_bin_dir  = '/data/local/tmp/'
+
+    if self.builder_cfg.get('os', '') == 'Chromecast':
+      # On the Chromecast, everything goes in the (~110M) /cache/skia
+      self.android_bin_dir  = '/cache/skia/'
+      self.android_data_dir = '/cache/skia/'
 
   @property
   def upload_dm_results(self):

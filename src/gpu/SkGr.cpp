@@ -238,15 +238,6 @@ GrTexture* GrGenerateMipMapsAndUploadToTexture(GrContext* ctx, const SkBitmap& b
 
     GrSurfaceDesc desc = GrImageInfoToSurfaceDesc(bitmap.info(), *ctx->caps());
 
-    // We don't support Gray8 directly in the GL backend, so fail-over to GrUploadBitmapToTexture.
-    // That will transform the Gray8 to 8888, then use the driver/GPU to build mipmaps. If we build
-    // the mips on the CPU here, they'll all be Gray8, which isn't useful. (They get treated as A8).
-    // TODO: A better option might be to transform the initial bitmap here to 8888, then run the
-    // CPU mip-mapper on that data before uploading. This is much less code for a rare case though:
-    if (kGray_8_SkColorType == bitmap.colorType()) {
-        return nullptr;
-    }
-
     SkAutoPixmapUnlock srcUnlocker;
     if (!bitmap.requestLock(&srcUnlocker)) {
         return nullptr;
@@ -310,11 +301,31 @@ GrTexture* GrUploadMipMapToTexture(GrContext* ctx, const SkImageInfo& info,
                                                            mipLevelCount, 0, colorMode);
 }
 
+sk_sp<GrTextureProxy> GrUploadMipMapToTextureProxy(GrContext* ctx, const SkImageInfo& info,
+                                                   const GrMipLevel* texels,
+                                                   int mipLevelCount,
+                                                   SkDestinationSurfaceColorMode colorMode) {
+    sk_sp<GrTexture> tex(GrUploadMipMapToTexture(ctx, info, texels, mipLevelCount, colorMode));
+
+    return GrSurfaceProxy::MakeWrapped(std::move(tex));
+}
+
 GrTexture* GrRefCachedBitmapTexture(GrContext* ctx, const SkBitmap& bitmap,
                                     const GrSamplerParams& params, SkScalar scaleAdjust[2]) {
     // Caller doesn't care about the texture's color space (they can always get it from the bitmap)
     return GrBitmapTextureMaker(ctx, bitmap).refTextureForParams(params, nullptr,
                                                                  nullptr, scaleAdjust);
+}
+
+sk_sp<GrTextureProxy> GrRefCachedBitmapTextureProxy(GrContext* ctx,
+                                                    const SkBitmap& bitmap,
+                                                    const GrSamplerParams& params,
+                                                    SkScalar scaleAdjust[2]) {
+    // Caller doesn't care about the texture's color space (they can always get it from the bitmap)
+    sk_sp<GrTexture> tex(GrBitmapTextureMaker(ctx, bitmap).refTextureForParams(params, nullptr,
+                                                                               nullptr,
+                                                                               scaleAdjust));
+    return GrSurfaceProxy::MakeWrapped(std::move(tex));
 }
 
 sk_sp<GrTextureProxy> GrMakeCachedBitmapProxy(GrResourceProvider* resourceProvider,
@@ -339,10 +350,6 @@ sk_sp<GrTextureProxy> GrMakeCachedBitmapProxy(GrResourceProvider* resourceProvid
             // MDB TODO (caching): this has to play nice with the GrSurfaceProxy's caching
             GrInstallBitmapUniqueKeyInvalidator(originalKey, bitmap.pixelRef());
         }
-    }
-
-    if (!proxy) {
-        return nullptr;
     }
 
     return proxy;

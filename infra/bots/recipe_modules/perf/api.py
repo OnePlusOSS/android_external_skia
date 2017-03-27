@@ -35,29 +35,37 @@ def nanobench_flags(bot):
     config += [ '565' ]
 
   gl_prefix = 'gl'
-  sample_count = 16
+  sample_count = '8'
   if 'Android' in bot or 'iOS' in bot:
-    sample_count = 4
+    sample_count = '4'
     # The NVIDIA_Shield has a regular OpenGL implementation. We bench that
     # instead of ES.
     if 'NVIDIA_Shield' not in bot:
       gl_prefix = 'gles'
     # The NP produces a long error stream when we run with MSAA.
-    if 'NexusPlayer' in bot:
-      sample_count = 0
+    # iOS crashes (skia:6399)
+    if 'NexusPlayer' in bot or 'iOS' in bot:
+      sample_count = ''
+  elif 'Intel' in bot:
+    sample_count = ''
 
   config.append(gl_prefix)
-  if sample_count > 0:
-    config.extend([gl_prefix + 'msaa' + str(sample_count),
-      gl_prefix + 'nvpr' + str(sample_count),
-      gl_prefix + 'nvprdit' + str(sample_count)])
+  if sample_count is not '':
+    config.extend([gl_prefix + 'msaa' + sample_count,
+      gl_prefix + 'nvpr' + sample_count,
+      gl_prefix + 'nvprdit' + sample_count])
+
+  # We want to test both the OpenGL config and the GLES config on Linux Intel:
+  # GL is used by Chrome, GLES is used by ChromeOS.
+  if 'Intel' in bot and 'Ubuntu' in bot:
+    config.append('gles')
 
   # Bench instanced rendering on a limited number of platforms
   inst_config = gl_prefix + 'inst'
   if 'Nexus6' in bot:
     config.append(inst_config) # msaa inst isn't working yet on Adreno.
   elif 'PixelC' in bot or 'NVIDIA_Shield' in bot or 'MacMini6.2' in bot:
-    config.extend([inst_config, inst_config + str(sample_count)])
+    config.extend([inst_config, inst_config + sample_count])
 
   if 'CommandBuffer' in bot:
     config = ['commandbuffer']
@@ -99,6 +107,8 @@ def nanobench_flags(bot):
     match.append('~GLInstancedArraysBench') # skia:4714
   if 'IntelIris540' in bot and 'ANGLE' in bot:
     match.append('~tile_image_filter_tiled_64')  # skia:6082
+  if 'Intel' in bot and 'Ubuntu' in bot and not 'Vulkan' in bot:
+    match.append('~native_image_to_raster_surface')  # skia:6401
   if 'Vulkan' in bot and 'NexusPlayer' in bot:
     match.append('~hardstop') # skia:6037
 
@@ -179,6 +189,16 @@ def perf_steps(api):
     args.append(skip_flag)
   args.extend(nanobench_flags(api.vars.builder_name))
 
+  if 'Chromecast' in api.vars.builder_cfg.get('os', ''):
+    # Due to limited disk space, run a watered down perf run on Chromecast.
+    args = [
+      target,
+       '-i', api.flavor.device_dirs.resource_dir,
+       '--images', api.flavor.device_path_join(
+            api.flavor.device_dirs.resource_dir, 'color_wheel.jpg'),
+       '--svgs',  api.flavor.device_dirs.svg_dir,
+    ]
+
   if api.vars.upload_perf_results:
     now = api.time.utcnow()
     ts = int(calendar.timegm(now.utctimetuple()))
@@ -194,8 +214,7 @@ def perf_steps(api):
       if not k in keys_blacklist:
         args.extend([k, api.vars.builder_cfg[k]])
 
-  env = {}
-  env.update(api.vars.default_env)
+  env = api.step.get_from_context('env', {})
   if 'Ubuntu16' in api.vars.builder_name:
     # The vulkan in this asset name simply means that the graphics driver
     # supports Vulkan. It is also the driver used for GL code.
@@ -223,9 +242,9 @@ def perf_steps(api):
   if '_AbandonGpuContext' in api.vars.builder_cfg.get('extra_config', ''):
     args.extend(['--abandonGpuContext', '--nocpu'])
 
-  api.run(api.flavor.step, target, cmd=args,
-          abort_on_failure=False,
-          env=env)
+  with api.step.context({'env': env}):
+    api.run(api.flavor.step, target, cmd=args,
+            abort_on_failure=False)
 
   # Copy results to swarming out dir.
   if api.vars.upload_perf_results:
@@ -237,11 +256,16 @@ def perf_steps(api):
 class PerfApi(recipe_api.RecipeApi):
   def run(self):
     self.m.core.setup()
+    env = self.m.step.get_from_context('env', {})
     if 'iOS' in self.m.vars.builder_name:
-      self.m.vars.default_env['IOS_BUNDLE_ID'] = 'com.google.nanobench'
-    try:
-      self.m.flavor.install_everything()
-      perf_steps(self.m)
-    finally:
-      self.m.flavor.cleanup_steps()
-    self.m.run.check_failure()
+      env['IOS_BUNDLE_ID'] = 'com.google.nanobench'
+    with self.m.step.context({'env': env}):
+      try:
+        if 'Chromecast' in self.m.vars.builder_name:
+          self.m.flavor.install(resources=True, skps=True)
+        else:
+          self.m.flavor.install_everything()
+        perf_steps(self.m)
+      finally:
+        self.m.flavor.cleanup_steps()
+      self.m.run.check_failure()

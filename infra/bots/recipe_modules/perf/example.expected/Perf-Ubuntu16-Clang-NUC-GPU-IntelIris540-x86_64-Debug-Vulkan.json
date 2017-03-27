@@ -7,6 +7,7 @@
       "[START_DIR]/skia/infra/bots/assets/skp/VERSION",
       "/path/to/tmp/"
     ],
+    "infra_step": true,
     "name": "Get downloaded SKP VERSION"
   },
   {
@@ -17,6 +18,7 @@
       "42",
       "[START_DIR]/tmp/SKP_VERSION"
     ],
+    "infra_step": true,
     "name": "write SKP_VERSION"
   },
   {
@@ -27,6 +29,7 @@
       "[START_DIR]/skia/infra/bots/assets/skimage/VERSION",
       "/path/to/tmp/"
     ],
+    "infra_step": true,
     "name": "Get downloaded skimage VERSION"
   },
   {
@@ -37,6 +40,7 @@
       "42",
       "[START_DIR]/tmp/SK_IMAGE_VERSION"
     ],
+    "infra_step": true,
     "name": "write SK_IMAGE_VERSION"
   },
   {
@@ -47,6 +51,7 @@
       "[START_DIR]/skia/infra/bots/assets/svg/VERSION",
       "/path/to/tmp/"
     ],
+    "infra_step": true,
     "name": "Get downloaded SVG VERSION"
   },
   {
@@ -57,6 +62,7 @@
       "42",
       "[START_DIR]/tmp/SVG_VERSION"
     ],
+    "infra_step": true,
     "name": "write SVG_VERSION"
   },
   {
@@ -112,7 +118,7 @@
       "CHROME_HEADLESS": "1",
       "LD_LIBRARY_PATH": "[START_DIR]/linux_vulkan_sdk/lib:[START_DIR]/linux_vulkan_intel_driver_debug",
       "LIBGL_DRIVERS_PATH": "[START_DIR]/linux_vulkan_intel_driver_debug",
-      "PATH": "%(PATH)s:[START_DIR]/linux_vulkan_sdk/bin",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
       "SKIA_OUT": "[START_DIR]/out",
       "VK_ICD_FILENAMES": "[START_DIR]/linux_vulkan_intel_driver_debug/intel_icd.x86_64.json"
     },

@@ -290,18 +290,30 @@ sk_sp<GrSurfaceContext> GrSurfaceProxy::TestCopy(GrContext* context, const GrSur
     return dstContext;
 }
 
-void GrSurfaceProxyPriv::makeBudgeted() {
-    if (fProxy->fTarget) {
-        fProxy->fTarget->resourcePriv().makeBudgeted();
+void GrSurfaceProxyPriv::exactify() {
+    if (this->isExact()) {
+        return;
     }
 
-    fProxy->fBudgeted = SkBudgeted::kYes;
-}
+    SkASSERT(SkBackingFit::kApprox == fProxy->fFit);
 
-void GrSurfaceProxyPriv::makeUnbudgeted() {
     if (fProxy->fTarget) {
-        fProxy->fTarget->resourcePriv().makeUnbudgeted();
+        // The kApprox but already instantiated case. Setting the proxy's width & height to
+        // the instantiated width & height could have side-effects going forward, since we're
+        // obliterating the area of interest information. This call (exactify) only used 
+        // when converting an SkSpecialImage to an SkImage so the proxy shouldn't be
+        // used for additional draws.
+        fProxy->fDesc.fWidth = fProxy->fTarget->width();
+        fProxy->fDesc.fHeight = fProxy->fTarget->height();
+        return;
     }
 
-    fProxy->fBudgeted = SkBudgeted::kNo;
+    // The kApprox uninstantiated case. Making this proxy be exact should be okay.
+    // It could mess things up if prior decisions were based on the approximate size.
+    fProxy->fFit = SkBackingFit::kExact;
+    // If fGpuMemorySize is used when caching specialImages for the image filter DAG. If it has
+    // already been computed we want to leave it alone so that amount will be removed when 
+    // the special image goes away. If it hasn't been computed yet it might as well compute the
+    // exact amount.
 }
+

@@ -20,11 +20,11 @@
 
 #include "SkBitmap.h"
 #include "SkColorPriv.h"
+#include "SkImageEncoderFns.h"
 #include "SkStream.h"
 #include "SkTemplates.h"
 #include "SkUnPreMultiply.h"
 #include "SkUtils.h"
-#include "transform_scanline.h"
 
 // A WebP decoder only, on top of (subset of) libwebp
 // For more information on WebP image format, and libwebp library, see:
@@ -126,7 +126,7 @@ static bool do_encode(SkWStream* stream, const SkPixmap& srcPixmap, const SkEnco
             srcPixmap.colorSpace()->gammaIsLinear());
 
     SkPixmap pixmap = srcPixmap;
-    if (SkEncodeOptions::PremulBehavior::kLegacy == opts.fPremulBehavior) {
+    if (SkEncodeOptions::ColorBehavior::kLegacy == opts.fColorBehavior) {
         pixmap.setColorSpace(nullptr);
     } else {
         if (!pixmap.colorSpace()) {

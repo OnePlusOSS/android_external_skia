@@ -8,6 +8,13 @@
       "/sdcard/revenge_of_the_skiabot/resources"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "mkdir /sdcard/revenge_of_the_skiabot/resources"
   },
   {
@@ -18,7 +25,13 @@
       "[START_DIR]/skia/resources",
       "/sdcard/revenge_of_the_skiabot/resources"
     ],
-    "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "push [START_DIR]/skia/resources/* /sdcard/revenge_of_the_skiabot/resources",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -47,6 +60,7 @@
       "[START_DIR]/skia/infra/bots/assets/skp/VERSION",
       "/path/to/tmp/"
     ],
+    "infra_step": true,
     "name": "Get downloaded SKP VERSION"
   },
   {
@@ -57,6 +71,7 @@
       "42",
       "[START_DIR]/tmp/SKP_VERSION"
     ],
+    "infra_step": true,
     "name": "write SKP_VERSION"
   },
   {
@@ -67,6 +82,13 @@
       "/sdcard/revenge_of_the_skiabot/SKP_VERSION"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "read /sdcard/revenge_of_the_skiabot/SKP_VERSION",
     "stdout": "/path/to/tmp/"
   },
@@ -79,6 +101,13 @@
       "/sdcard/revenge_of_the_skiabot/SKP_VERSION"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "rm /sdcard/revenge_of_the_skiabot/SKP_VERSION"
   },
   {
@@ -90,6 +119,13 @@
       "/sdcard/revenge_of_the_skiabot/skps"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "rm /sdcard/revenge_of_the_skiabot/skps"
   },
   {
@@ -101,6 +137,13 @@
       "/sdcard/revenge_of_the_skiabot/skps"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "mkdir /sdcard/revenge_of_the_skiabot/skps"
   },
   {
@@ -111,7 +154,13 @@
       "[START_DIR]/skp",
       "/sdcard/revenge_of_the_skiabot/skps"
     ],
-    "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "push [START_DIR]/skp/* /sdcard/revenge_of_the_skiabot/skps",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -140,6 +189,13 @@
       "/sdcard/revenge_of_the_skiabot/SKP_VERSION"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "push [START_DIR]/tmp/SKP_VERSION /sdcard/revenge_of_the_skiabot/SKP_VERSION"
   },
   {
@@ -150,6 +206,7 @@
       "[START_DIR]/skia/infra/bots/assets/skimage/VERSION",
       "/path/to/tmp/"
     ],
+    "infra_step": true,
     "name": "Get downloaded skimage VERSION"
   },
   {
@@ -160,6 +217,7 @@
       "42",
       "[START_DIR]/tmp/SK_IMAGE_VERSION"
     ],
+    "infra_step": true,
     "name": "write SK_IMAGE_VERSION"
   },
   {
@@ -170,6 +228,13 @@
       "/sdcard/revenge_of_the_skiabot/SK_IMAGE_VERSION"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "read /sdcard/revenge_of_the_skiabot/SK_IMAGE_VERSION",
     "stdout": "/path/to/tmp/"
   },
@@ -182,6 +247,13 @@
       "/sdcard/revenge_of_the_skiabot/SK_IMAGE_VERSION"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "rm /sdcard/revenge_of_the_skiabot/SK_IMAGE_VERSION"
   },
   {
@@ -193,6 +265,13 @@
       "/sdcard/revenge_of_the_skiabot/images"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "rm /sdcard/revenge_of_the_skiabot/images"
   },
   {
@@ -204,6 +283,13 @@
       "/sdcard/revenge_of_the_skiabot/images"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "mkdir /sdcard/revenge_of_the_skiabot/images"
   },
   {
@@ -214,7 +300,13 @@
       "[START_DIR]/skimage",
       "/sdcard/revenge_of_the_skiabot/images"
     ],
-    "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "push [START_DIR]/skimage/* /sdcard/revenge_of_the_skiabot/images",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -243,6 +335,13 @@
       "/sdcard/revenge_of_the_skiabot/SK_IMAGE_VERSION"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "push [START_DIR]/tmp/SK_IMAGE_VERSION /sdcard/revenge_of_the_skiabot/SK_IMAGE_VERSION"
   },
   {
@@ -253,6 +352,7 @@
       "[START_DIR]/skia/infra/bots/assets/svg/VERSION",
       "/path/to/tmp/"
     ],
+    "infra_step": true,
     "name": "Get downloaded SVG VERSION"
   },
   {
@@ -263,6 +363,7 @@
       "42",
       "[START_DIR]/tmp/SVG_VERSION"
     ],
+    "infra_step": true,
     "name": "write SVG_VERSION"
   },
   {
@@ -273,6 +374,13 @@
       "/sdcard/revenge_of_the_skiabot/SVG_VERSION"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "read /sdcard/revenge_of_the_skiabot/SVG_VERSION",
     "stdout": "/path/to/tmp/"
   },
@@ -285,6 +393,13 @@
       "/sdcard/revenge_of_the_skiabot/SVG_VERSION"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "rm /sdcard/revenge_of_the_skiabot/SVG_VERSION"
   },
   {
@@ -296,6 +411,13 @@
       "/sdcard/revenge_of_the_skiabot/svgs"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "rm /sdcard/revenge_of_the_skiabot/svgs"
   },
   {
@@ -307,6 +429,13 @@
       "/sdcard/revenge_of_the_skiabot/svgs"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "mkdir /sdcard/revenge_of_the_skiabot/svgs"
   },
   {
@@ -317,7 +446,13 @@
       "[START_DIR]/svg",
       "/sdcard/revenge_of_the_skiabot/svgs"
     ],
-    "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "push [START_DIR]/svg/* /sdcard/revenge_of_the_skiabot/svgs",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -346,6 +481,13 @@
       "/sdcard/revenge_of_the_skiabot/SVG_VERSION"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "push [START_DIR]/tmp/SVG_VERSION /sdcard/revenge_of_the_skiabot/SVG_VERSION"
   },
   {
@@ -359,6 +501,7 @@
     "env": {
       "PYTHONPATH": "[START_DIR]/skia/infra/bots/.recipe_deps/build/scripts"
     },
+    "infra_step": true,
     "name": "rmtree dm"
   },
   {
@@ -369,6 +512,7 @@
       "[CUSTOM_[SWARM_OUT_DIR]]/dm",
       "511"
     ],
+    "infra_step": true,
     "name": "makedirs dm",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -392,6 +536,13 @@
       "/sdcard/revenge_of_the_skiabot/dm_out"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "rm /sdcard/revenge_of_the_skiabot/dm_out"
   },
   {
@@ -403,6 +554,13 @@
       "/sdcard/revenge_of_the_skiabot/dm_out"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "mkdir /sdcard/revenge_of_the_skiabot/dm_out"
   },
   {
@@ -413,6 +571,7 @@
       "[START_DIR]/tmp",
       "511"
     ],
+    "infra_step": true,
     "name": "makedirs tmp_dir",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -434,7 +593,13 @@
       "\nimport contextlib\nimport math\nimport socket\nimport sys\nimport time\nimport urllib2\n\nHASHES_URL = 'https://gold.skia.org/_/hashes'\nRETRIES = 5\nTIMEOUT = 60\nWAIT_BASE = 15\n\nsocket.setdefaulttimeout(TIMEOUT)\nfor retry in range(RETRIES):\n  try:\n    with contextlib.closing(\n        urllib2.urlopen(HASHES_URL, timeout=TIMEOUT)) as w:\n      hashes = w.read()\n      with open(sys.argv[1], 'w') as f:\n        f.write(hashes)\n        break\n  except Exception as e:\n    print 'Failed to get uninteresting hashes from %s:' % HASHES_URL\n    print e\n    if retry == RETRIES:\n      raise\n    waittime = WAIT_BASE * math.pow(2, retry)\n    print 'Retry in %d seconds.' % waittime\n    time.sleep(waittime)\n",
       "[START_DIR]/tmp/uninteresting_hashes.txt"
     ],
-    "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "get uninteresting hashes",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -478,6 +643,13 @@
       "/sdcard/revenge_of_the_skiabot/uninteresting_hashes.txt"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "push [START_DIR]/tmp/uninteresting_hashes.txt /sdcard/revenge_of_the_skiabot/uninteresting_hashes.txt"
   },
   {
@@ -488,6 +660,13 @@
       "/data/local/tmp/"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "push dm"
   },
   {
@@ -498,6 +677,13 @@
       "set -x; /data/local/tmp/dm --undefok --resourcePath /sdcard/revenge_of_the_skiabot/resources --skps /sdcard/revenge_of_the_skiabot/skps --images /sdcard/revenge_of_the_skiabot/images/dm --colorImages /sdcard/revenge_of_the_skiabot/images/colorspace --nameByHash --properties gitHash abc123 master client.skia builder Test-Android-Clang-Nexus10-GPU-MaliT604-arm-Debug-Android build_number 6 --svgs /sdcard/revenge_of_the_skiabot/svgs --key arch arm compiler Clang configuration Debug cpu_or_gpu GPU cpu_or_gpu_value MaliT604 extra_config Android model Nexus10 os Android --uninterestingHashesFile /sdcard/revenge_of_the_skiabot/uninteresting_hashes.txt --writePath /sdcard/revenge_of_the_skiabot/dm_out --nocpu --config 8888 srgb gles glesdft glessrgb glesmsaa4 serialize-8888 tiles_rt-8888 pic-8888 --src tests gm image colorImage svg --blacklist glessrgb image _ _ 8888 image _ _ _ test _ GrShape serialize-8888 gm _ bleed_image serialize-8888 gm _ c_gms serialize-8888 gm _ colortype serialize-8888 gm _ colortype_xfermodes serialize-8888 gm _ drawfilter serialize-8888 gm _ fontmgr_bounds_0.75_0 serialize-8888 gm _ fontmgr_bounds_1_-0.25 serialize-8888 gm _ fontmgr_bounds serialize-8888 gm _ fontmgr_match serialize-8888 gm _ fontmgr_iter serialize-8888 gm _ imagemasksubset serialize-8888 gm _ bitmapfilters serialize-8888 gm _ bitmapshaders serialize-8888 gm _ bleed serialize-8888 gm _ bleed_alpha_bmp serialize-8888 gm _ bleed_alpha_bmp_shader serialize-8888 gm _ convex_poly_clip serialize-8888 gm _ extractalpha serialize-8888 gm _ filterbitmap_checkerboard_32_32_g8 serialize-8888 gm _ filterbitmap_image_mandrill_64 serialize-8888 gm _ shadows serialize-8888 gm _ simpleaaclip_aaclip serialize-8888 gm _ composeshader_bitmap serialize-8888 gm _ scaled_tilemodes_npot serialize-8888 gm _ scaled_tilemodes serialize-8888 gm _ typefacerendering_pfaMac serialize-8888 gm _ parsedpaths serialize-8888 gm _ ImageGeneratorExternal_rect serialize-8888 gm _ ImageGeneratorExternal_shader serialize-8888 gm _ shadow_utils serialize-8888 gm _ bleed_alpha_image serialize-8888 gm _ bleed_alpha_image_shader serialize-8888 gm _ verylargebitmap serialize-8888 gm _ verylarge_picture_image pic-8888 gm _ drawfilter pic-8888 gm _ image-cacherator-from-picture serialize-8888 gm _ image-cacherator-from-picture pic-8888 gm _ image-cacherator-from-raster serialize-8888 gm _ image-cacherator-from-raster pic-8888 gm _ image-cacherator-from-ctable serialize-8888 gm _ image-cacherator-from-ctable pic-8888 gm _ gamut serialize-8888 gm _ gamut pic-8888 gm _ complexclip4_bw serialize-8888 gm _ complexclip4_bw pic-8888 gm _ complexclip4_aa serialize-8888 gm _ complexclip4_aa tiles_rt-8888 gm _ complexclip4_bw tiles_rt-8888 gm _ complexclip4_aa _ image _ interlaced1.png _ image _ interlaced2.png _ image _ interlaced3.png _ image _ .arw _ image _ .cr2 _ image _ .dng _ image _ .nef _ image _ .nrw _ image _ .orf _ image _ .raf _ image _ .rw2 _ image _ .pef _ image _ .srw _ image _ .ARW _ image _ .CR2 _ image _ .DNG _ image _ .NEF _ image _ .NRW _ image _ .ORF _ image _ .RAF _ image _ .RW2 _ image _ .PEF _ image _ .SRW --match ~CopySurface ~SRGBReadWritePixels; echo $? >/data/local/tmp/rc",
       "[START_DIR]/tmp/dm.sh"
     ],
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "write dm.sh"
   },
   {
@@ -508,6 +694,13 @@
       "/data/local/tmp/"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "push dm.sh"
   },
   {
@@ -517,6 +710,13 @@
       "-c"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "clear log"
   },
   {
@@ -527,6 +727,12 @@
       "/data/local/tmp/",
       "dm.sh"
     ],
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
     "name": "dm",
     "~followup_annotations": [
       "step returned non-zero exit code: 1",
@@ -554,6 +760,13 @@
       "[CUSTOM_[SWARM_OUT_DIR]]/dm"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "pull /sdcard/revenge_of_the_skiabot/dm_out [CUSTOM_[SWARM_OUT_DIR]]/dm",
     "~followup_annotations": [
       "step returned non-zero exit code: 1",
@@ -567,6 +780,13 @@
       "\nimport os\nimport subprocess\nimport sys\nout = sys.argv[1]\nlog = subprocess.check_output(['adb', 'logcat', '-d'])\nfor line in log.split('\\n'):\n  tokens = line.split()\n  if len(tokens) == 11 and tokens[-7] == 'F' and tokens[-3] == 'pc':\n    addr, path = tokens[-2:]\n    local = os.path.join(out, os.path.basename(path))\n    if os.path.exists(local):\n      sym = subprocess.check_output(['addr2line', '-Cfpe', local, addr])\n      line = line.replace(addr, addr + ' ' + sym.strip())\n  print line\n",
       "[START_DIR]/out/Debug"
     ],
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "dump log",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -593,6 +813,13 @@
       "kill-server"
     ],
     "cwd": "[START_DIR]/skia",
+    "env": {
+      "BUILDTYPE": "Debug",
+      "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "infra_step": true,
     "name": "kill adb server"
   },
   {

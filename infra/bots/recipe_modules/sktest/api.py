@@ -13,9 +13,9 @@ def dm_flags(bot):
   args = []
 
   # This enables non-deterministic random seeding of the GPU FP optimization
-  # test. Limit it to one bot until we're sure it's not going to cause an
+  # test. Limit testing until we're sure it's not going to cause an
   # avalanche of problems.
-  if 'Test-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Release' in bot:
+  if 'Ubuntu' in bot or 'Win' in bot or 'Mac' in bot:
     args.append('--randomProcessorTest')
 
   # 32-bit desktop bots tend to run out of memory, because they have relatively
@@ -23,14 +23,27 @@ def dm_flags(bot):
   if '-x86-' in bot and not 'NexusPlayer' in bot:
     args.extend('--threads 4'.split(' '))
 
+  # Avoid issues with dynamically exceeding resource cache limits.
+  if 'Test' in bot and 'DISCARDABLE' in bot:
+    args.extend('--threads 0'.split(' '))
+
   # These are the canonical configs that we would ideally run on all bots. We
   # may opt out or substitute some below for specific bots
   configs = ['8888', 'srgb', 'pdf']
   # Add in either gles or gl configs to the canonical set based on OS
+  sample_count = '8'
+  gl_prefix = 'gl'
   if 'Android' in bot or 'iOS' in bot:
-    configs.extend(['gles', 'glesdft', 'glessrgb', 'glesmsaa4'])
-  else:
-    configs.extend(['gl', 'gldft', 'glsrgb', 'glmsaa16'])
+    sample_count = '4'
+    # We want to test the OpenGL config not the GLES config on the Shield
+    if 'NVIDIA_Shield' not in bot:
+      gl_prefix = 'gles'
+  elif 'Intel' in bot:
+    sample_count = ''
+
+  configs.extend([gl_prefix, gl_prefix + 'dft', gl_prefix + 'srgb'])
+  if sample_count is not '':
+    configs.append(gl_prefix + 'msaa' + sample_count)
 
   # The NP produces a long error stream when we run with MSAA. The Tegra3 just
   # doesn't support it.
@@ -58,20 +71,18 @@ def dm_flags(bot):
     configs.extend(['lite-8888'])                # Experimental display list.
     configs.extend(['gbr-8888'])
 
-  if '-TSAN' not in bot:
+  if '-TSAN' not in bot and sample_count is not '':
     if ('TegraK1'  in bot or
         'TegraX1'  in bot or
         'GTX550Ti' in bot or
         'GTX660'   in bot or
         'GT610'    in bot):
-      if 'Android' in bot:
-        configs.append('glesnvprdit4')
-      else:
-        configs.append('glnvprdit16')
+      configs.append(gl_prefix + 'nvprdit' + sample_count)
 
-  # We want to test the OpenGL config not the GLES config on the Shield
-  if 'NVIDIA_Shield' in bot:
-    configs = [x.replace('gles', 'gl') for x in configs]
+  # We want to test both the OpenGL config and the GLES config on Linux Intel:
+  # GL is used by Chrome, GLES is used by ChromeOS.
+  if 'Intel' in bot and 'Ubuntu' in bot:
+    configs.extend(['gles', 'glesdft', 'glessrgb'])
 
   # NP is running out of RAM when we run all these modes.  skia:3255
   if 'NexusPlayer' not in bot:
@@ -80,17 +91,17 @@ def dm_flags(bot):
 
   # Test instanced rendering on a limited number of platforms
   if 'Nexus6' in bot:
-    configs.append('glesinst') # glesinst4 isn't working yet on Adreno.
-  elif 'NVIDIA_Shield' in bot:
-    # Multisampled instanced configs use nvpr.
-    configs = [x.replace('glnvpr', 'glinst') for x in configs]
-    configs.append('glinst')
-  elif 'PixelC' in bot:
-    # Multisampled instanced configs use nvpr.
-    configs = [x.replace('glesnvpr', 'glesinst') for x in configs]
-    configs.append('glesinst')
-  elif 'MacMini6.2' in bot:
-    configs.extend(['glinst', 'glinst16'])
+    configs.append(gl_prefix + 'inst') # inst msaa isn't working yet on Adreno.
+  elif 'NVIDIA_Shield' in bot or 'PixelC' in bot:
+    # Multisampled instanced configs use nvpr so we substitute inst msaa
+    # configs for nvpr msaa configs.
+    old = gl_prefix + 'nvpr'
+    new = gl_prefix + 'inst'
+    configs = [x.replace(old, new) for x in configs]
+    # We also test non-msaa instanced.
+    configs.append(new)
+  elif 'MacMini6.2' in bot and sample_count is not '':
+    configs.extend([gl_prefix + 'inst', gl_prefix + 'inst' + sample_count])
 
   # CommandBuffer bot *only* runs the command_buffer config.
   if 'CommandBuffer' in bot:
@@ -100,8 +111,10 @@ def dm_flags(bot):
   if 'ANGLE' in bot:
     configs = ['angle_d3d11_es2',
                'angle_d3d9_es2',
-               'angle_d3d11_es2_msaa4',
                'angle_gl_es2']
+    if sample_count is not '':
+      # Currently we only have 4 sample msaa angle configs
+      configs.append('angle_d3d11_es2_msaa4')
 
   # Vulkan bot *only* runs the vk config.
   if 'Vulkan' in bot:
@@ -124,8 +137,8 @@ def dm_flags(bot):
 
   # TODO: ???
   blacklist('f16 _ _ dstreadshuffle')
-  blacklist('glessrgb image _ _')
   blacklist('glsrgb image _ _')
+  blacklist('glessrgb image _ _')
 
   # Decoder tests are now performing gamma correct decodes.  This means
   # that, when viewing the results, we need to perform a gamma correct
@@ -147,8 +160,7 @@ def dm_flags(bot):
     blacklist('_ svg _ _')
 
   if 'iOS' in bot:
-    blacklist('gles skp _ _')
-    blacklist('glesmsaa skp _ _')
+    blacklist(gl_prefix + ' skp _ _')
 
   if 'Mac' in bot or 'iOS' in bot:
     # CG fails on questionable bmps
@@ -311,34 +323,37 @@ def dm_flags(bot):
   # Large image that overwhelms older Mac bots
   if 'MacMini4.1-GPU' in bot:
     blacklist('_ image _ abnormal.wbmp')
-    blacklist(['glmsaa16', 'gm', '_', 'blurcircles'])
+    blacklist([gl_prefix + 'msaa' + sample_count, 'gm', '_', 'blurcircles'])
 
   if 'IntelHD405' in bot and 'Ubuntu16' in bot:
     # skia:6331
-    blacklist('glmsaa16 image gen_codec_gpu abnormal.wbmp')
+    blacklist(['glmsaa8',   'image', 'gen_codec_gpu', 'abnormal.wbmp'])
+    blacklist(['glesmsaa4', 'image', 'gen_codec_gpu', 'abnormal.wbmp'])
 
   if 'Nexus5' in bot:
     # skia:5876
     blacklist(['_', 'gm', '_', 'encode-platform'])
 
   if 'AndroidOne-GPU' in bot:  # skia:4697, skia:4704, skia:4694, skia:4705
-    blacklist(['_',         'gm', '_', 'bigblurs'])
-    blacklist(['_',         'gm', '_', 'bleed'])
-    blacklist(['_',         'gm', '_', 'bleed_alpha_bmp'])
-    blacklist(['_',         'gm', '_', 'bleed_alpha_bmp_shader'])
-    blacklist(['_',         'gm', '_', 'bleed_alpha_image'])
-    blacklist(['_',         'gm', '_', 'bleed_alpha_image_shader'])
-    blacklist(['_',         'gm', '_', 'bleed_image'])
-    blacklist(['_',         'gm', '_', 'dropshadowimagefilter'])
-    blacklist(['_',         'gm', '_', 'filterfastbounds'])
-    blacklist(['gles',      'gm', '_', 'imageblurtiled'])
-    blacklist(['glesmsaa4', 'gm', '_', 'imageblurtiled'])
-    blacklist(['glesmsaa4', 'gm', '_', 'imagefiltersbase'])
-    blacklist(['_',         'gm', '_', 'imagefiltersclipped'])
-    blacklist(['_',         'gm', '_', 'imagefiltersscaled'])
-    blacklist(['_',         'gm', '_', 'imageresizetiled'])
-    blacklist(['_',         'gm', '_', 'matrixconvolution'])
-    blacklist(['_',         'gm', '_', 'strokedlines'])
+    blacklist(['_',            'gm', '_', 'bigblurs'])
+    blacklist(['_',            'gm', '_', 'bleed'])
+    blacklist(['_',            'gm', '_', 'bleed_alpha_bmp'])
+    blacklist(['_',            'gm', '_', 'bleed_alpha_bmp_shader'])
+    blacklist(['_',            'gm', '_', 'bleed_alpha_image'])
+    blacklist(['_',            'gm', '_', 'bleed_alpha_image_shader'])
+    blacklist(['_',            'gm', '_', 'bleed_image'])
+    blacklist(['_',            'gm', '_', 'dropshadowimagefilter'])
+    blacklist(['_',            'gm', '_', 'filterfastbounds'])
+    blacklist([gl_prefix,      'gm', '_', 'imageblurtiled'])
+    blacklist(['_',            'gm', '_', 'imagefiltersclipped'])
+    blacklist(['_',            'gm', '_', 'imagefiltersscaled'])
+    blacklist(['_',            'gm', '_', 'imageresizetiled'])
+    blacklist(['_',            'gm', '_', 'matrixconvolution'])
+    blacklist(['_',            'gm', '_', 'strokedlines'])
+    if sample_count is not '':
+      gl_msaa_config = gl_prefix + 'msaa' + sample_count
+      blacklist([gl_msaa_config, 'gm', '_', 'imageblurtiled'])
+      blacklist([gl_msaa_config, 'gm', '_', 'imagefiltersbase'])
 
   match = []
   if 'Valgrind' in bot: # skia:3021
@@ -389,6 +404,13 @@ def dm_flags(bot):
   if 'Vulkan' in bot and 'GTX1070' in bot and 'Win' in bot:
     # skia:6092
     match.append('~GPUMemorySize')
+
+  if 'Vulkan' in bot and 'RadeonR9M470X' in bot and 'Win' in bot:
+    # skia:6396
+    match.append('~ComposedImageFilterBounds_Gpu')
+    match.append('~CopySurface')
+    match.append('~ImageFilterZeroBlurSigma_Gpu')
+    match.append('~XfermodeImageFilterCroppedInput_Gpu')
 
   if 'Vulkan' in bot and 'IntelIris540' in bot and 'Ubuntu' in bot:
     match.extend(['~VkHeapTests', # skia:6245
@@ -503,7 +525,6 @@ def test_steps(api):
             time.sleep(waittime)
         """,
         args=[host_hashes_file],
-        cwd=api.vars.skia_dir,
         abort_on_failure=False,
         fail_build_on_failure=False,
         infra_step=True)
@@ -561,8 +582,7 @@ def test_steps(api):
     args.append(skip_flag)
   args.extend(dm_flags(api.vars.builder_name))
 
-  env = {}
-  env.update(api.vars.default_env)
+  env = api.step.get_from_context('env', {})
   if 'Ubuntu16' in api.vars.builder_name:
     # The vulkan in this asset name simply means that the graphics driver
     # supports Vulkan. It is also the driver used for GL code.
@@ -592,9 +612,8 @@ def test_steps(api):
   if '_PreAbandonGpuContext' in api.vars.builder_cfg.get('extra_config', ''):
     args.append('--preAbandonGpuContext')
 
-  api.run(api.flavor.step, 'dm', cmd=args,
-          abort_on_failure=False,
-          env=env)
+  with api.step.context({'env': env}):
+    api.run(api.flavor.step, 'dm', cmd=args, abort_on_failure=False)
 
   if api.vars.upload_dm_results:
     # Copy images and JSON to host machine if needed.
@@ -605,11 +624,13 @@ def test_steps(api):
 class TestApi(recipe_api.RecipeApi):
   def run(self):
     self.m.core.setup()
+    env = self.m.step.get_from_context('env', {})
     if 'iOS' in self.m.vars.builder_name:
-      self.m.vars.default_env['IOS_BUNDLE_ID'] = 'com.google.dm'
-    try:
-      self.m.flavor.install_everything()
-      test_steps(self.m)
-    finally:
-      self.m.flavor.cleanup_steps()
-    self.m.run.check_failure()
+      env['IOS_BUNDLE_ID'] = 'com.google.dm'
+    with self.m.step.context({'env': env}):
+      try:
+        self.m.flavor.install_everything()
+        test_steps(self.m)
+      finally:
+        self.m.flavor.cleanup_steps()
+      self.m.run.check_failure()

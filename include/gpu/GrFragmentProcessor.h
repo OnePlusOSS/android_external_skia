@@ -16,6 +16,7 @@ class GrInvariantOutput;
 class GrPipeline;
 class GrProcessorKeyBuilder;
 class GrShaderCaps;
+class GrSwizzle;
 
 /** Provides custom fragment shader code. Fragment processors receive an input color (vec4f) and
     produce an output color. They may reference textures and uniforms. They may use
@@ -54,6 +55,24 @@ public:
      *  processor.
      */
     static sk_sp<GrFragmentProcessor> PremulInput(sk_sp<GrFragmentProcessor>);
+
+    /**
+     *  Returns a fragment processor that calls the passed in fragment processor, and then premuls
+     *  the output.
+     */
+    static sk_sp<GrFragmentProcessor> PremulOutput(sk_sp<GrFragmentProcessor>);
+
+    /**
+     *  Returns a fragment processor that calls the passed in fragment processor, and then unpremuls
+     *  the output.
+     */
+    static sk_sp<GrFragmentProcessor> UnpremulOutput(sk_sp<GrFragmentProcessor>);
+
+    /**
+     *  Returns a fragment processor that calls the passed in fragment processor, and then swizzles
+     *  the output.
+     */
+    static sk_sp<GrFragmentProcessor> SwizzleOutput(sk_sp<GrFragmentProcessor>, const GrSwizzle&);
 
     /**
      * Returns a fragment processor that runs the passed in array of fragment processors in a

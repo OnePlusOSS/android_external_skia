@@ -205,7 +205,7 @@ public:
         fBackend = kNone_BackEndType;
     }
 
-    virtual ~DefaultDeviceManager() {
+    ~DefaultDeviceManager() override {
 #if SK_SUPPORT_GPU
         SkSafeUnref(fCurContext);
         SkSafeUnref(fCurIntf);
@@ -1088,7 +1088,7 @@ void SampleWindow::draw(SkCanvas* canvas) {
     if (kNo_Tiling == fTilingMode) {
         SkDebugfDumper dumper;
         SkDumpCanvas dump(&dumper);
-        SkDeferredCanvas deferred(canvas);
+        SkDeferredCanvas deferred(canvas, SkDeferredCanvas::kEager);
         SkCanvas* c = fUseDeferredCanvas ? &deferred : canvas;
         this->INHERITED::draw(c); // no looping or surfaces needed
     } else {

@@ -49,14 +49,14 @@ class CIPDStore(object):
   def __init__(self, cipd_url=DEFAULT_CIPD_SERVICE_URL):
     self._cipd = 'cipd'
     if sys.platform == 'win32':
-      self._cipd = 'cipd.exe'
+      self._cipd = 'cipd.bat'
     self._cipd_url = cipd_url
     self._check_setup()
 
   def _check_setup(self):
     """Verify that we have the CIPD binary and that we're authenticated."""
     try:
-      subprocess.check_call([self._cipd, 'auth-info'])
+      self._run(['auth-info'], specify_service_url=False)
     except OSError:
       raise Exception('CIPD binary not found on your path (typically in '
                       'depot_tools). You may need to update depot_tools.')
@@ -64,12 +64,19 @@ class CIPDStore(object):
       raise Exception('CIPD not authenticated. You may need to run:\n\n'
                       '$ %s auth-login' % self._cipd)
 
-  def _run(self, cmd):
+  def _run(self, cmd, specify_service_url=True):
     """Run the given command."""
+    cipd_args = []
+    if specify_service_url:
+      cipd_args.extend(['--service-url', self._cipd_url])
+    if os.getenv('USE_CIPD_GCE_AUTH'):
+      # Enable automatic GCE authentication. For context see
+      # https://bugs.chromium.org/p/skia/issues/detail?id=6385#c3
+      cipd_args.extend(['-service-account-json', ':gce'])
     subprocess.check_call(
         [self._cipd]
         + cmd
-        + ['--service-url', self._cipd_url]
+        + cipd_args
     )
 
   def _json_output(self, cmd):

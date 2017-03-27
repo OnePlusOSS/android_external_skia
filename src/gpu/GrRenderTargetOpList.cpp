@@ -30,10 +30,12 @@ static const int kDefaultMaxOpLookahead = 10;
 GrRenderTargetOpList::GrRenderTargetOpList(GrRenderTargetProxy* rtp, GrGpu* gpu,
                                            GrResourceProvider* resourceProvider,
                                            GrAuditTrail* auditTrail, const Options& options)
-    : INHERITED(rtp, auditTrail)
-    , fGpu(SkRef(gpu))
-    , fResourceProvider(resourceProvider)
-    , fLastClipStackGenID(SK_InvalidUniqueID) {
+        : INHERITED(rtp, auditTrail)
+        , fGpu(SkRef(gpu))
+        , fResourceProvider(resourceProvider)
+        , fLastClipStackGenID(SK_InvalidUniqueID)
+        , fClipAllocator(fClipAllocatorStorage, sizeof(fClipAllocatorStorage),
+                         sizeof(fClipAllocatorStorage)) {
 
     fMaxOpLookback = (options.fMaxOpCombineLookback < 0) ? kDefaultMaxOpLookback
                                                          : options.fMaxOpCombineLookback;
@@ -70,19 +72,40 @@ void GrRenderTargetOpList::dump() const {
         }
     }
 }
+
+void GrRenderTargetOpList::validateTargetsSingleRenderTarget() const {
+    GrRenderTarget* rt = nullptr;
+    for (int i = 0; i < fRecordedOps.count(); ++i) {
+        if (!fRecordedOps[i].fOp) {
+            continue;       // combined forward
+        }
+
+        if (!rt) {
+            rt = fRecordedOps[i].fRenderTarget.get();
+        } else {
+            SkASSERT(fRecordedOps[i].fRenderTarget.get() == rt);
+        }
+    }
+}
 #endif
 
 void GrRenderTargetOpList::prepareOps(GrOpFlushState* flushState) {
-    // Semi-usually the GrOpLists are already closed at this point, but sometimes Ganesh
-    // needs to flush mid-draw. In that case, the SkGpuDevice's GrOpLists won't be closed
-    // but need to be flushed anyway. Closing such GrOpLists here will mean new
-    // GrOpLists will be created to replace them if the SkGpuDevice(s) write to them again.
-    this->makeClosed();
+    // MDB TODO: add SkASSERT(this->isClosed());
 
     // Loop over the ops that haven't yet been prepared.
     for (int i = 0; i < fRecordedOps.count(); ++i) {
         if (fRecordedOps[i].fOp) {
+            GrOpFlushState::DrawOpArgs opArgs;
+            if (fRecordedOps[i].fRenderTarget) {
+                opArgs = {
+                    fRecordedOps[i].fRenderTarget.get(),
+                    fRecordedOps[i].fAppliedClip,
+                    fRecordedOps[i].fDstTexture
+                };
+            }
+            flushState->setDrawOpArgs(&opArgs);
             fRecordedOps[i].fOp->prepare(flushState);
+            flushState->setDrawOpArgs(nullptr);
         }
     }
 
@@ -122,7 +145,17 @@ bool GrRenderTargetOpList::executeOps(GrOpFlushState* flushState) {
             }
             flushState->setCommandBuffer(commandBuffer.get());
         }
+        GrOpFlushState::DrawOpArgs opArgs;
+        if (fRecordedOps[i].fRenderTarget) {
+            opArgs = {
+                fRecordedOps[i].fRenderTarget.get(),
+                fRecordedOps[i].fAppliedClip,
+                fRecordedOps[i].fDstTexture
+            };
+            flushState->setDrawOpArgs(&opArgs);
+        }
         fRecordedOps[i].fOp->execute(flushState);
+        flushState->setDrawOpArgs(nullptr);
     }
     if (commandBuffer) {
         commandBuffer->end();
@@ -213,8 +246,33 @@ static inline bool can_reorder(const SkRect& a, const SkRect& b) {
            b.fRight <= a.fLeft || b.fBottom <= a.fTop;
 }
 
+bool GrRenderTargetOpList::combineIfPossible(const RecordedOp& a, GrOp* b,
+                                             const GrAppliedClip* bClip,
+                                             const DstTexture* bDstTexture) {
+    if (a.fAppliedClip) {
+        if (!bClip) {
+            return false;
+        }
+        if (*a.fAppliedClip != *bClip) {
+            return false;
+        }
+    } else if (bClip) {
+        return false;
+    }
+    if (bDstTexture) {
+        if (a.fDstTexture != *bDstTexture) {
+            return false;
+        }
+    } else if (a.fDstTexture.texture()) {
+        return false;
+    }
+    return a.fOp->combineIfPossible(b, *this->caps());
+}
+
 GrOp* GrRenderTargetOpList::recordOp(std::unique_ptr<GrOp> op,
-                                     GrRenderTargetContext* renderTargetContext) {
+                                     GrRenderTargetContext* renderTargetContext,
+                                     GrAppliedClip* clip,
+                                     const DstTexture* dstTexture) {
     GrRenderTarget* renderTarget =
             renderTargetContext ? renderTargetContext->accessRenderTarget()
                                 : nullptr;
@@ -249,7 +307,7 @@ GrOp* GrRenderTargetOpList::recordOp(std::unique_ptr<GrOp> op,
                           candidate.fOp->uniqueID());
                 break;
             }
-            if (candidate.fOp->combineIfPossible(op.get(), *this->caps())) {
+            if (this->combineIfPossible(candidate, op.get(), clip, dstTexture)) {
                 GrOP_INFO("\t\tCombining with (%s, B%u)\n", candidate.fOp->name(),
                           candidate.fOp->uniqueID());
                 GrOP_INFO("\t\t\tCombined op info:\n");
@@ -273,7 +331,10 @@ GrOp* GrRenderTargetOpList::recordOp(std::unique_ptr<GrOp> op,
         GrOP_INFO("\t\tFirstOp\n");
     }
     GR_AUDIT_TRAIL_OP_RESULT_NEW(fAuditTrail, op);
-    fRecordedOps.emplace_back(std::move(op), renderTarget);
+    if (clip) {
+        clip = fClipAllocator.make<GrAppliedClip>(std::move(*clip));
+    }
+    fRecordedOps.emplace_back(std::move(op), renderTarget, clip, dstTexture);
     fRecordedOps.back().fOp->wasRecorded();
     fLastFullClearOp = nullptr;
     fLastFullClearRenderTargetID.makeInvalid();
@@ -284,7 +345,7 @@ void GrRenderTargetOpList::forwardCombine() {
     if (fMaxOpLookahead <= 0) {
         return;
     }
-    for (int i = 0; i < fRecordedOps.count() - 2; ++i) {
+    for (int i = 0; i < fRecordedOps.count() - 1; ++i) {
         GrOp* op = fRecordedOps[i].fOp.get();
         GrRenderTarget* renderTarget = fRecordedOps[i].fRenderTarget.get();
         // If we don't have a valid destination render target ID then we cannot reorder.
@@ -301,14 +362,8 @@ void GrRenderTargetOpList::forwardCombine() {
                           candidate.fOp->uniqueID());
                 break;
             }
-            if (j == i +1) {
-                // We assume op would have combined with candidate when the candidate was added
-                // via backwards combining in recordOp.
-
-                // not sure why this fires with device-clipping in gm/complexclip4.cpp
-//                SkASSERT(!op->combineIfPossible(candidate.fOp.get(), *this->caps()));
-
-            } else if (op->combineIfPossible(candidate.fOp.get(), *this->caps())) {
+            if (this->combineIfPossible(fRecordedOps[i], candidate.fOp.get(),
+                                        candidate.fAppliedClip, &candidate.fDstTexture)) {
                 GrOP_INFO("\t\tCombining with (%s, B%u)\n", candidate.fOp->name(),
                           candidate.fOp->uniqueID());
                 GR_AUDIT_TRAIL_OPS_RESULT_COMBINED(fAuditTrail, op, candidate.fOp.get());

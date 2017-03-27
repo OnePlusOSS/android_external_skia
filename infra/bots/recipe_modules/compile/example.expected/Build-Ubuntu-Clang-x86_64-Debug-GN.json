@@ -7,6 +7,7 @@
       "[CUSTOM_/_B_WORK]",
       "511"
     ],
+    "infra_step": true,
     "name": "makedirs checkout_path",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -42,13 +43,11 @@
     ],
     "cwd": "[CUSTOM_/_B_WORK]",
     "env": {
-      "BUILDTYPE": "Debug",
-      "CHROME_HEADLESS": "1",
       "GIT_HTTP_LOW_SPEED_LIMIT": "1000",
       "GIT_HTTP_LOW_SPEED_TIME": "300",
-      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
-      "SKIA_OUT": "[CUSTOM_/_B_WORK]/skia/out/Build-Ubuntu-Clang-x86_64-Debug-GN"
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]"
     },
+    "infra_step": true,
     "name": "bot_update",
     "~followup_annotations": [
       "@@@STEP_TEXT@Some step text@@@",
@@ -86,12 +85,13 @@
     "cwd": "[CUSTOM_/_B_WORK]/skia",
     "env": {
       "BUILDTYPE": "Debug",
+      "CC": "/usr/bin/clang",
       "CHROME_HEADLESS": "1",
-      "GIT_HTTP_LOW_SPEED_LIMIT": "1000",
-      "GIT_HTTP_LOW_SPEED_TIME": "300",
+      "CXX": "/usr/bin/clang++",
       "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
       "SKIA_OUT": "[CUSTOM_/_B_WORK]/skia/out/Build-Ubuntu-Clang-x86_64-Debug-GN"
     },
+    "infra_step": true,
     "name": "fetch-gn"
   },
   {
@@ -104,9 +104,9 @@
     "cwd": "[CUSTOM_/_B_WORK]/skia",
     "env": {
       "BUILDTYPE": "Debug",
+      "CC": "/usr/bin/clang",
       "CHROME_HEADLESS": "1",
-      "GIT_HTTP_LOW_SPEED_LIMIT": "1000",
-      "GIT_HTTP_LOW_SPEED_TIME": "300",
+      "CXX": "/usr/bin/clang++",
       "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
       "SKIA_OUT": "[CUSTOM_/_B_WORK]/skia/out/Build-Ubuntu-Clang-x86_64-Debug-GN"
     },
@@ -121,9 +121,9 @@
     "cwd": "[CUSTOM_/_B_WORK]/skia",
     "env": {
       "BUILDTYPE": "Debug",
+      "CC": "/usr/bin/clang",
       "CHROME_HEADLESS": "1",
-      "GIT_HTTP_LOW_SPEED_LIMIT": "1000",
-      "GIT_HTTP_LOW_SPEED_TIME": "300",
+      "CXX": "/usr/bin/clang++",
       "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
       "SKIA_OUT": "[CUSTOM_/_B_WORK]/skia/out/Build-Ubuntu-Clang-x86_64-Debug-GN"
     },
@@ -137,6 +137,7 @@
       "[CUSTOM_/_B_WORK]/skia/out/Build-Ubuntu-Clang-x86_64-Debug-GN/Debug",
       "[CUSTOM_[SWARM_OUT_DIR]]/out/Debug"
     ],
+    "infra_step": true,
     "name": "copy build products",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@import errno@@@",

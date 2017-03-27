@@ -12,12 +12,13 @@
 #include "SkColor.h"
 #include "SkColorPriv.h"
 #include "SkDither.h"
+#include "SkImageEncoderFns.h"
 #include "SkMath.h"
 #include "SkStream.h"
+#include "SkString.h"
 #include "SkTemplates.h"
 #include "SkUnPreMultiply.h"
 #include "SkUtils.h"
-#include "transform_scanline.h"
 
 #include "png.h"
 
@@ -36,6 +37,18 @@ static void sk_write_fn(png_structp png_ptr, png_bytep data, png_size_t len) {
     if (!sk_stream->write(data, len)) {
         png_error(png_ptr, "sk_write_fn Error!");
     }
+}
+
+static void set_icc(png_structp png_ptr, png_infop info_ptr, sk_sp<SkData> icc) {
+#if PNG_LIBPNG_VER_MAJOR > 1 || (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 5)
+    const char* name = "Skia";
+    png_const_bytep iccPtr = icc->bytes();
+#else
+    SkString str("Skia");
+    char* name = str.writable_str();
+    png_charp iccPtr = (png_charp) icc->writable_data();
+#endif
+    png_set_iCCP(png_ptr, info_ptr, name, 0, iccPtr, icc->size());
 }
 
 static transform_scanline_proc choose_proc(const SkImageInfo& info) {
@@ -168,7 +181,7 @@ bool SkEncodeImageAsPNG(SkWStream* stream, const SkPixmap& src, const SkEncodeOp
              src.colorSpace()->gammaIsLinear());
 
     SkPixmap pixmap = src;
-    if (SkEncodeOptions::PremulBehavior::kLegacy == opts.fPremulBehavior) {
+    if (SkEncodeOptions::ColorBehavior::kLegacy == opts.fColorBehavior) {
         pixmap.setColorSpace(nullptr);
     } else {
         if (!pixmap.colorSpace()) {
@@ -331,6 +344,17 @@ static bool do_encode(SkWStream* stream, const SkPixmap& pixmap,
         png_set_PLTE(png_ptr, info_ptr, paletteColors, colorTable->count());
         if (numTrans > 0) {
             png_set_tRNS(png_ptr, info_ptr, trans, numTrans, nullptr);
+        }
+    }
+
+    if (pixmap.colorSpace()) {
+        if (pixmap.colorSpace()->isSRGB()) {
+            png_set_sRGB(png_ptr, info_ptr, PNG_sRGB_INTENT_PERCEPTUAL);
+        } else {
+            sk_sp<SkData> icc = icc_from_color_space(*pixmap.colorSpace());
+            if (icc) {
+                set_icc(png_ptr, info_ptr, std::move(icc));
+            }
         }
     }
 

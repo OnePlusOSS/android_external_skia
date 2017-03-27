@@ -7,6 +7,7 @@
       "[CUSTOM_/_B_WORK]",
       "511"
     ],
+    "infra_step": true,
     "name": "makedirs checkout_path",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -48,13 +49,11 @@
     ],
     "cwd": "[CUSTOM_/_B_WORK]",
     "env": {
-      "BUILDTYPE": "Release",
-      "CHROME_HEADLESS": "1",
       "GIT_HTTP_LOW_SPEED_LIMIT": "1000",
       "GIT_HTTP_LOW_SPEED_TIME": "300",
-      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
-      "SKIA_OUT": "[CUSTOM_/_B_WORK]/pdfium/third_party/skia/out/Build-Ubuntu-GCC-x86_64-Release-PDFium"
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]"
     },
+    "infra_step": true,
     "name": "bot_update",
     "~followup_annotations": [
       "@@@STEP_TEXT@Some step text@@@",
@@ -102,8 +101,6 @@
     "env": {
       "BUILDTYPE": "Release",
       "CHROME_HEADLESS": "1",
-      "GIT_HTTP_LOW_SPEED_LIMIT": "1000",
-      "GIT_HTTP_LOW_SPEED_TIME": "300",
       "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
       "SKIA_OUT": "[CUSTOM_/_B_WORK]/pdfium/third_party/skia/out/Build-Ubuntu-GCC-x86_64-Release-PDFium"
     },
@@ -119,8 +116,6 @@
     "env": {
       "BUILDTYPE": "Release",
       "CHROME_HEADLESS": "1",
-      "GIT_HTTP_LOW_SPEED_LIMIT": "1000",
-      "GIT_HTTP_LOW_SPEED_TIME": "300",
       "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
       "SKIA_OUT": "[CUSTOM_/_B_WORK]/pdfium/third_party/skia/out/Build-Ubuntu-GCC-x86_64-Release-PDFium"
     },
@@ -138,8 +133,6 @@
       "BUILDTYPE": "Release",
       "CHROME_HEADLESS": "1",
       "CHROMIUM_BUILDTOOLS_PATH": "[CUSTOM_/_B_WORK]/pdfium/buildtools",
-      "GIT_HTTP_LOW_SPEED_LIMIT": "1000",
-      "GIT_HTTP_LOW_SPEED_TIME": "300",
       "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
       "SKIA_OUT": "[CUSTOM_/_B_WORK]/pdfium/third_party/skia/out/Build-Ubuntu-GCC-x86_64-Release-PDFium"
     },
@@ -157,8 +150,6 @@
       "BUILDTYPE": "Release",
       "CHROME_HEADLESS": "1",
       "CHROMIUM_BUILDTOOLS_PATH": "[CUSTOM_/_B_WORK]/pdfium/buildtools",
-      "GIT_HTTP_LOW_SPEED_LIMIT": "1000",
-      "GIT_HTTP_LOW_SPEED_TIME": "300",
       "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
       "SKIA_OUT": "[CUSTOM_/_B_WORK]/pdfium/third_party/skia/out/Build-Ubuntu-GCC-x86_64-Release-PDFium"
     },
@@ -172,6 +163,7 @@
       "[CUSTOM_/_B_WORK]/pdfium/third_party/skia/out/Build-Ubuntu-GCC-x86_64-Release-PDFium/Release",
       "[CUSTOM_[SWARM_OUT_DIR]]/out/Release"
     ],
+    "infra_step": true,
     "name": "copy build products",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@import errno@@@",

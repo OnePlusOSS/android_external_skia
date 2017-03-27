@@ -7,6 +7,7 @@
       "[START_DIR]/skia/infra/bots/assets/skp/VERSION",
       "/path/to/tmp/"
     ],
+    "infra_step": true,
     "name": "Get downloaded SKP VERSION"
   },
   {
@@ -17,6 +18,7 @@
       "42",
       "[START_DIR]/tmp/SKP_VERSION"
     ],
+    "infra_step": true,
     "name": "write SKP_VERSION"
   },
   {
@@ -27,6 +29,7 @@
       "[START_DIR]/skia/infra/bots/assets/skimage/VERSION",
       "/path/to/tmp/"
     ],
+    "infra_step": true,
     "name": "Get downloaded skimage VERSION"
   },
   {
@@ -37,6 +40,7 @@
       "42",
       "[START_DIR]/tmp/SK_IMAGE_VERSION"
     ],
+    "infra_step": true,
     "name": "write SK_IMAGE_VERSION"
   },
   {
@@ -47,6 +51,7 @@
       "[START_DIR]/skia/infra/bots/assets/svg/VERSION",
       "/path/to/tmp/"
     ],
+    "infra_step": true,
     "name": "Get downloaded SVG VERSION"
   },
   {
@@ -57,6 +62,7 @@
       "42",
       "[START_DIR]/tmp/SVG_VERSION"
     ],
+    "infra_step": true,
     "name": "write SVG_VERSION"
   },
   {
@@ -70,6 +76,7 @@
     "env": {
       "PYTHONPATH": "[START_DIR]/skia/infra/bots/.recipe_deps/build/scripts"
     },
+    "infra_step": true,
     "name": "rmtree dm"
   },
   {
@@ -80,6 +87,7 @@
       "[CUSTOM_[SWARM_OUT_DIR]]/dm",
       "511"
     ],
+    "infra_step": true,
     "name": "makedirs dm",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -102,6 +110,7 @@
       "[START_DIR]/tmp",
       "511"
     ],
+    "infra_step": true,
     "name": "makedirs tmp_dir",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -123,12 +132,13 @@
       "\nimport contextlib\nimport math\nimport socket\nimport sys\nimport time\nimport urllib2\n\nHASHES_URL = 'https://gold.skia.org/_/hashes'\nRETRIES = 5\nTIMEOUT = 60\nWAIT_BASE = 15\n\nsocket.setdefaulttimeout(TIMEOUT)\nfor retry in range(RETRIES):\n  try:\n    with contextlib.closing(\n        urllib2.urlopen(HASHES_URL, timeout=TIMEOUT)) as w:\n      hashes = w.read()\n      with open(sys.argv[1], 'w') as f:\n        f.write(hashes)\n        break\n  except Exception as e:\n    print 'Failed to get uninteresting hashes from %s:' % HASHES_URL\n    print e\n    if retry == RETRIES:\n      raise\n    waittime = WAIT_BASE * math.pow(2, retry)\n    print 'Retry in %d seconds.' % waittime\n    time.sleep(waittime)\n",
       "[START_DIR]/tmp/uninteresting_hashes.txt"
     ],
-    "cwd": "[START_DIR]/skia",
     "env": {
       "BUILDTYPE": "Release",
       "CHROME_HEADLESS": "1",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
       "SKIA_OUT": "[START_DIR]/out"
     },
+    "infra_step": true,
     "name": "get uninteresting hashes",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -212,6 +222,7 @@
       "--writePath",
       "[CUSTOM_[SWARM_OUT_DIR]]/dm",
       "--nocpu",
+      "--randomProcessorTest",
       "--config",
       "8888",
       "srgb",
@@ -219,6 +230,9 @@
       "gl",
       "gldft",
       "glsrgb",
+      "gles",
+      "glesdft",
+      "glessrgb",
       "serialize-8888",
       "tiles_rt-8888",
       "pic-8888",
@@ -230,6 +244,10 @@
       "svg",
       "--blacklist",
       "glsrgb",
+      "image",
+      "_",
+      "_",
+      "glessrgb",
       "image",
       "_",
       "_",
@@ -524,6 +542,7 @@
       "CHROME_HEADLESS": "1",
       "LD_LIBRARY_PATH": "[START_DIR]/linux_vulkan_intel_driver_release",
       "LIBGL_DRIVERS_PATH": "[START_DIR]/linux_vulkan_intel_driver_release",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
       "SKIA_OUT": "[START_DIR]/out"
     },
     "name": "symbolized dm"

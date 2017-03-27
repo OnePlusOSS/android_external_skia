@@ -48,16 +48,18 @@ TEST_BUILDERS = {
        '_AbandonGpuContext'),
       ('Test-Ubuntu-GCC-ShuttleA-GPU-GTX550Ti-x86_64-Release-Valgrind' +
        '_PreAbandonGpuContext'),
-      'Test-Ubuntu-GCC-ShuttleA-GPU-GTX660-x86_64-Release',
       'Test-Ubuntu16-Clang-NUC5PPYH-GPU-IntelHD405-x86_64-Debug',
       'Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Debug-Vulkan',
       'Test-Ubuntu16-Clang-NUC-GPU-IntelIris540-x86_64-Release',
+      'Test-Win10-MSVC-AlphaR2-GPU-RadeonR9M470X-x86_64-Debug-Vulkan',
       'Test-Win10-MSVC-NUC-GPU-IntelIris540-x86_64-Debug-ANGLE',
       'Test-Win10-MSVC-ShuttleA-GPU-GTX660-x86_64-Debug-Vulkan',
       'Test-Win10-MSVC-ZBOX-GPU-GTX1070-x86_64-Debug-Vulkan',
       'Test-Win8-MSVC-ShuttleB-CPU-AVX2-x86_64-Release-Trybot',
       'Test-Win8-MSVC-ShuttleB-GPU-GTX960-x86_64-Debug-ANGLE',
       'Test-iOS-Clang-iPadMini4-GPU-GX6450-arm-Release',
+      ('Test-Ubuntu-GCC-GCE-CPU-AVX2-x86_64-Debug-SK_USE_DISCARDABLE_' +
+        'SCALEDIMAGECACHE'),
     ],
   },
 }

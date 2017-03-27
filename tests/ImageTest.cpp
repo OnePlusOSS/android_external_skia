@@ -101,13 +101,6 @@ static sk_sp<SkImage> create_data_image() {
     return SkImage::MakeRasterData(info, std::move(data), info.minRowBytes());
 }
 #if SK_SUPPORT_GPU // not gpu-specific but currently only used in GPU tests
-static sk_sp<SkImage> create_image_565() {
-    const SkImageInfo info = SkImageInfo::Make(20, 20, kRGB_565_SkColorType, kOpaque_SkAlphaType);
-    auto surface(SkSurface::MakeRaster(info));
-    draw_image_test_pattern(surface->getCanvas());
-    return surface->makeImageSnapshot();
-}
-
 static sk_sp<SkImage> create_image_large(int maxTextureSize) {
     const SkImageInfo info = SkImageInfo::MakeN32(maxTextureSize + 1, 32, kOpaque_SkAlphaType);
     auto surface(SkSurface::MakeRaster(info));
@@ -116,23 +109,6 @@ static sk_sp<SkImage> create_image_large(int maxTextureSize) {
     paint.setColor(SK_ColorBLACK);
     surface->getCanvas()->drawRect(SkRect::MakeXYWH(4000, 2, 28000, 30), paint);
     return surface->makeImageSnapshot();
-}
-static sk_sp<SkImage> create_image_ct() {
-    SkPMColor colors[] = {
-        SkPreMultiplyARGB(0xFF, 0xFF, 0xFF, 0x00),
-        SkPreMultiplyARGB(0x80, 0x00, 0xA0, 0xFF),
-        SkPreMultiplyARGB(0xFF, 0xBB, 0x00, 0xBB)
-    };
-    sk_sp<SkColorTable> colorTable(new SkColorTable(colors, SK_ARRAY_COUNT(colors)));
-    uint8_t data[] = {
-        0, 0, 0, 0, 0,
-        0, 1, 1, 1, 0,
-        0, 1, 2, 1, 0,
-        0, 1, 1, 1, 0,
-        0, 0, 0, 0, 0
-    };
-    SkImageInfo info = SkImageInfo::Make(5, 5, kIndex_8_SkColorType, kPremul_SkAlphaType);
-    return SkImage::MakeRasterCopy(SkPixmap(info, data, 5, colorTable.get()));
 }
 static sk_sp<SkImage> create_picture_image() {
     SkPictureRecorder recorder;
@@ -466,13 +442,26 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(c, reporter, ctxInfo) {
     }
 }
 
+GrContextFactory::ContextType pick_second_context_type(const sk_gpu_test::ContextInfo& info) {
+    switch (info.backend()) {
+        case kOpenGL_GrBackend:
+#if defined(SK_BUILD_FOR_WIN) || defined(SK_BUILD_FOR_UNIX) || defined (SK_BUILD_FOR_MAC)
+            return GrContextFactory::kGL_ContextType;
+#else
+            return GrContextFactory::kGLES_ContextType;
+#endif
+        case kVulkan_GrBackend:
+            return GrContextFactory::kVulkan_ContextType;
+    }
+    SkFAIL("Unknown backend type.");
+    return GrContextFactory::kGL_ContextType;
+}
+
 DEF_GPUTEST_FOR_RENDERING_CONTEXTS(SkImage_makeTextureImage, reporter, contextInfo) {
     GrContext* context = contextInfo.grContext();
     sk_gpu_test::TestContext* testContext = contextInfo.testContext();
-
     GrContextFactory otherFactory;
-    GrContextFactory::ContextType otherContextType =
-            GrContextFactory::NativeContextTypeForBackend(testContext->backend());
+    GrContextFactory::ContextType otherContextType = pick_second_context_type(contextInfo);
     ContextInfo otherContextInfo = otherFactory.getContextInfo(otherContextType);
     testContext->makeCurrent();
 
@@ -900,31 +889,6 @@ static void check_images_same(skiatest::Reporter* reporter, const SkImage* a, co
     }
 }
 
-DEF_GPUTEST_FOR_RENDERING_CONTEXTS(NewTextureFromPixmap, reporter, ctxInfo) {
-    for (auto create : {&create_image,
-                        &create_image_565,
-                        &create_image_ct}) {
-        sk_sp<SkImage> image((*create)());
-        if (!image) {
-            ERRORF(reporter, "Could not create image");
-            return;
-        }
-
-        SkPixmap pixmap;
-        if (!image->peekPixels(&pixmap)) {
-            ERRORF(reporter, "peek failed");
-        } else {
-            sk_sp<SkImage> texImage(SkImage::MakeTextureFromPixmap(ctxInfo.grContext(), pixmap,
-                                                                   SkBudgeted::kNo));
-            if (!texImage) {
-                ERRORF(reporter, "NewTextureFromPixmap failed.");
-            } else {
-                check_images_same(reporter, image.get(), texImage.get());
-            }
-        }
-    }
-}
-
 DEF_GPUTEST_FOR_RENDERING_CONTEXTS(DeferredTextureImage, reporter, ctxInfo) {
     GrContext* context = ctxInfo.grContext();
     sk_gpu_test::TestContext* testContext = ctxInfo.testContext();
@@ -932,7 +896,7 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(DeferredTextureImage, reporter, ctxInfo) {
 
     GrContextFactory otherFactory;
     ContextInfo otherContextInfo =
-        otherFactory.getContextInfo(GrContextFactory::kNativeGL_ContextType);
+        otherFactory.getContextInfo(pick_second_context_type(ctxInfo));
 
     testContext->makeCurrent();
     REPORTER_ASSERT(reporter, proxy);
@@ -964,7 +928,7 @@ DEF_GPUTEST_FOR_RENDERING_CONTEXTS(DeferredTextureImage, reporter, ctxInfo) {
             testContext->makeCurrent();
             return otherContextImage;
           }, {{SkMatrix::I(), kNone_SkFilterQuality, 0}},
-        kNone_SkFilterQuality, 1, false },
+          kNone_SkFilterQuality, 1, false },
         // Create an image that is too large to upload.
         { createLarge, {{SkMatrix::I(), kNone_SkFilterQuality, 0}},
           kNone_SkFilterQuality, 1, false },

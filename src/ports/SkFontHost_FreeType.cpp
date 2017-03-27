@@ -18,6 +18,7 @@
 #include "SkMask.h"
 #include "SkMaskGamma.h"
 #include "SkMatrix22.h"
+#include "SkMemory.h"
 #include "SkMutex.h"
 #include "SkOTUtils.h"
 #include "SkPath.h"
@@ -449,7 +450,7 @@ public:
     SkScalerContext_FreeType(sk_sp<SkTypeface>,
                              const SkScalerContextEffects&,
                              const SkDescriptor* desc);
-    virtual ~SkScalerContext_FreeType();
+    ~SkScalerContext_FreeType() override;
 
     bool success() const {
         return fFTSize != nullptr && fFace != nullptr;

@@ -32,7 +32,8 @@ def is_android(builder_cfg):
   return 'Android' in builder_cfg.get('extra_config', '')
 
 def is_chromecast(builder_cfg):
-  return 'Chromecast' in builder_cfg.get('extra_config', '')
+  return ('Chromecast' in builder_cfg.get('extra_config', '') or
+          'Chromecast' in builder_cfg.get('os', ''))
 
 def is_flutter(builder_cfg):
   return 'Flutter' in builder_cfg.get('extra_config', '')
@@ -71,8 +72,8 @@ class SkiaFlavorApi(recipe_api.RecipeApi):
   def step(self, name, cmd, **kwargs):
     return self._f.step(name, cmd, **kwargs)
 
-  def compile(self, target, **kwargs):
-    return self._f.compile(target, **kwargs)
+  def compile(self, target):
+    return self._f.compile(target)
 
   def copy_extra_build_products(self, swarming_out_dir):
     return self._f.copy_extra_build_products(swarming_out_dir)

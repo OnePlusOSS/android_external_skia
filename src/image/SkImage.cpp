@@ -169,25 +169,14 @@ sk_sp<SkImage> SkImage::makeSubset(const SkIRect& subset) const {
 #if SK_SUPPORT_GPU
 
 GrTexture* SkImage::getTexture() const {
-    return as_IB(this)->peekTexture();
+    return as_IB(this)->onGetTexture();
 }
 
-bool SkImage::isTextureBacked() const { return SkToBool(as_IB(this)->peekTexture()); }
+bool SkImage::isTextureBacked() const { return SkToBool(as_IB(this)->peekProxy()); }
 
 GrBackendObject SkImage::getTextureHandle(bool flushPendingGrContextIO,
                                           GrSurfaceOrigin* origin) const {
-    GrTexture* texture = as_IB(this)->peekTexture();
-    if (texture) {
-        GrContext* context = texture->getContext();
-        if (context && flushPendingGrContextIO) {
-            context->prepareSurfaceForExternalIO(texture);
-        }
-        if (origin) {
-            *origin = texture->origin();
-        }
-        return texture->getTextureHandle();
-    }
-    return 0;
+    return as_IB(this)->onGetTextureHandle(flushPendingGrContextIO, origin);
 }
 
 #else
@@ -319,9 +308,12 @@ sk_sp<SkImage> SkImage_Base::makeColorSpace(sk_sp<SkColorSpace> target) const {
         return nullptr;
     }
 
-    // Be sure to treat nullptr srcs as "equal to" sRGB.
+    // No need to create a new image if:
+    // (1) The color spaces are equal (nullptr is considered to be sRGB).
+    // (2) The color type is kAlpha8.
     if ((!this->colorSpace() && target->isSRGB()) ||
-            SkColorSpace_Base::EqualsIgnoreFlags(this->colorSpace(), target.get())) {
+            SkColorSpace_Base::EqualsIgnoreFlags(this->colorSpace(), target.get()) ||
+            kAlpha_8_SkColorType == this->onImageInfo().colorType()) {
         return sk_ref_sp(const_cast<SkImage_Base*>(this));
     }
 
@@ -331,10 +323,6 @@ sk_sp<SkImage> SkImage_Base::makeColorSpace(sk_sp<SkColorSpace> target) const {
 //////////////////////////////////////////////////////////////////////////////////////
 
 #if !SK_SUPPORT_GPU
-
-sk_sp<SkImage> SkImage::MakeTextureFromPixmap(GrContext*, const SkPixmap&, SkBudgeted budgeted) {
-    return nullptr;
-}
 
 sk_sp<SkImage> MakeTextureFromMipMap(GrContext*, const SkImageInfo&, const GrMipLevel* texels,
                                      int mipLevelCount, SkBudgeted, SkDestinationSurfaceColorMode) {

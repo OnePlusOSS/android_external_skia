@@ -160,6 +160,12 @@ public:
      */
     void purgeAllUnlockedResources();
 
+    /**
+     * Purge GPU resources that haven't been used in the past 'ms' milliseconds, regardless of
+     * whether the context is currently under budget.
+     */
+    void purgeResourcesNotUsedInMs(std::chrono::milliseconds ms);
+
     /** Access the context capabilities */
     const GrCaps* caps() const { return fCaps; }
 
@@ -424,17 +430,15 @@ private:
      * of effects that make a readToUPM->writeToPM->readToUPM cycle invariant. Otherwise, they
      * return NULL. They also can perform a swizzle as part of the draw.
      */
-    sk_sp<GrFragmentProcessor> createPMToUPMEffect(GrTexture*, const GrSwizzle&, const SkMatrix&);
-    sk_sp<GrFragmentProcessor> createPMToUPMEffect(sk_sp<GrTextureProxy>, const GrSwizzle&,
-                                                   const SkMatrix&);
-    sk_sp<GrFragmentProcessor> createUPMToPMEffect(sk_sp<GrTextureProxy>, const GrSwizzle&,
-                                                   const SkMatrix&);
+    sk_sp<GrFragmentProcessor> createPMToUPMEffect(GrTexture*, const SkMatrix&);
+    sk_sp<GrFragmentProcessor> createPMToUPMEffect(sk_sp<GrTextureProxy>, const SkMatrix&);
+    sk_sp<GrFragmentProcessor> createUPMToPMEffect(sk_sp<GrTextureProxy>, const SkMatrix&);
     /** Called before either of the above two functions to determine the appropriate fragment
         processors for conversions. */
     void testPMConversionsIfNecessary(uint32_t flags);
-    /** Returns true if we've already determined that createPMtoUPMEffect and createUPMToPMEffect
-        will fail. In such cases fall back to SW conversion. */
-    bool didFailPMUPMConversionTest() const;
+    /** Returns true if we've determined that createPMtoUPMEffect and createUPMToPMEffect will
+        succeed for the passed in config. Otherwise we fall back to SW conversion. */
+    bool validPMUPMConversionExists(GrPixelConfig) const;
 
     /**
      * A callback similar to the above for use by the TextBlobCache

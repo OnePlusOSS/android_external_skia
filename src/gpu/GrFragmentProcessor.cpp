@@ -106,46 +106,161 @@ sk_sp<GrFragmentProcessor> GrFragmentProcessor::MulOutputByInputAlpha(
     return GrXfermodeFragmentProcessor::MakeFromDstProcessor(std::move(fp), SkBlendMode::kDstIn);
 }
 
-sk_sp<GrFragmentProcessor> GrFragmentProcessor::PremulInput(sk_sp<GrFragmentProcessor> fp) {
+namespace {
 
-    class PremulInputFragmentProcessor : public GrFragmentProcessor {
+class PremulInputFragmentProcessor : public GrFragmentProcessor {
+public:
+    PremulInputFragmentProcessor()
+            : INHERITED(kPreservesOpaqueInput_OptimizationFlag |
+                        kConstantOutputForConstantInput_OptimizationFlag) {
+        this->initClassID<PremulInputFragmentProcessor>();
+    }
+
+    const char* name() const override { return "PremultiplyInput"; }
+
+private:
+    GrGLSLFragmentProcessor* onCreateGLSLInstance() const override {
+        class GLFP : public GrGLSLFragmentProcessor {
+        public:
+            void emitCode(EmitArgs& args) override {
+                GrGLSLFPFragmentBuilder* fragBuilder = args.fFragBuilder;
+
+                fragBuilder->codeAppendf("%s = %s;", args.fOutputColor, args.fInputColor);
+                fragBuilder->codeAppendf("%s.rgb *= %s.a;",
+                                            args.fOutputColor, args.fInputColor);
+            }
+        };
+        return new GLFP;
+    }
+
+    void onGetGLSLProcessorKey(const GrShaderCaps&, GrProcessorKeyBuilder*) const override {}
+
+    bool onIsEqual(const GrFragmentProcessor&) const override { return true; }
+
+    GrColor4f constantOutputForConstantInput(GrColor4f input) const override {
+        return input.premul();
+    }
+
+    typedef GrFragmentProcessor INHERITED;
+};
+
+class UnpremulInputFragmentProcessor : public GrFragmentProcessor {
+public:
+    UnpremulInputFragmentProcessor()
+            : INHERITED(kPreservesOpaqueInput_OptimizationFlag |
+                        kConstantOutputForConstantInput_OptimizationFlag) {
+        this->initClassID<UnpremulInputFragmentProcessor>();
+    }
+
+    const char* name() const override { return "UnpremultiplyInput"; }
+
+private:
+    GrGLSLFragmentProcessor* onCreateGLSLInstance() const override {
+        class GLFP : public GrGLSLFragmentProcessor {
+        public:
+            void emitCode(EmitArgs& args) override {
+                GrGLSLFPFragmentBuilder* fragBuilder = args.fFragBuilder;
+
+                fragBuilder->codeAppendf("%s = %s;", args.fOutputColor, args.fInputColor);
+                fragBuilder->codeAppendf("float invAlpha = %s.a <= 0.0 ? 0.0 : 1.0 / %s.a;",
+                                         args.fInputColor, args.fInputColor);
+                fragBuilder->codeAppendf("%s.rgb *= invAlpha;", args.fOutputColor);
+            }
+        };
+        return new GLFP;
+    }
+
+    void onGetGLSLProcessorKey(const GrShaderCaps&, GrProcessorKeyBuilder*) const override {}
+
+    bool onIsEqual(const GrFragmentProcessor&) const override { return true; }
+
+    GrColor4f constantOutputForConstantInput(GrColor4f input) const override {
+        return input.unpremul();
+    }
+
+    typedef GrFragmentProcessor INHERITED;
+};
+
+}
+
+sk_sp<GrFragmentProcessor> GrFragmentProcessor::PremulInput(sk_sp<GrFragmentProcessor> fp) {
+    if (!fp) {
+        return nullptr;
+    }
+    sk_sp<GrFragmentProcessor> fpPipeline[] = { sk_make_sp<PremulInputFragmentProcessor>(), fp};
+    return GrFragmentProcessor::RunInSeries(fpPipeline, 2);
+}
+
+sk_sp<GrFragmentProcessor> GrFragmentProcessor::PremulOutput(sk_sp<GrFragmentProcessor> fp) {
+    if (!fp) {
+        return nullptr;
+    }
+    sk_sp<GrFragmentProcessor> fpPipeline[] = { fp, sk_make_sp<PremulInputFragmentProcessor>() };
+    return GrFragmentProcessor::RunInSeries(fpPipeline, 2);
+}
+
+sk_sp<GrFragmentProcessor> GrFragmentProcessor::UnpremulOutput(sk_sp<GrFragmentProcessor> fp) {
+    if (!fp) {
+        return nullptr;
+    }
+    sk_sp<GrFragmentProcessor> fpPipeline[] = { fp, sk_make_sp<UnpremulInputFragmentProcessor>() };
+    return GrFragmentProcessor::RunInSeries(fpPipeline, 2);
+}
+
+sk_sp<GrFragmentProcessor> GrFragmentProcessor::SwizzleOutput(sk_sp<GrFragmentProcessor> fp,
+                                                              const GrSwizzle& swizzle) {
+    class SwizzleFragmentProcessor : public GrFragmentProcessor {
     public:
-        PremulInputFragmentProcessor()
-                : INHERITED(kPreservesOpaqueInput_OptimizationFlag |
-                            kConstantOutputForConstantInput_OptimizationFlag) {
-            this->initClassID<PremulInputFragmentProcessor>();
+        SwizzleFragmentProcessor(const GrSwizzle& swizzle)
+                : INHERITED(kAll_OptimizationFlags)
+                , fSwizzle(swizzle) {
+            this->initClassID<SwizzleFragmentProcessor>();
         }
 
-        const char* name() const override { return "PremultiplyInput"; }
+        const char* name() const override { return "Swizzle"; }
+        const GrSwizzle& swizzle() const { return fSwizzle; }
+
     private:
         GrGLSLFragmentProcessor* onCreateGLSLInstance() const override {
             class GLFP : public GrGLSLFragmentProcessor {
             public:
                 void emitCode(EmitArgs& args) override {
+                    const SwizzleFragmentProcessor& sfp = args.fFp.cast<SwizzleFragmentProcessor>();
+                    const GrSwizzle& swizzle = sfp.swizzle();
                     GrGLSLFPFragmentBuilder* fragBuilder = args.fFragBuilder;
 
-                    fragBuilder->codeAppendf("%s = %s;", args.fOutputColor, args.fInputColor);
-                    fragBuilder->codeAppendf("%s.rgb *= %s.a;",
-                                             args.fOutputColor, args.fInputColor);
+                    fragBuilder->codeAppendf("%s = %s.%s;",
+                                             args.fOutputColor, args.fInputColor, swizzle.c_str());
                 }
             };
             return new GLFP;
         }
 
-        void onGetGLSLProcessorKey(const GrShaderCaps&, GrProcessorKeyBuilder*) const override {}
+        void onGetGLSLProcessorKey(const GrShaderCaps&, GrProcessorKeyBuilder* b) const override {
+            b->add32(fSwizzle.asKey());
+        }
 
-        bool onIsEqual(const GrFragmentProcessor&) const override { return true; }
+        bool onIsEqual(const GrFragmentProcessor& other) const override {
+            const SwizzleFragmentProcessor& sfp = other.cast<SwizzleFragmentProcessor>();
+            return fSwizzle == sfp.fSwizzle;
+        }
 
         GrColor4f constantOutputForConstantInput(GrColor4f input) const override {
-            return input.premul();
+            return fSwizzle.applyTo(input);
         }
+
+        GrSwizzle fSwizzle;
 
         typedef GrFragmentProcessor INHERITED;
     };
+
     if (!fp) {
         return nullptr;
     }
-    sk_sp<GrFragmentProcessor> fpPipeline[] = { sk_make_sp<PremulInputFragmentProcessor>(), fp};
+    if (GrSwizzle::RGBA() == swizzle) {
+        return fp;
+    }
+    sk_sp<GrFragmentProcessor> fpPipeline[] = { fp, sk_make_sp<SwizzleFragmentProcessor>(swizzle) };
     return GrFragmentProcessor::RunInSeries(fpPipeline, 2);
 }
 
