@@ -18,7 +18,7 @@
 #include "SkMask.h"
 #include "SkMaskGamma.h"
 #include "SkMatrix22.h"
-#include "SkMemory.h"
+#include "SkMalloc.h"
 #include "SkMutex.h"
 #include "SkOTUtils.h"
 #include "SkPath.h"
@@ -1388,7 +1388,7 @@ void SkScalerContext_FreeType::generateFontMetrics(SkPaint::FontMetrics* metrics
         underlinePosition = -SkIntToScalar(face->underline_position +
                                            face->underline_thickness / 2) / upem;
 
-        metrics->fFlags |= SkPaint::FontMetrics::kUnderlineThinknessIsValid_Flag;
+        metrics->fFlags |= SkPaint::FontMetrics::kUnderlineThicknessIsValid_Flag;
         metrics->fFlags |= SkPaint::FontMetrics::kUnderlinePositionIsValid_Flag;
 
         // we may be able to synthesize x_height and cap_height from outline
@@ -1417,7 +1417,7 @@ void SkScalerContext_FreeType::generateFontMetrics(SkPaint::FontMetrics* metrics
         underlineThickness = 0;
         underlinePosition = 0;
 
-        metrics->fFlags &= ~SkPaint::FontMetrics::kUnderlineThinknessIsValid_Flag;
+        metrics->fFlags &= ~SkPaint::FontMetrics::kUnderlineThicknessIsValid_Flag;
         metrics->fFlags &= ~SkPaint::FontMetrics::kUnderlinePositionIsValid_Flag;
     } else {
         sk_bzero(metrics, sizeof(*metrics));

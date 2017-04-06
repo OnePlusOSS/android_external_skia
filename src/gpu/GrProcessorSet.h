@@ -10,7 +10,7 @@
 
 #include "GrFragmentProcessor.h"
 #include "GrPaint.h"
-#include "GrPipelineInput.h"
+#include "GrPipelineAnalysis.h"
 #include "SkTemplates.h"
 
 class GrAppliedClip;
@@ -32,16 +32,18 @@ public:
 
     int numColorFragmentProcessors() const { return fColorFragmentProcessorCnt; }
     int numCoverageFragmentProcessors() const {
-        return fFragmentProcessors.count() - fColorFragmentProcessorCnt;
+        return this->numFragmentProcessors() - fColorFragmentProcessorCnt;
     }
-    int numFragmentProcessors() const { return fFragmentProcessors.count(); }
+    int numFragmentProcessors() const {
+        return fFragmentProcessors.count() - fFragmentProcessorOffset;
+    }
 
     const GrFragmentProcessor* colorFragmentProcessor(int idx) const {
         SkASSERT(idx < fColorFragmentProcessorCnt);
-        return fFragmentProcessors[idx];
+        return fFragmentProcessors[idx + fFragmentProcessorOffset];
     }
     const GrFragmentProcessor* coverageFragmentProcessor(int idx) const {
-        return fFragmentProcessors[idx + fColorFragmentProcessorCnt];
+        return fFragmentProcessors[idx + fColorFragmentProcessorCnt + fFragmentProcessorOffset];
     }
 
     const GrXPFactory* xpFactory() const { return fXPFactory; }
@@ -77,25 +79,32 @@ public:
                 : fIsInitializedWithProcessorSet(false)
                 , fCompatibleWithCoverageAsAlpha(true)
                 , fValidInputColor(false)
-                , fOutputCoverageType(static_cast<unsigned>(CoverageType::kNone))
+                , fOutputCoverageType(static_cast<unsigned>(GrPipelineAnalysisCoverage::kNone))
                 , fOutputColorType(static_cast<unsigned>(ColorType::kUnknown))
                 , fInitialColorProcessorsToEliminate(0) {}
 
         // This version is used by a unit test that assumes no clip, no processors, and no PLS.
-        FragmentProcessorAnalysis(const GrPipelineInput& colorInput,
-                                  const GrPipelineInput coverageInput, const GrCaps&);
+        FragmentProcessorAnalysis(const GrPipelineAnalysisColor&, GrPipelineAnalysisCoverage,
+                                  const GrCaps&);
 
-        void init(const GrPipelineInput& colorInput, const GrPipelineInput coverageInput,
-                  const GrProcessorSet&, const GrAppliedClip*, const GrCaps&);
+        void init(const GrPipelineAnalysisColor&, GrPipelineAnalysisCoverage, const GrProcessorSet&,
+                  const GrAppliedClip*, const GrCaps&);
 
         bool isInitializedWithProcessorSet() const { return fIsInitializedWithProcessorSet; }
 
-        int initialColorProcessorsToEliminate(GrColor* newInputColor) const {
-            if (fInitialColorProcessorsToEliminate > 0) {
-                SkASSERT(fValidInputColor);
+        /**
+         * If the return is greater than or equal to zero then 'newInputColor' should be used as the
+         * input color to the GrPipeline derived from this processor set, replacing the GrDrawOp's
+         * initial color. If the return is less than zero then newInputColor has not been
+         * modified and no modification need be made to the pipeline's input color by the op.
+         */
+        int getInputColorOverrideAndColorProcessorEliminationCount(GrColor* newInputColor) const {
+            if (fValidInputColor) {
                 *newInputColor = fInputColor;
+                return fInitialColorProcessorsToEliminate;
             }
-            return fInitialColorProcessorsToEliminate;
+            SkASSERT(!fInitialColorProcessorsToEliminate);
+            return -1;
         }
 
         /**
@@ -123,19 +132,19 @@ public:
             }
             return constant;
         }
-        bool hasCoverage() const { return CoverageType::kNone != this->outputCoverageType(); }
-        bool hasLCDCoverage() const { return CoverageType::kLCD == this->outputCoverageType(); }
+        GrPipelineAnalysisCoverage outputCoverageType() const {
+            return static_cast<GrPipelineAnalysisCoverage>(fOutputCoverageType);
+        }
+        bool hasCoverage() const {
+            return this->outputCoverageType() != GrPipelineAnalysisCoverage::kNone;
+        }
 
     private:
         enum class ColorType : unsigned { kUnknown, kOpaqueConstant, kConstant, kOpaque };
-        enum class CoverageType : unsigned { kNone, kSingleChannel, kLCD };
 
-        CoverageType outputCoverageType() const {
-            return static_cast<CoverageType>(fOutputCoverageType);
-        }
         ColorType outputColorType() const { return static_cast<ColorType>(fOutputColorType); }
 
-        void internalInit(const GrPipelineInput& colorInput, const GrPipelineInput coverageInput,
+        void internalInit(const GrPipelineAnalysisColor&, const GrPipelineAnalysisCoverage,
                           const GrProcessorSet&, const GrFragmentProcessor* clipFP, const GrCaps&);
 
         // MSVS 2015 won't pack a bool with an unsigned.
@@ -151,12 +160,19 @@ public:
 
         GrColor fInputColor;
         GrColor fKnownOutputColor;
+
+        friend class GrProcessorSet;
     };
     GR_STATIC_ASSERT(sizeof(FragmentProcessorAnalysis) == 2 * sizeof(GrColor) + sizeof(uint32_t));
 
+    void analyzeAndEliminateFragmentProcessors(FragmentProcessorAnalysis*,
+                                               const GrPipelineAnalysisColor& colorInput,
+                                               const GrPipelineAnalysisCoverage coverageInput,
+                                               const GrAppliedClip*, const GrCaps&);
+
 private:
     // This absurdly large limit allows FragmentProcessorAnalysis and this to pack fields together.
-    static constexpr int kMaxColorProcessors = SK_MaxU16;
+    static constexpr int kMaxColorProcessors = UINT8_MAX;
 
     enum Flags : uint16_t {
         kUseDistanceVectorField_Flag = 0x1,
@@ -167,8 +183,9 @@ private:
 
     const GrXPFactory* fXPFactory = nullptr;
     SkAutoSTArray<4, const GrFragmentProcessor*> fFragmentProcessors;
-    uint16_t fColorFragmentProcessorCnt;
-    uint16_t fFlags;
+    uint8_t fColorFragmentProcessorCnt;
+    uint8_t fFragmentProcessorOffset = 0;
+    uint8_t fFlags;
 };
 
 #endif

@@ -334,15 +334,15 @@ void InstancedRendering::Op::appendParamsTexel(SkScalar x, SkScalar y, SkScalar 
 
 bool InstancedRendering::Op::xpRequiresDstTexture(const GrCaps& caps, const GrAppliedClip* clip) {
     GrProcessorSet::FragmentProcessorAnalysis analysis;
-    GrPipelineInput coverageInput;
+    GrPipelineAnalysisCoverage coverageInput;
     if (GrAAType::kCoverage == fInfo.aaType() ||
         (GrAAType::kNone == fInfo.aaType() && !fInfo.isSimpleRects() && fInfo.fCannotDiscard)) {
-        coverageInput = GrPipelineInput();
+        coverageInput = GrPipelineAnalysisCoverage::kSingleChannel;
     } else {
-        coverageInput = GrColor_WHITE;
+        coverageInput = GrPipelineAnalysisCoverage::kNone;
     }
-    analysis.init(this->getSingleInstance().fColor, coverageInput, fProcessors, clip, caps);
-
+    fProcessors.analyzeAndEliminateFragmentProcessors(&analysis, this->getSingleInstance().fColor,
+                                                      coverageInput, clip, caps);
     Draw& draw = this->getSingleDraw(); // This will assert if we have > 1 command.
     SkASSERT(draw.fGeometry.isEmpty());
     SkASSERT(SkIsPow2(fInfo.fShapeTypes));
@@ -363,7 +363,7 @@ bool InstancedRendering::Op::xpRequiresDstTexture(const GrCaps& caps, const GrAp
     }
 
     GrColor overrideColor;
-    if (analysis.initialColorProcessorsToEliminate(&overrideColor)) {
+    if (analysis.getInputColorOverrideAndColorProcessorEliminationCount(&overrideColor) >= 0) {
         SkASSERT(State::kRecordingDraws == fInstancedRendering->fState);
         this->getSingleDraw().fInstance.fColor = overrideColor;
     }
@@ -470,18 +470,18 @@ void InstancedRendering::Op::onExecute(GrOpFlushState* state) {
     state->gpu()->handleDirtyContext();
 
     GrProcessorSet::FragmentProcessorAnalysis analysis;
-    GrPipelineInput coverageInput;
+    GrPipelineAnalysisCoverage coverageInput;
     if (GrAAType::kCoverage == fInfo.aaType() ||
         (GrAAType::kNone == fInfo.aaType() && !fInfo.isSimpleRects() && fInfo.fCannotDiscard)) {
-        coverageInput = GrPipelineInput();
+        coverageInput = GrPipelineAnalysisCoverage::kSingleChannel;
     } else {
-        coverageInput = GrColor_WHITE;
+        coverageInput = GrPipelineAnalysisCoverage::kNone;
     }
-    GrPipelineInput colorInput;
+    GrPipelineAnalysisColor colorInput;
     if (fDrawColorsAreSame) {
         colorInput = fHeadDraw->fInstance.fColor;
     } else if (fDrawColorsAreOpaque) {
-        colorInput = GrPipelineInput::Opaque::kYes;
+        colorInput = GrPipelineAnalysisColor::Opaque::kYes;
     }
     const GrAppliedClip* clip = state->drawOpArgs().fAppliedClip;
     analysis.init(colorInput, coverageInput, fProcessors, clip, state->caps());

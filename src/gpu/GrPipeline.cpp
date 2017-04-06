@@ -11,7 +11,6 @@
 #include "GrCaps.h"
 #include "GrGpu.h"
 #include "GrPipelineBuilder.h"
-#include "GrProcOptInfo.h"
 #include "GrRenderTargetContext.h"
 #include "GrRenderTargetOpList.h"
 #include "GrRenderTargetPriv.h"
@@ -66,7 +65,9 @@ GrPipelineOptimizations GrPipeline::init(const InitArgs& args) {
                 *args.fCaps, *args.fAnalysis, hasMixedSamples, &args.fDstTexture));
     }
     GrColor overrideColor = GrColor_ILLEGAL;
-    int colorFPsToEliminate = args.fAnalysis->initialColorProcessorsToEliminate(&overrideColor);
+    int colorFPsToEliminate =
+            args.fAnalysis->getInputColorOverrideAndColorProcessorEliminationCount(&overrideColor);
+    colorFPsToEliminate = SkTMax(colorFPsToEliminate, 0);
 
     GrXferProcessor::OptFlags optFlags = GrXferProcessor::kNone_OptFlags;
 

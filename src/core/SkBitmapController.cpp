@@ -81,6 +81,9 @@ bool SkDefaultBitmapControllerState::processHQRequest(const SkBitmapProvider& pr
     // Our default return state is to downgrade the request to Medium, w/ or w/o setting fBitmap
     // to a valid bitmap. If we succeed, we will set this to Low instead.
     fQuality = kMedium_SkFilterQuality;
+#ifdef SK_USE_MIP_FOR_DOWNSCALE_HQ
+    return false;
+#endif
 
     if (kN32_SkColorType != provider.info().colorType() || !cache_size_okay(provider, fInvMatrix) ||
         fInvMatrix.hasPerspective())
@@ -121,7 +124,7 @@ bool SkDefaultBitmapControllerState::processHQRequest(const SkBitmapProvider& pr
     const int dstH = SkScalarRoundToScalar(provider.height() / invScaleY);
     const SkBitmapCacheDesc desc = provider.makeCacheDesc(dstW, dstH);
 
-    if (!SkBitmapCache::FindWH(desc, &fResultBitmap)) {
+    if (!SkBitmapCache::Find(desc, &fResultBitmap)) {
         SkBitmap orig;
         if (!provider.asBitmap(&orig)) {
             return false;
@@ -138,7 +141,7 @@ bool SkDefaultBitmapControllerState::processHQRequest(const SkBitmapProvider& pr
         SkASSERT(fResultBitmap.getPixels());
         fResultBitmap.setImmutable();
         if (!provider.isVolatile()) {
-            if (SkBitmapCache::AddWH(desc, fResultBitmap)) {
+            if (SkBitmapCache::Add(desc, fResultBitmap)) {
                 provider.notifyAddedToCache();
             }
         }
