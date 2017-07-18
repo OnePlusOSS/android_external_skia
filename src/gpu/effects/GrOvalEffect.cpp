@@ -45,7 +45,7 @@ private:
     SkScalar            fRadius;
     GrPrimitiveEdgeType    fEdgeType;
 
-    GR_DECLARE_FRAGMENT_PROCESSOR_TEST;
+    GR_DECLARE_FRAGMENT_PROCESSOR_TEST
 
     typedef GrFragmentProcessor INHERITED;
 };
@@ -98,7 +98,7 @@ public:
     static inline void GenKey(const GrProcessor&, const GrShaderCaps&, GrProcessorKeyBuilder*);
 
 protected:
-    void onSetData(const GrGLSLProgramDataManager&, const GrProcessor&) override;
+    void onSetData(const GrGLSLProgramDataManager&, const GrFragmentProcessor&) override;
 
 private:
     GrGLSLProgramDataManager::UniformHandle fCircleUniform;
@@ -140,8 +140,7 @@ void GLCircleEffect::emitCode(EmitArgs& args) {
         fragBuilder->codeAppend("d = d > 0.5 ? 1.0 : 0.0;");
     }
 
-    fragBuilder->codeAppendf("%s = %s;", args.fOutputColor,
-                             (GrGLSLExpr4(args.fInputColor) * GrGLSLExpr1("d")).c_str());
+    fragBuilder->codeAppendf("%s = %s * d;", args.fOutputColor, args.fInputColor);
 }
 
 void GLCircleEffect::GenKey(const GrProcessor& processor, const GrShaderCaps&,
@@ -151,7 +150,7 @@ void GLCircleEffect::GenKey(const GrProcessor& processor, const GrShaderCaps&,
 }
 
 void GLCircleEffect::onSetData(const GrGLSLProgramDataManager& pdman,
-                               const GrProcessor& processor) {
+                               const GrFragmentProcessor& processor) {
     const CircleEffect& ce = processor.cast<CircleEffect>();
     if (ce.getRadius() != fPrevRadius || ce.getCenter() != fPrevCenter) {
         SkScalar radius = ce.getRadius();
@@ -207,7 +206,7 @@ private:
     SkVector            fRadii;
     GrPrimitiveEdgeType    fEdgeType;
 
-    GR_DECLARE_FRAGMENT_PROCESSOR_TEST;
+    GR_DECLARE_FRAGMENT_PROCESSOR_TEST
 
     typedef GrFragmentProcessor INHERITED;
 };
@@ -266,7 +265,7 @@ public:
     static inline void GenKey(const GrProcessor&, const GrShaderCaps&, GrProcessorKeyBuilder*);
 
 protected:
-    void onSetData(const GrGLSLProgramDataManager&, const GrProcessor&) override;
+    void onSetData(const GrGLSLProgramDataManager&, const GrFragmentProcessor&) override;
 
 private:
     GrGLSLProgramDataManager::UniformHandle fEllipseUniform;
@@ -333,8 +332,7 @@ void GLEllipseEffect::emitCode(EmitArgs& args) {
             SkFAIL("Hairline not expected here.");
     }
 
-    fragBuilder->codeAppendf("%s = %s;", args.fOutputColor,
-                             (GrGLSLExpr4(args.fInputColor) * GrGLSLExpr1("alpha")).c_str());
+    fragBuilder->codeAppendf("%s = %s * alpha;", args.fOutputColor, args.fInputColor);
 }
 
 void GLEllipseEffect::GenKey(const GrProcessor& effect, const GrShaderCaps&,
@@ -344,7 +342,7 @@ void GLEllipseEffect::GenKey(const GrProcessor& effect, const GrShaderCaps&,
 }
 
 void GLEllipseEffect::onSetData(const GrGLSLProgramDataManager& pdman,
-                                const GrProcessor& effect) {
+                                const GrFragmentProcessor& effect) {
     const EllipseEffect& ee = effect.cast<EllipseEffect>();
     if (ee.getRadii() != fPrevRadii || ee.getCenter() != fPrevCenter) {
         float invRXSqd;

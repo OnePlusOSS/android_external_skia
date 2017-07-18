@@ -53,9 +53,16 @@ bool GrDashOp::CanDrawDashLine(const SkPoint pts[2], const GrStyle& style,
     }
 
     SkPaint::Cap cap = style.strokeRec().getCap();
-    // Current we do don't handle Round or Square cap dashes
-    if (SkPaint::kRound_Cap == cap && intervals[0] != 0.f) {
-        return false;
+    if (SkPaint::kRound_Cap == cap) {
+        // Current we don't support round caps unless the on interval is zero
+        if (intervals[0] != 0.f) {
+            return false;
+        }
+        // If the width of the circle caps in greater than the off interval we will pick up unwanted
+        // segments of circles at the start and end of the dash line.
+        if (style.strokeRec().getWidth() > intervals[1]) {
+            return false;
+        }
     }
 
     return true;
@@ -137,9 +144,6 @@ static SkScalar calc_end_adjustment(const SkScalar intervals[2], const SkPoint p
         *endingInt = srcIntervalLen;
     }
     if (*endingInt > intervals[0]) {
-        if (0 == intervals[0]) {
-            *endingInt -= 0.01f; // make sure we capture the last zero size pnt (used if has caps)
-        }
         return *endingInt - intervals[0];
     }
     return 0;
@@ -195,7 +199,6 @@ static void setup_dashed_rect(const SkRect& rect, void* vertices, int idx,
             verts[idx + i].fRadius = radius;
             verts[idx + i].fCenterX = centerX;
         }
-
     } else {
         SkASSERT(kNonRound_DashCap == cap && vertexStride == sizeof(DashLineVertex));
         DashLineVertex* verts = reinterpret_cast<DashLineVertex*>(vertices);
@@ -237,7 +240,7 @@ static sk_sp<GrGeometryProcessor> make_dash_gp(GrColor,
                                                const SkMatrix& localMatrix,
                                                bool usesLocalCoords);
 
-class DashOp final : public GrMeshDrawOp {
+class DashOp final : public GrLegacyMeshDrawOp {
 public:
     DEFINE_OP_CLASS_ID
     struct LineData {
@@ -251,9 +254,11 @@ public:
         SkScalar fPerpendicularScale;
     };
 
-    static std::unique_ptr<GrMeshDrawOp> Make(const LineData& geometry, GrColor color,
-                                              SkPaint::Cap cap, AAMode aaMode, bool fullDash) {
-        return std::unique_ptr<GrMeshDrawOp>(new DashOp(geometry, color, cap, aaMode, fullDash));
+    static std::unique_ptr<GrLegacyMeshDrawOp> Make(const LineData& geometry, GrColor color,
+                                                    SkPaint::Cap cap, AAMode aaMode,
+                                                    bool fullDash) {
+        return std::unique_ptr<GrLegacyMeshDrawOp>(
+                new DashOp(geometry, color, cap, aaMode, fullDash));
     }
 
     const char* name() const override { return "DashOp"; }
@@ -296,13 +301,13 @@ private:
         this->setTransformedBounds(bounds, combinedMatrix, aaBloat, zeroArea);
     }
 
-    void getFragmentProcessorAnalysisInputs(GrPipelineAnalysisColor* color,
-                                            GrPipelineAnalysisCoverage* coverage) const override {
+    void getProcessorAnalysisInputs(GrProcessorAnalysisColor* color,
+                                    GrProcessorAnalysisCoverage* coverage) const override {
         color->setToConstant(fColor);
-        *coverage = GrPipelineAnalysisCoverage::kSingleChannel;
+        *coverage = GrProcessorAnalysisCoverage::kSingleChannel;
     }
 
-    void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
+    void applyPipelineOptimizations(const PipelineOptimizations& optimizations) override {
         optimizations.getOverrideColorIfSet(&fColor);
 
         fUsesLocalCoords = optimizations.readsLocalCoords();
@@ -373,7 +378,7 @@ private:
 
             DashDraw& draw = draws.push_back(args);
 
-            bool hasCap = SkPaint::kButt_Cap != cap && 0 != args.fSrcStrokeWidth;
+            bool hasCap = SkPaint::kButt_Cap != cap;
 
             // We always want to at least stroke out half a pixel on each side in device space
             // so 0.5f / perpScale gives us this min in src space
@@ -473,7 +478,7 @@ private:
 
             SkScalar halfDevStroke = strokeWidth * 0.5f;
 
-            if (SkPaint::kSquare_Cap == cap && 0 != args.fSrcStrokeWidth) {
+            if (SkPaint::kSquare_Cap == cap) {
                 // add cap to on interval and remove from off interval
                 devIntervals[0] += strokeWidth;
                 devIntervals[1] -= strokeWidth;
@@ -625,7 +630,7 @@ private:
             rectIndex++;
         }
         SkASSERT(0 == (curVIdx % 4) && (curVIdx / 4) == totalRectCount);
-        helper.recordDraw(target, gp.get());
+        helper.recordDraw(target, gp.get(), this->pipeline());
     }
 
     bool onCombineIfPossible(GrOp* t, const GrCaps& caps) override {
@@ -679,14 +684,14 @@ private:
     bool fFullDash;
     SkSTArray<1, LineData, true> fLines;
 
-    typedef GrMeshDrawOp INHERITED;
+    typedef GrLegacyMeshDrawOp INHERITED;
 };
 
-std::unique_ptr<GrMeshDrawOp> GrDashOp::MakeDashLineOp(GrColor color,
-                                                       const SkMatrix& viewMatrix,
-                                                       const SkPoint pts[2],
-                                                       AAMode aaMode,
-                                                       const GrStyle& style) {
+std::unique_ptr<GrLegacyMeshDrawOp> GrDashOp::MakeDashLineOp(GrColor color,
+                                                             const SkMatrix& viewMatrix,
+                                                             const SkPoint pts[2],
+                                                             AAMode aaMode,
+                                                             const GrStyle& style) {
     SkASSERT(GrDashOp::CanDrawDashLine(pts, style, viewMatrix));
     const SkScalar* intervals = style.dashIntervals();
     SkScalar phase = style.dashPhase();
@@ -789,7 +794,7 @@ private:
     const Attribute*    fInDashParams;
     const Attribute*    fInCircleParams;
 
-    GR_DECLARE_GEOMETRY_PROCESSOR_TEST;
+    GR_DECLARE_GEOMETRY_PROCESSOR_TEST
 
     typedef GrGeometryProcessor INHERITED;
 };
@@ -999,7 +1004,7 @@ private:
     const Attribute*    fInDashParams;
     const Attribute*    fInRectParams;
 
-    GR_DECLARE_GEOMETRY_PROCESSOR_TEST;
+    GR_DECLARE_GEOMETRY_PROCESSOR_TEST
 
     typedef GrGeometryProcessor INHERITED;
 };
@@ -1193,7 +1198,7 @@ static sk_sp<GrGeometryProcessor> make_dash_gp(GrColor color,
 
 #if GR_TEST_UTILS
 
-DRAW_OP_TEST_DEFINE(DashOp) {
+GR_LEGACY_MESH_DRAW_OP_TEST_DEFINE(DashOp) {
     GrColor color = GrRandomColor(random);
     SkMatrix viewMatrix = GrTest::TestMatrixPreservesRightAngles(random);
     AAMode aaMode = static_cast<AAMode>(random->nextULessThan(GrDashOp::kAAModeCnt));
@@ -1226,20 +1231,23 @@ DRAW_OP_TEST_DEFINE(DashOp) {
         kCloseOpen_Intervals,
     };
 
-    Intervals intervalType = SkPaint::kRound_Cap ?
+    Intervals intervalType = SkPaint::kRound_Cap == cap ?
                              kOpenClose_Intervals :
                              Intervals(random->nextULessThan(kCloseOpen_Intervals + 1));
     static const SkScalar kIntervalMin = 0.1f;
+    static const SkScalar kIntervalMinCircles = 1.f; // Must be >= to stroke width
     static const SkScalar kIntervalMax = 10.f;
     switch (intervalType) {
         case kOpenOpen_Intervals:
             intervals[0] = random->nextRangeScalar(kIntervalMin, kIntervalMax);
             intervals[1] = random->nextRangeScalar(kIntervalMin, kIntervalMax);
             break;
-        case kOpenClose_Intervals:
+        case kOpenClose_Intervals: {
             intervals[0] = 0.f;
-            intervals[1] = random->nextRangeScalar(kIntervalMin, kIntervalMax);
+            SkScalar min = SkPaint::kRound_Cap == cap ? kIntervalMinCircles : kIntervalMin;
+            intervals[1] = random->nextRangeScalar(min, kIntervalMax);
             break;
+        }
         case kCloseOpen_Intervals:
             intervals[0] = random->nextRangeScalar(kIntervalMin, kIntervalMax);
             intervals[1] = 0.f;

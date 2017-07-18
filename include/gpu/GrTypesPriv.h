@@ -12,6 +12,8 @@
 #include "GrTypes.h"
 #include "SkRefCnt.h"
 
+class GrCaps;
+
 // The old libstdc++ uses the draft name "monotonic_clock" rather than "steady_clock". This might
 // not actually be monotonic, depending on how libstdc++ was built. However, this is only currently
 // used for idle resource purging so it shouldn't cause a correctness problem.
@@ -50,6 +52,24 @@ static inline bool GrAATypeIsHW(GrAAType type) {
     SkFAIL("Unknown AA Type");
     return false;
 }
+
+/** The type of full scene antialiasing supported by a render target. */
+enum class GrFSAAType {
+    /** No FSAA */
+    kNone,
+    /** Regular MSAA where each attachment has the same sample count. */
+    kUnifiedMSAA,
+    /** One color sample, N stencil samples. */
+    kMixedSamples,
+};
+
+/**
+ * Not all drawing code paths support using mixed samples when available and instead use
+ * coverage-based aa.
+ */
+enum class GrAllowMixedSamples { kNo, kYes };
+
+GrAAType GrChooseAAType(GrAA, GrFSAAType, GrAllowMixedSamples, const GrCaps&);
 
 /**
  * Types of shader-language-specific boxed variables we can create. (Currently only GrGLShaderVars,
@@ -98,14 +118,6 @@ enum GrShaderFlags {
 };
 GR_MAKE_BITFIELD_OPS(GrShaderFlags);
 
-enum class GrDrawFace {
-    kInvalid = -1,
-
-    kBoth,
-    kCCW,
-    kCW,
-};
-
 /**
  * Precisions of shader language variables. Not all shading languages support precisions or actually
  * vary the internal precision based on the qualifiers. These currently only apply to float types (
@@ -116,11 +128,14 @@ enum GrSLPrecision {
     kMedium_GrSLPrecision,
     kHigh_GrSLPrecision,
 
-    // Default precision is medium. This is because on OpenGL ES 2 highp support is not
-    // guaranteed. On (non-ES) OpenGL the specifiers have no effect on precision.
-    kDefault_GrSLPrecision = kMedium_GrSLPrecision,
+    // Default precision is a special tag that means "whatever the default for the program/type
+    // combination is". In other words, it maps to the empty string in shader code. There are some
+    // scenarios where kDefault is not allowed (as the default precision for a program, or for
+    // varyings, for example).
+    kDefault_GrSLPrecision,
 
-    kLast_GrSLPrecision = kHigh_GrSLPrecision
+    // We only consider the "real" precisions here
+    kLast_GrSLPrecision = kHigh_GrSLPrecision,
 };
 
 static const int kGrSLPrecisionCount = kLast_GrSLPrecision + 1;
@@ -547,6 +562,26 @@ enum GrAccessPattern {
     kLast_GrAccessPattern = kStream_GrAccessPattern
 };
 
+// Flags shared between GrRenderTarget and GrRenderTargetProxy
+enum class GrRenderTargetFlags {
+    kNone               = 0,
+
+    // For internal resources:
+    //    this is enabled whenever MSAA is enabled and GrCaps reports mixed samples are supported
+    // For wrapped resources:
+    //    this is disabled for FBO0
+    //    but, otherwise, is enabled whenever MSAA is enabled and GrCaps reports mixed samples
+    //        are supported
+    kMixedSampled       = 1 << 0,
+
+    // For internal resources:
+    //    this is enabled whenever GrCaps reports window rect support
+    // For wrapped resources1
+    //    this is disabled for FBO0
+    //    but, otherwise, is enabled whenever GrCaps reports window rect support
+    kWindowRectsSupport = 1 << 1
+};
+GR_MAKE_BITFIELD_CLASS_OPS(GrRenderTargetFlags)
 
 #ifdef SK_DEBUG
 // Takes a pointer to a GrCaps, and will suppress prints if required

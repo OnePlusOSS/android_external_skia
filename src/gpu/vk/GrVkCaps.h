@@ -90,11 +90,11 @@ public:
         return fMustSleepOnTearDown;
     }
 
-    // Returns true if while adding commands to secondary command buffers, we must make a new
-    // secondary command buffer everytime we want to bind a new VkPipeline. This is to work around a
-    // driver bug specifically on AMD.
-    bool newSecondaryCBOnPipelineChange() const {
-        return fNewSecondaryCBOnPipelineChange;
+    // Returns true if while adding commands to command buffers, we must make a new command buffer
+    // everytime we want to bind a new VkPipeline. This is true for both primary and secondary
+    // command buffers. This is to work around a driver bug specifically on AMD.
+    bool newCBOnPipelineChange() const {
+        return fNewCBOnPipelineChange;
     }
 
     /**
@@ -104,7 +104,8 @@ public:
         return fPreferedStencilFormat;
     }
 
-    bool initDescForDstCopy(const GrRenderTarget* src, GrSurfaceDesc* desc) const override;
+    bool initDescForDstCopy(const GrRenderTargetProxy* src, GrSurfaceDesc* desc,
+                            bool* rectsMustMatch, bool* disallowSubrect) const override;
 
 private:
     enum VkVendor {
@@ -156,7 +157,7 @@ private:
 
     bool fMustSleepOnTearDown;
 
-    bool fNewSecondaryCBOnPipelineChange;
+    bool fNewCBOnPipelineChange;
 
     typedef GrCaps INHERITED;
 };

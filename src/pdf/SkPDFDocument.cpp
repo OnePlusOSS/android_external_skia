@@ -180,7 +180,7 @@ SkPDFDocument::SkPDFDocument(SkWStream* stream,
     , fRasterDpi(rasterDpi)
     , fMetadata(metadata)
     , fPDFA(pdfa) {
-    fCanon.setPixelSerializer(std::move(jpegEncoder));
+    fCanon.fPixelSerializer = std::move(jpegEncoder);
 }
 
 SkPDFDocument::~SkPDFDocument() {
@@ -193,8 +193,7 @@ void SkPDFDocument::serialize(const sk_sp<SkPDFObject>& object) {
     fObjectSerializer.serializeObjects(this->getStream());
 }
 
-SkCanvas* SkPDFDocument::onBeginPage(SkScalar width, SkScalar height,
-                                     const SkRect& trimBox) {
+SkCanvas* SkPDFDocument::onBeginPage(SkScalar width, SkScalar height) {
     SkASSERT(!fCanvas.get());  // endPage() was called before this.
     if (fPages.empty()) {
         // if this is the first page if the document.
@@ -215,11 +214,9 @@ SkCanvas* SkPDFDocument::onBeginPage(SkScalar width, SkScalar height,
     }
     SkISize pageSize = SkISize::Make(
             SkScalarRoundToInt(width), SkScalarRoundToInt(height));
-    fPageDevice.reset(
-            SkPDFDevice::Create(pageSize, fRasterDpi, this));
+    fPageDevice = sk_make_sp<SkPDFDevice>(pageSize, this);
+    fPageDevice->setFlip();  // Only the top-level device needs to be flipped.
     fCanvas.reset(new SkPDFCanvas(fPageDevice));
-    fCanvas->clipRect(trimBox);
-    fCanvas->translate(trimBox.x(), trimBox.y());
     return fCanvas.get();
 }
 
@@ -251,7 +248,7 @@ void SkPDFDocument::onAbort() {
 void SkPDFDocument::reset() {
     fCanvas.reset(nullptr);
     fPages.reset();
-    fCanon.reset();
+    renew(&fCanon);
     renew(&fObjectSerializer);
     fFonts.reset();
 }
@@ -438,6 +435,9 @@ sk_sp<SkDocument> SkPDFMakeDocument(SkWStream* stream,
                                     const SkDocument::PDFMetadata& metadata,
                                     sk_sp<SkPixelSerializer> jpeg,
                                     bool pdfa) {
+    if (dpi <= 0) {
+        dpi = 72.0f;
+    }
     return stream ? sk_make_sp<SkPDFDocument>(stream, proc, dpi, metadata,
                                               std::move(jpeg), pdfa)
                   : nullptr;

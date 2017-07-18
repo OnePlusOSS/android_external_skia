@@ -97,7 +97,8 @@ bool GrVkCopyManager::createCopyProgram(GrVkGpu* gpu) {
     uint32_t samplerVisibility = kFragment_GrShaderFlag;
     SkTArray<uint32_t> visibilityArray(&samplerVisibility, 1);
 
-    resourceProvider.getSamplerDescriptorSetHandle(visibilityArray, &fSamplerDSHandle);
+    resourceProvider.getSamplerDescriptorSetHandle(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                                   visibilityArray, &fSamplerDSHandle);
     dsLayout[GrVkUniformHandler::kSamplerDescSet] =
         resourceProvider.getSamplerDSLayout(fSamplerDSHandle);
 
@@ -143,8 +144,20 @@ bool GrVkCopyManager::copySurfaceAsDraw(GrVkGpu* gpu,
                                         GrSurface* src,
                                         const SkIRect& srcRect,
                                         const SkIPoint& dstPoint) {
+    // None of our copy methods can handle a swizzle. TODO: Make copySurfaceAsDraw handle the
+    // swizzle.
+    if (gpu->caps()->shaderCaps()->configOutputSwizzle(src->config()) !=
+        gpu->caps()->shaderCaps()->configOutputSwizzle(dst->config())) {
+        return false;
+    }
+
     if (!gpu->vkCaps().supportsCopiesAsDraws()) {
         return false;
+    }
+
+    if (gpu->vkCaps().newCBOnPipelineChange()) {
+        // We bind a new pipeline here for the copy so we must start a new command buffer.
+        gpu->finishFlush();
     }
 
     GrVkRenderTarget* rt = static_cast<GrVkRenderTarget*>(dst->asRenderTarget());
@@ -227,7 +240,7 @@ bool GrVkCopyManager::copySurfaceAsDraw(GrVkGpu* gpu,
     descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptorWrites.pNext = nullptr;
     descriptorWrites.dstSet = uniformDS->descriptorSet();
-    descriptorWrites.dstBinding = GrVkUniformHandler::kVertexBinding;
+    descriptorWrites.dstBinding = GrVkUniformHandler::kGeometryBinding;
     descriptorWrites.dstArrayElement = 0;
     descriptorWrites.descriptorCount = 1;
     descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -364,7 +377,7 @@ bool GrVkCopyManager::copySurfaceAsDraw(GrVkGpu* gpu,
     scissor.offset.y = 0;
     cmdBuffer->setScissor(gpu, 0, 1, &scissor);
 
-    cmdBuffer->bindVertexBuffer(gpu, fVertexBuffer.get());
+    cmdBuffer->bindInputBuffer(gpu, 0, fVertexBuffer.get());
     cmdBuffer->draw(gpu, 4, 1, 0, 0);
     cmdBuffer->endRenderPass(gpu);
 

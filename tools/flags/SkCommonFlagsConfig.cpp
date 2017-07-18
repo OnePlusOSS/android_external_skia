@@ -64,6 +64,7 @@ static const struct {
     { "glsrgb",                "gpu", "api=gl,color=srgb" },
     { "glwide",                "gpu", "api=gl,color=f16_wide" },
     { "glnarrow",              "gpu", "api=gl,color=f16_narrow" },
+    { "glnostencils",          "gpu", "api=gl,stencils=false" },
     { "glessrgb",              "gpu", "api=gles,color=srgb" },
     { "gleswide",              "gpu", "api=gles,color=f16_wide" },
     { "glesnarrow",            "gpu", "api=gles,color=f16_narrow" },
@@ -76,9 +77,12 @@ static const struct {
     { "angle_d3d9_es2",        "gpu", "api=angle_d3d9_es2" },
     { "angle_d3d11_es2_msaa4", "gpu", "api=angle_d3d11_es2,samples=4" },
     { "angle_d3d11_es2_msaa8", "gpu", "api=angle_d3d11_es2,samples=8" },
+    { "angle_d3d11_es3_msaa4", "gpu", "api=angle_d3d11_es3,samples=4" },
+    { "angle_d3d11_es3_msaa8", "gpu", "api=angle_d3d11_es3,samples=8" },
     { "angle_gl_es2",          "gpu", "api=angle_gl_es2" },
     { "angle_gl_es3",          "gpu", "api=angle_gl_es3" },
-    { "commandbuffer",         "gpu", "api=commandbuffer" }
+    { "commandbuffer",         "gpu", "api=commandbuffer" },
+    { "mock",                  "gpu", "api=mock" }
 #if SK_MESA
     ,{ "mesa",                 "gpu", "api=mesa" }
 #endif
@@ -89,9 +93,8 @@ static const struct {
     ,{ "vkmsaa4",              "gpu", "api=vulkan,samples=4" }
     ,{ "vkmsaa8",              "gpu", "api=vulkan,samples=8" }
 #endif
-
 #else
-{ "", "", "" }
+     { "", "", "" }
 #endif
 };
 
@@ -117,7 +120,6 @@ static const char configExtendedHelp[] =
     "\tapi\ttype: string\trequired\n"
     "\t    Select graphics API to use with gpu backend.\n"
     "\t    Options:\n"
-    "\t\tnative\t\t\tUse platform default OpenGL or OpenGL ES backend.\n"
     "\t\tgl    \t\t\tUse OpenGL.\n"
     "\t\tgles  \t\t\tUse OpenGL ES.\n"
     "\t\tdebuggl \t\t\tUse debug OpenGL.\n"
@@ -128,6 +130,7 @@ static const char configExtendedHelp[] =
     "\t\tangle_gl_es2\t\t\tUse OpenGL ES2 on the ANGLE OpenGL backend.\n"
     "\t\tangle_gl_es3\t\t\tUse OpenGL ES3 on the ANGLE OpenGL backend.\n"
     "\t\tcommandbuffer\t\tUse command buffer.\n"
+    "\t\tmock\t\tUse mock context.\n"
 #if SK_MESA
     "\t\tmesa\t\t\tUse MESA.\n"
 #endif
@@ -151,6 +154,8 @@ static const char configExtendedHelp[] =
     "\t    Use NV_path_rendering OpenGL and OpenGL ES extension.\n"
     "\tsamples\ttype: int\tdefault: 0.\n"
     "\t    Use multisampling with N samples.\n"
+    "\tstencils\ttype: bool\tdefault: true.\n"
+    "\t    Allow the use of stencil buffers.\n"
     "\n"
     "Predefined configs:\n\n"
     // Help text for pre-defined configs is auto-generated from gPredefinedConfigs
@@ -181,7 +186,7 @@ SkCommandLineConfig::~SkCommandLineConfig() {
 SkCommandLineConfigGpu::SkCommandLineConfigGpu(
     const SkString& tag, const SkTArray<SkString>& viaParts, ContextType contextType, bool useNVPR,
     bool useInstanced, bool useDIText, int samples, SkColorType colorType,
-    sk_sp<SkColorSpace> colorSpace)
+    sk_sp<SkColorSpace> colorSpace, bool useStencilBuffers)
         : SkCommandLineConfig(tag, SkString("gpu"), viaParts)
         , fContextType(contextType)
         , fContextOverrides(ContextOverrides::kNone)
@@ -209,6 +214,9 @@ SkCommandLineConfigGpu::SkCommandLineConfigGpu(
     if (fColorSpace) {
         fContextOverrides |= ContextOverrides::kRequireSRGBSupport;
         fContextOverrides |= ContextOverrides::kAllowSRGBWithoutDecodeControl;
+    }
+    if (!useStencilBuffers) {
+        fContextOverrides |= ContextOverrides::kAvoidStencilBuffers;
     }
 }
 static bool parse_option_int(const SkString& value, int* outInt) {
@@ -274,6 +282,10 @@ static bool parse_option_gpu_api(const SkString& value,
     }
     if (value.equals("commandbuffer")) {
         *outContextType = GrContextFactory::kCommandBuffer_ContextType;
+        return true;
+    }
+    if (value.equals("mock")) {
+        *outContextType = GrContextFactory::kMock_ContextType;
         return true;
     }
 #if SK_MESA
@@ -370,6 +382,8 @@ SkCommandLineConfigGpu* parse_command_line_config_gpu(const SkString& tag,
     bool seenColor = false;
     SkColorType colorType = kRGBA_8888_SkColorType;
     sk_sp<SkColorSpace> colorSpace = nullptr;
+    bool seenUseStencils = false;
+    bool useStencils = true;
 
     SkTArray<SkString> optionParts;
     SkStrSplit(options.c_str(), ",", kStrict_SkStrSplitMode, &optionParts);
@@ -400,6 +414,9 @@ SkCommandLineConfigGpu* parse_command_line_config_gpu(const SkString& tag,
         } else if (key.equals("color") && !seenColor) {
             valueOk = parse_option_gpu_color(value, &colorType, &colorSpace);
             seenColor = true;
+        } else if (key.equals("stencils") && !seenUseStencils) {
+            valueOk = parse_option_bool(value, &useStencils);
+            seenUseStencils = true;
         }
         if (!valueOk) {
             return nullptr;
@@ -409,7 +426,7 @@ SkCommandLineConfigGpu* parse_command_line_config_gpu(const SkString& tag,
         return nullptr;
     }
     return new SkCommandLineConfigGpu(tag, vias, contextType, useNVPR, useInstanced, useDIText,
-                                      samples, colorType, colorSpace);
+                                      samples, colorType, colorSpace, useStencils);
 }
 #endif
 

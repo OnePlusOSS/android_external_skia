@@ -11,13 +11,12 @@
 #include "GrTypes.h"
 #include "GrTypesPriv.h"
 #include "GrBlend.h"
-#include "GrShaderVar.h"
 #include "GrShaderCaps.h"
 #include "SkRefCnt.h"
 #include "SkString.h"
 
 struct GrContextOptions;
-class GrRenderTarget;
+class GrRenderTargetProxy;
 
 /**
  * Represents the capabilities of a GrContext.
@@ -27,7 +26,6 @@ public:
     GrCaps(const GrContextOptions&);
 
     virtual SkString dump() const;
-
     const GrShaderCaps* shaderCaps() const { return fShaderCaps.get(); }
 
     bool npotTextureTileSupport() const { return fNPOTTextureTileSupport; }
@@ -45,26 +43,17 @@ public:
      * Is there support for enabling/disabling sRGB writes for sRGB-capable color buffers?
      */
     bool srgbWriteControl() const { return fSRGBWriteControl; }
-    bool twoSidedStencilSupport() const { return fTwoSidedStencilSupport; }
-    bool stencilWrapOpsSupport() const { return  fStencilWrapOpsSupport; }
     bool discardRenderTargetSupport() const { return fDiscardRenderTargetSupport; }
     bool gpuTracingSupport() const { return fGpuTracingSupport; }
-    bool compressedTexSubImageSupport() const { return fCompressedTexSubImageSupport; }
     bool oversizedStencilSupport() const { return fOversizedStencilSupport; }
     bool textureBarrierSupport() const { return fTextureBarrierSupport; }
     bool sampleLocationsSupport() const { return fSampleLocationsSupport; }
     bool multisampleDisableSupport() const { return fMultisampleDisableSupport; }
+    bool instanceAttribSupport() const { return fInstanceAttribSupport; }
     bool usesMixedSamples() const { return fUsesMixedSamples; }
     bool preferClientSideDynamicBuffers() const { return fPreferClientSideDynamicBuffers; }
 
     bool useDrawInsteadOfClear() const { return fUseDrawInsteadOfClear; }
-    bool useDrawInsteadOfPartialRenderTargetWrite() const {
-        return fUseDrawInsteadOfPartialRenderTargetWrite;
-    }
-
-    bool useDrawInsteadOfAllRenderTargetWrites() const {
-        return fUseDrawInsteadOfAllRenderTargetWrites;
-    }
 
     bool preferVRAMUseOverFlushes() const { return fPreferVRAMUseOverFlushes; }
 
@@ -82,6 +71,8 @@ public:
     InstancedSupport instancedSupport() const { return fInstancedSupport; }
 
     bool avoidInstancedDrawsToFPTargets() const { return fAvoidInstancedDrawsToFPTargets; }
+
+    bool avoidStencilBuffers() const { return fAvoidStencilBuffers; }
 
     /**
      * Indicates the capabilities of the fixed function blend unit.
@@ -161,13 +152,11 @@ public:
 
     int maxWindowRectangles() const { return fMaxWindowRectangles; }
 
-    virtual bool isConfigTexturable(GrPixelConfig config) const = 0;
+    virtual bool isConfigTexturable(GrPixelConfig) const = 0;
     virtual bool isConfigRenderable(GrPixelConfig config, bool withMSAA) const = 0;
     virtual bool canConfigBeImageStorage(GrPixelConfig config) const = 0;
 
     bool suppressPrints() const { return fSuppressPrints; }
-
-    bool immediateFlush() const { return fImmediateFlush; }
 
     size_t bufferMapThreshold() const {
         SkASSERT(fBufferMapThreshold >= 0);
@@ -180,6 +169,8 @@ public:
         is not initialized (even if not read by draw calls). */
     bool mustClearUploadedBufferData() const { return fMustClearUploadedBufferData; }
 
+    bool wireframeMode() const { return fWireframeMode; }
+
     bool sampleShadingSupport() const { return fSampleShadingSupport; }
 
     bool fenceSyncSupport() const { return fFenceSyncSupport; }
@@ -187,11 +178,14 @@ public:
 
     /**
      * This is can be called before allocating a texture to be a dst for copySurface. This is only
-     * used for doing dst copies needed in blends, thus the src is always a GrRenderTarget. It will
-     * populate the origin, config, and flags fields of the desc such that copySurface can
-     * efficiently succeed.
+     * used for doing dst copies needed in blends, thus the src is always a GrRenderTargetProxy. It
+     * will populate the origin, config, and flags fields of the desc such that copySurface can
+     * efficiently succeed. rectsMustMatch will be set to true if the copy operation must ensure
+     * that the src and dest rects are identical. disallowSubrect will be set to true if copy rect
+     * must equal src's bounds.
      */
-    virtual bool initDescForDstCopy(const GrRenderTarget* src, GrSurfaceDesc* desc) const = 0;
+    virtual bool initDescForDstCopy(const GrRenderTargetProxy* src, GrSurfaceDesc* desc,
+                                    bool* rectsMustMatch, bool* disallowSubrect) const = 0;
 
 protected:
     /** Subclasses must call this at the end of their constructors in order to apply caps
@@ -205,17 +199,15 @@ protected:
     bool fMipMapSupport                              : 1;
     bool fSRGBSupport                                : 1;
     bool fSRGBWriteControl                           : 1;
-    bool fTwoSidedStencilSupport                     : 1;
-    bool fStencilWrapOpsSupport                      : 1;
     bool fDiscardRenderTargetSupport                 : 1;
     bool fReuseScratchTextures                       : 1;
     bool fReuseScratchBuffers                        : 1;
     bool fGpuTracingSupport                          : 1;
-    bool fCompressedTexSubImageSupport               : 1;
     bool fOversizedStencilSupport                    : 1;
     bool fTextureBarrierSupport                      : 1;
     bool fSampleLocationsSupport                     : 1;
     bool fMultisampleDisableSupport                  : 1;
+    bool fInstanceAttribSupport                      : 1;
     bool fUsesMixedSamples                           : 1;
     bool fPreferClientSideDynamicBuffers             : 1;
     bool fFullClearIsFree                            : 1;
@@ -223,9 +215,8 @@ protected:
 
     // Driver workaround
     bool fUseDrawInsteadOfClear                      : 1;
-    bool fUseDrawInsteadOfPartialRenderTargetWrite   : 1;
-    bool fUseDrawInsteadOfAllRenderTargetWrites      : 1;
     bool fAvoidInstancedDrawsToFPTargets             : 1;
+    bool fAvoidStencilBuffers                        : 1;
 
     // ANGLE workaround
     bool fPreferVRAMUseOverFlushes                   : 1;
@@ -259,7 +250,7 @@ private:
     virtual void onApplyOptionsOverrides(const GrContextOptions&) {}
 
     bool fSuppressPrints : 1;
-    bool fImmediateFlush: 1;
+    bool fWireframeMode  : 1;
 
     typedef SkRefCnt INHERITED;
 };

@@ -8,10 +8,8 @@
 #ifndef GrPipelineBuilder_DEFINED
 #define GrPipelineBuilder_DEFINED
 
-#include "GrGpuResourceRef.h"
 #include "GrPipeline.h"
 #include "GrProcessorSet.h"
-#include "GrRenderTarget.h"
 #include "GrUserStencilSettings.h"
 #include "GrXferProcessor.h"
 
@@ -29,8 +27,7 @@ public:
      * which is unmodified by this function and clipping which will be enabled.
      */
     GrPipelineBuilder(GrPaint&& paint, GrAAType aaType)
-            : fFlags(0x0)
-            , fDrawFace(GrDrawFace::kBoth)
+            : fFlags(GrPipeline::SRGBFlagsFromPaint(paint))
             , fUserStencilSettings(&GrUserStencilSettings::kUnused)
             , fProcessors(std::move(paint)) {
         if (GrAATypeIsHW(aaType)) {
@@ -63,18 +60,12 @@ public:
 
     const GrProcessorSet& processors() const { return fProcessors; }
 
-    /// @}
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// @name Blending
-    ////
-
-    /**
-     * Checks whether the xp will need destination in a texture to correctly blend.
-     */
-    bool willXPNeedDstTexture(const GrCaps& caps,
-                              const GrProcessorSet::FragmentProcessorAnalysis& analysis) const {
-        return GrXPFactory::WillNeedDstTexture(fProcessors.xpFactory(), caps, analysis);
+    GrProcessorSet::Analysis finalizeProcessors(const GrProcessorAnalysisColor& colorInput,
+                                                const GrProcessorAnalysisCoverage coverageInput,
+                                                const GrAppliedClip* clip, bool isMixedSamples,
+                                                const GrCaps& caps, GrColor* overrideColor) {
+        return fProcessors.finalize(colorInput, coverageInput, clip, isMixedSamples, caps,
+                                    overrideColor);
     }
 
     /// @}
@@ -113,31 +104,14 @@ public:
 
     /// @}
 
-    ///////////////////////////////////////////////////////////////////////////
-    /// @name Face Culling
-    ////
-
-    /**
-     * Controls whether clockwise, counterclockwise, or both faces are drawn.
-     * @param face  the face(s) to draw.
-     */
-    void setDrawFace(GrDrawFace face) {
-        SkASSERT(GrDrawFace::kInvalid != face);
-        fDrawFace = face;
-    }
-
-    /// @}
-
     void getPipelineInitArgs(GrPipeline::InitArgs* args) const {
         args->fFlags = fFlags;
         args->fUserStencil = fUserStencilSettings;
-        args->fDrawFace = fDrawFace;
         args->fProcessors = &fProcessors;
     }
 
 private:
     uint32_t fFlags;
-    GrDrawFace fDrawFace;
     const GrUserStencilSettings* fUserStencilSettings;
     GrProcessorSet fProcessors;
 };

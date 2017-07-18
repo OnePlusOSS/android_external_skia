@@ -15,7 +15,7 @@
 #include "SkBitmapRegionDecoder.h"
 #include "SkCanvas.h"
 #include "SkData.h"
-#include "SkMultiPictureDocumentReader.h"
+#include "SkMultiPictureDocument.h"
 #include "SkPicture.h"
 #include "gm.h"
 
@@ -127,7 +127,6 @@ public:
     };
     enum DstColorType {
         kGetFromCanvas_DstColorType,
-        kIndex8_Always_DstColorType,
         kGrayscale_Always_DstColorType,
         kNonNative8888_Always_DstColorType,
     };
@@ -288,7 +287,7 @@ public:
 
 private:
     Path fPath;
-    SkMultiPictureDocumentReader fReader;
+    mutable SkTArray<SkDocumentPage> fPages;
 };
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/

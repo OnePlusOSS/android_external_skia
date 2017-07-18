@@ -91,21 +91,6 @@ public:
     virtual ~TestSampleLocationsInterface() {}
 };
 
-static void construct_dummy_pipeline(GrRenderTargetContext* dc, GrPipeline* pipeline) {
-    GrPipelineBuilder dummyBuilder(GrPaint(), GrAAType::kNone);
-    GrScissorState dummyScissor;
-    GrWindowRectsState dummyWindows;
-
-    GrProcessorSet::FragmentProcessorAnalysis analysis;
-    GrPipeline::InitArgs args;
-    dummyBuilder.getPipelineInitArgs(&args);
-    args.fRenderTarget = dc->accessRenderTarget();
-    args.fAnalysis = &analysis;
-    args.fCaps = dc->caps();
-    args.fDstTexture = GrXferProcessor::DstTexture();
-    pipeline->init(args);
-}
-
 void assert_equal(skiatest::Reporter* reporter, const SamplePattern& pattern,
                   const GrGpu::MultisampleSpecs& specs, bool flipY) {
     GrAlwaysAssert(specs.fSampleLocations);
@@ -133,11 +118,11 @@ void test_sampleLocations(skiatest::Reporter* reporter, TestSampleLocationsInter
     for (int i = 0; i < numTestPatterns; ++i) {
         int numSamples = (int)kTestPatterns[i].size();
         GrAlwaysAssert(numSamples > 1 && SkIsPow2(numSamples));
-        bottomUps[i] = ctx->makeRenderTargetContextWithFallback(
+        bottomUps[i] = ctx->makeDeferredRenderTargetContextWithFallback(
                            SkBackingFit::kExact, 100, 100, kRGBA_8888_GrPixelConfig, nullptr,
                            rand.nextRangeU(1 + numSamples / 2, numSamples),
                            kBottomLeft_GrSurfaceOrigin);
-        topDowns[i] = ctx->makeRenderTargetContextWithFallback(
+        topDowns[i] = ctx->makeDeferredRenderTargetContextWithFallback(
                           SkBackingFit::kExact, 100, 100, kRGBA_8888_GrPixelConfig, nullptr,
                           rand.nextRangeU(1 + numSamples / 2, numSamples),
                           kTopLeft_GrSurfaceOrigin);
@@ -147,10 +132,11 @@ void test_sampleLocations(skiatest::Reporter* reporter, TestSampleLocationsInter
     for (int repeat = 0; repeat < 2; ++repeat) {
         for (int i = 0; i < numTestPatterns; ++i) {
             testInterface->overrideSamplePattern(kTestPatterns[i]);
-            for (GrRenderTargetContext* dc : {bottomUps[i].get(), topDowns[i].get()}) {
-                GrPipeline dummyPipeline;
-                construct_dummy_pipeline(dc, &dummyPipeline);
-                GrRenderTarget* rt = dc->accessRenderTarget();
+            for (GrRenderTargetContext* rtc : {bottomUps[i].get(), topDowns[i].get()}) {
+                GrPipeline dummyPipeline(rtc->accessRenderTarget(),
+                                         GrPipeline::ScissorState::kDisabled,
+                                         SkBlendMode::kSrcOver);
+                GrRenderTarget* rt = rtc->accessRenderTarget();
                 assert_equal(reporter, kTestPatterns[i],
                              rt->renderTargetPriv().getMultisampleSpecs(dummyPipeline),
                              kBottomLeft_GrSurfaceOrigin == rt->origin());
@@ -202,6 +188,11 @@ private:
 DEF_GPUTEST(GLSampleLocations, reporter, /*factory*/) {
     GLTestSampleLocationsInterface testInterface;
     sk_sp<GrContext> ctx(GrContext::Create(kOpenGL_GrBackend, testInterface));
+
+    // This test relies on at least 2 samples.
+    if (ctx->caps()->maxSampleCount() < 2) {
+        return;
+    }
     test_sampleLocations(reporter, &testInterface, ctx.get());
 }
 

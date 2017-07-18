@@ -20,16 +20,6 @@
 #include "SkSurface.h"
 #include "SkUtils.h"
 
-void SkAutoPixmapUnlock::reset(const SkPixmap& pm, void (*unlock)(void*), void* ctx) {
-    SkASSERT(pm.addr() != nullptr);
-
-    this->unlock();
-    fPixmap = pm;
-    fUnlockProc = unlock;
-    fUnlockContext = ctx;
-    fIsLocked = true;
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 void SkPixmap::reset() {
@@ -84,8 +74,8 @@ bool SkPixmap::extractSubset(SkPixmap* result, const SkIRect& subset) const {
     return true;
 }
 
-bool SkPixmap::readPixels(const SkImageInfo& dstInfo, void* dstPixels, size_t dstRB, int x, int y)
-const {
+bool SkPixmap::readPixels(const SkImageInfo& dstInfo, void* dstPixels, size_t dstRB, int x, int y,
+                          SkTransferFunctionBehavior behavior) const {
     if (!SkImageInfoValidConversion(dstInfo, fInfo)) {
         return false;
     }
@@ -98,7 +88,7 @@ const {
     const void* srcPixels = this->addr(rec.fX, rec.fY);
     const SkImageInfo srcInfo = fInfo.makeWH(rec.fInfo.width(), rec.fInfo.height());
     SkConvertPixels(rec.fInfo, rec.fPixels, rec.fRowBytes, srcInfo, srcPixels, this->rowBytes(),
-                    this->ctable(), SkTransferFunctionBehavior::kRespect);
+                    this->ctable(), behavior);
     return true;
 }
 
@@ -267,6 +257,13 @@ SkColor SkPixmap::getColor(int x, int y) const {
     SkASSERT(this->addr());
     SkASSERT((unsigned)x < (unsigned)this->width());
     SkASSERT((unsigned)y < (unsigned)this->height());
+
+    const bool needsUnpremul = (kPremul_SkAlphaType == fInfo.alphaType());
+    auto toColor = [needsUnpremul](uint32_t maybePremulColor) {
+        return needsUnpremul ? SkUnPreMultiply::PMColorToColor(maybePremulColor)
+                             : SkSwizzle_BGRA_to_PMColor(maybePremulColor);
+    };
+
     switch (this->colorType()) {
         case kGray_8_SkColorType: {
             uint8_t value = *this->addr8(x, y);
@@ -277,8 +274,8 @@ SkColor SkPixmap::getColor(int x, int y) const {
         }
         case kIndex_8_SkColorType: {
             SkASSERT(this->ctable());
-            SkPMColor pmColor = (*this->ctable())[*this->addr8(x, y)];
-            return SkUnPreMultiply::PMColorToColor(pmColor);
+            SkPMColor c = (*this->ctable())[*this->addr8(x, y)];
+            return toColor(c);
         }
         case kRGB_565_SkColorType: {
             return SkPixel16ToColor(*this->addr16(x, y));
@@ -286,23 +283,23 @@ SkColor SkPixmap::getColor(int x, int y) const {
         case kARGB_4444_SkColorType: {
             uint16_t value = *this->addr16(x, y);
             SkPMColor c = SkPixel4444ToPixel32(value);
-            return SkUnPreMultiply::PMColorToColor(c);
+            return toColor(c);
         }
         case kBGRA_8888_SkColorType: {
             uint32_t value = *this->addr32(x, y);
             SkPMColor c = SkSwizzle_BGRA_to_PMColor(value);
-            return SkUnPreMultiply::PMColorToColor(c);
+            return toColor(c);
         }
         case kRGBA_8888_SkColorType: {
             uint32_t value = *this->addr32(x, y);
             SkPMColor c = SkSwizzle_RGBA_to_PMColor(value);
-            return SkUnPreMultiply::PMColorToColor(c);
+            return toColor(c);
         }
         case kRGBA_F16_SkColorType: {
              const uint64_t* addr =
                  (const uint64_t*)fPixels + y * (fRowBytes >> 3) + x;
              Sk4f p4 = SkHalfToFloat_finite_ftz(*addr);
-             if (p4[3]) {
+             if (p4[3] && needsUnpremul) {
                  float inva = 1 / p4[3];
                  p4 = p4 * Sk4f(inva, inva, inva, 1);
              }

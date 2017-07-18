@@ -10,52 +10,44 @@
 #include "GrOpFlushState.h"
 #include "SkGr.h"
 
-std::unique_ptr<GrMeshDrawOp> GrDrawVerticesOp::Make(
-        GrColor color, GrPrimitiveType primitiveType, const SkMatrix& viewMatrix,
-        const SkPoint* positions, int vertexCount, const uint16_t* indices, int indexCount,
-        const uint32_t* colors, const SkPoint* localCoords, const SkRect& bounds,
-        GrRenderTargetContext::ColorArrayType colorArrayType) {
-    static constexpr SkCanvas::VertexMode kIgnoredMode = SkCanvas::kTriangles_VertexMode;
-    SkASSERT(positions);
-    if (!colors) {
-        // When we tessellate we will fill a color array with the GrColor value passed above as
-        // 'color'.
-        colorArrayType = GrRenderTargetContext::ColorArrayType::kPremulGrColor;
-    }
-    sk_sp<SkVertices> vertices = SkVertices::MakeCopy(kIgnoredMode, vertexCount, positions,
-                                                      localCoords, colors, indexCount, indices);
-    if (!vertices) {
-        return nullptr;
-    }
-    return std::unique_ptr<GrMeshDrawOp>(new GrDrawVerticesOp(std::move(vertices), primitiveType,
-                                                              color, colorArrayType, viewMatrix));
-}
-
-std::unique_ptr<GrMeshDrawOp> GrDrawVerticesOp::Make(GrColor color, sk_sp<SkVertices> vertices,
-                                                     const SkMatrix& viewMatrix) {
+std::unique_ptr<GrLegacyMeshDrawOp> GrDrawVerticesOp::Make(GrColor color,
+                                                           sk_sp<SkVertices> vertices,
+                                                           const SkMatrix& viewMatrix,
+                                                           bool gammaCorrect,
+                                                           sk_sp<GrColorSpaceXform> colorSpaceXform,
+                                                           GrPrimitiveType* overridePrimType) {
     SkASSERT(vertices);
-    GrPrimitiveType primType = SkVertexModeToGrPrimitiveType(vertices->mode());
-    return std::unique_ptr<GrMeshDrawOp>(new GrDrawVerticesOp(
-            std::move(vertices), primType, color, GrRenderTargetContext::ColorArrayType::kSkColor,
-            viewMatrix));
+    GrPrimitiveType primType = overridePrimType ? *overridePrimType
+                                                : SkVertexModeToGrPrimitiveType(vertices->mode());
+    return std::unique_ptr<GrLegacyMeshDrawOp>(new GrDrawVerticesOp(std::move(vertices), primType,
+                                                                    color, gammaCorrect,
+                                                                    std::move(colorSpaceXform),
+                                                                    viewMatrix));
 }
 
 GrDrawVerticesOp::GrDrawVerticesOp(sk_sp<SkVertices> vertices, GrPrimitiveType primitiveType,
-                                   GrColor color,
-                                   GrRenderTargetContext::ColorArrayType colorArrayType,
-                                   const SkMatrix& viewMatrix, uint32_t flags)
-        : INHERITED(ClassID()), fColorArrayType(colorArrayType) {
+                                   GrColor color, bool gammaCorrect,
+                                   sk_sp<GrColorSpaceXform> colorSpaceXform,
+                                   const SkMatrix& viewMatrix)
+        : INHERITED(ClassID())
+        , fPrimitiveType(primitiveType)
+        , fColorSpaceXform(std::move(colorSpaceXform)) {
     SkASSERT(vertices);
 
     fVertexCount = vertices->vertexCount();
     fIndexCount = vertices->indexCount();
-    fPrimitiveType = primitiveType;
+    fColorArrayType = vertices->hasColors() ? ColorArrayType::kSkColor
+                                            : ColorArrayType::kPremulGrColor;
+    // GrColor is linearized (and gamut converted) during paint conversion, but SkColors need to be
+    // handled in the shader
+    fLinearizeColors = gammaCorrect && vertices->hasColors();
 
     Mesh& mesh = fMeshes.push_back();
     mesh.fColor = color;
     mesh.fViewMatrix = viewMatrix;
     mesh.fVertices = std::move(vertices);
-    mesh.fFlags = flags;
+    mesh.fIgnoreTexCoords = false;
+    mesh.fIgnoreColors = false;
 
     fFlags = 0;
     if (mesh.hasPerVertexColors()) {
@@ -66,7 +58,7 @@ GrDrawVerticesOp::GrDrawVerticesOp(sk_sp<SkVertices> vertices, GrPrimitiveType p
     }
 
     IsZeroArea zeroArea;
-    if (GrIsPrimTypeLines(primitiveType) || kPoints_GrPrimitiveType == primitiveType) {
+    if (GrIsPrimTypeLines(primitiveType) || GrPrimitiveType::kPoints == primitiveType) {
         zeroArea = IsZeroArea::kYes;
     } else {
         zeroArea = IsZeroArea::kNo;
@@ -74,29 +66,30 @@ GrDrawVerticesOp::GrDrawVerticesOp(sk_sp<SkVertices> vertices, GrPrimitiveType p
     this->setTransformedBounds(mesh.fVertices->bounds(), viewMatrix, HasAABloat::kNo, zeroArea);
 }
 
-void GrDrawVerticesOp::getFragmentProcessorAnalysisInputs(
-        GrPipelineAnalysisColor* color, GrPipelineAnalysisCoverage* coverage) const {
+void GrDrawVerticesOp::getProcessorAnalysisInputs(GrProcessorAnalysisColor* color,
+                                                  GrProcessorAnalysisCoverage* coverage) const {
     if (this->requiresPerVertexColors()) {
         color->setToUnknown();
     } else {
         color->setToConstant(fMeshes[0].fColor);
     }
-    *coverage = GrPipelineAnalysisCoverage::kNone;
+    *coverage = GrProcessorAnalysisCoverage::kNone;
 }
 
-void GrDrawVerticesOp::applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) {
+void GrDrawVerticesOp::applyPipelineOptimizations(const PipelineOptimizations& optimizations) {
     SkASSERT(fMeshes.count() == 1);
     GrColor overrideColor;
     if (optimizations.getOverrideColorIfSet(&overrideColor)) {
         fMeshes[0].fColor = overrideColor;
-        fMeshes[0].fFlags |= kIgnoreColors_VerticesFlag;
+        fMeshes[0].fIgnoreColors = true;
         fFlags &= ~kRequiresPerVertexColors_Flag;
-        fColorArrayType = GrRenderTargetContext::ColorArrayType::kPremulGrColor;
+        fColorArrayType = ColorArrayType::kPremulGrColor;
+        fLinearizeColors = false;
     }
     if (optimizations.readsLocalCoords()) {
         fFlags |= kPipelineRequiresLocalCoords_Flag;
     } else {
-        fFlags |= kIgnoreTexCoords_VerticesFlag;
+        fMeshes[0].fIgnoreTexCoords = true;
         fFlags &= ~kAnyMeshHasExplicitLocalCoords;
     }
 }
@@ -122,9 +115,11 @@ sk_sp<GrGeometryProcessor> GrDrawVerticesOp::makeGP(bool* hasColorAttribute,
 
     Color color(fMeshes[0].fColor);
     if (this->requiresPerVertexColors()) {
-        color.fType = (fColorArrayType == GrRenderTargetContext::ColorArrayType::kPremulGrColor)
+        color.fType = (fColorArrayType == ColorArrayType::kPremulGrColor)
                               ? Color::kPremulGrColorAttribute_Type
                               : Color::kUnpremulSkColorAttribute_Type;
+        color.fLinearize = fLinearizeColors;
+        color.fColorSpaceXform = fColorSpaceXform;
         *hasColorAttribute = true;
     } else {
         *hasColorAttribute = false;
@@ -234,15 +229,14 @@ void GrDrawVerticesOp::onPrepareDraws(Target* target) const {
         vertexOffset += vertexCount;
     }
 
-    GrMesh mesh;
-    if (indices) {
-        mesh.initIndexed(this->primitiveType(), vertexBuffer, indexBuffer, firstVertex, firstIndex,
-                         fVertexCount, fIndexCount);
-
+    GrMesh mesh(this->primitiveType());
+    if (!indices) {
+        mesh.setNonIndexedNonInstanced(fVertexCount);
     } else {
-        mesh.init(this->primitiveType(), vertexBuffer, firstVertex, fVertexCount);
+        mesh.setIndexed(indexBuffer, fIndexCount, firstIndex, 0, fVertexCount - 1);
     }
-    target->draw(gp.get(), mesh);
+    mesh.setVertexData(vertexBuffer, firstVertex);
+    target->draw(gp.get(), this->pipeline(), mesh);
 }
 
 bool GrDrawVerticesOp::onCombineIfPossible(GrOp* t, const GrCaps& caps) {
@@ -265,9 +259,17 @@ bool GrDrawVerticesOp::onCombineIfPossible(GrOp* t, const GrCaps& caps) {
         return false;
     }
 
+    if (fLinearizeColors != that->fLinearizeColors) {
+        return false;
+    }
+
     if (fVertexCount + that->fVertexCount > SK_MaxU16) {
         return false;
     }
+
+    // NOTE: For SkColor vertex colors, the source color space is always sRGB, and the destination
+    // gamut is determined by the render target context. A mis-match should be impossible.
+    SkASSERT(GrColorSpaceXform::Equals(fColorSpaceXform.get(), that->fColorSpaceXform.get()));
 
     // If either op required explicit local coords or per-vertex colors the combined mesh does. Same
     // with multiple view matrices.
@@ -298,15 +300,17 @@ bool GrDrawVerticesOp::onCombineIfPossible(GrOp* t, const GrCaps& caps) {
 
 static uint32_t seed_vertices(GrPrimitiveType type) {
     switch (type) {
-        case kTriangles_GrPrimitiveType:
-        case kTriangleStrip_GrPrimitiveType:
-        case kTriangleFan_GrPrimitiveType:
+        case GrPrimitiveType::kTriangles:
+        case GrPrimitiveType::kTriangleStrip:
+        case GrPrimitiveType::kTriangleFan:
             return 3;
-        case kPoints_GrPrimitiveType:
+        case GrPrimitiveType::kPoints:
             return 1;
-        case kLines_GrPrimitiveType:
-        case kLineStrip_GrPrimitiveType:
+        case GrPrimitiveType::kLines:
+        case GrPrimitiveType::kLineStrip:
             return 2;
+        case GrPrimitiveType::kLinesAdjacency:
+            return 4;
     }
     SkFAIL("Incomplete switch\n");
     return 0;
@@ -314,15 +318,17 @@ static uint32_t seed_vertices(GrPrimitiveType type) {
 
 static uint32_t primitive_vertices(GrPrimitiveType type) {
     switch (type) {
-        case kTriangles_GrPrimitiveType:
+        case GrPrimitiveType::kTriangles:
             return 3;
-        case kLines_GrPrimitiveType:
+        case GrPrimitiveType::kLines:
             return 2;
-        case kTriangleStrip_GrPrimitiveType:
-        case kTriangleFan_GrPrimitiveType:
-        case kPoints_GrPrimitiveType:
-        case kLineStrip_GrPrimitiveType:
+        case GrPrimitiveType::kTriangleStrip:
+        case GrPrimitiveType::kTriangleFan:
+        case GrPrimitiveType::kPoints:
+        case GrPrimitiveType::kLineStrip:
             return 1;
+        case GrPrimitiveType::kLinesAdjacency:
+            return 4;
     }
     SkFAIL("Incomplete switch\n");
     return 0;
@@ -355,8 +361,13 @@ static void randomize_params(size_t count, size_t maxVertex, SkScalar min, SkSca
     }
 }
 
-DRAW_OP_TEST_DEFINE(VerticesOp) {
-    GrPrimitiveType type = GrPrimitiveType(random->nextULessThan(kLast_GrPrimitiveType + 1));
+GR_LEGACY_MESH_DRAW_OP_TEST_DEFINE(VerticesOp) {
+    GrPrimitiveType type;
+    do {
+       type = GrPrimitiveType(random->nextULessThan(kNumGrPrimitiveTypes));
+    } while (GrPrimTypeRequiresGeometryShaderSupport(type) &&
+             !context->caps()->shaderCaps()->geometryShaderSupport());
+
     uint32_t primitiveCount = random->nextRangeU(1, 100);
 
     // TODO make 'sensible' indexbuffers
@@ -368,6 +379,7 @@ DRAW_OP_TEST_DEFINE(VerticesOp) {
     bool hasTexCoords = random->nextBool();
     bool hasIndices = random->nextBool();
     bool hasColors = random->nextBool();
+    bool linearizeColors = random->nextBool();
 
     uint32_t vertexCount = seed_vertices(type) + (primitiveCount - 1) * primitive_vertices(type);
 
@@ -383,18 +395,19 @@ DRAW_OP_TEST_DEFINE(VerticesOp) {
                          hasIndices);
     }
 
-    GrRenderTargetContext::ColorArrayType colorArrayType =
-            random->nextBool() ? GrRenderTargetContext::ColorArrayType::kPremulGrColor
-                               : GrRenderTargetContext::ColorArrayType::kSkColor;
     SkMatrix viewMatrix = GrTest::TestMatrix(random);
-    SkRect bounds;
-    SkDEBUGCODE(bool result =) bounds.setBoundsCheck(positions.begin(), vertexCount);
-    SkASSERT(result);
 
     GrColor color = GrRandomColor(random);
-    return GrDrawVerticesOp::Make(color, type, viewMatrix, positions.begin(), vertexCount,
-                                  indices.begin(), hasIndices ? indices.count() : 0, colors.begin(),
-                                  texCoords.begin(), bounds, colorArrayType);
+    sk_sp<GrColorSpaceXform> colorSpaceXform = GrTest::TestColorXform(random);
+
+    static constexpr SkVertices::VertexMode kIgnoredMode = SkVertices::kTriangles_VertexMode;
+    sk_sp<SkVertices> vertices = SkVertices::MakeCopy(kIgnoredMode, vertexCount, positions.begin(),
+                                                      texCoords.begin(), colors.begin(),
+                                                      hasIndices ? indices.count() : 0,
+                                                      indices.begin());
+    return std::unique_ptr<GrLegacyMeshDrawOp>(
+            new GrDrawVerticesOp(std::move(vertices), type, color, linearizeColors,
+                                 std::move(colorSpaceXform), viewMatrix));
 }
 
 #endif

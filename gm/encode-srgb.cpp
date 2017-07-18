@@ -12,9 +12,13 @@
 #include "SkCodec.h"
 #include "SkColorSpace_Base.h"
 #include "SkData.h"
+#include "SkImage.h"
 #include "SkImageEncoderPriv.h"
+#include "SkJpegEncoder.h"
+#include "SkPngEncoder.h"
 #include "SkPM4f.h"
 #include "SkSRGB.h"
+#include "SkWebpEncoder.h"
 
 namespace skiagm {
 
@@ -67,10 +71,9 @@ static void make_index8(SkBitmap* bitmap, SkAlphaType alphaType, sk_sp<SkColorSp
         pmColors[i] = toPMColor(colors[i]);
     }
 
-    sk_sp<SkColorTable> colorTable(new SkColorTable(pmColors, SK_ARRAY_COUNT(pmColors)));
     SkImageInfo info = SkImageInfo::Make(imageWidth, imageHeight, kIndex_8_SkColorType,
                                          alphaType, colorSpace);
-    bitmap->allocPixels(info, nullptr, colorTable.get());
+    bitmap->allocPixels(info, SkColorTable::Make(pmColors, SK_ARRAY_COUNT(pmColors)));
     for (int y = 0; y < imageHeight; y++) {
         for (int x = 0; x < imageWidth; x++) {
             *bitmap->getAddr8(x, y) = (x / div_round_up(imageWidth, 2)) +
@@ -110,27 +113,28 @@ static void make(SkBitmap* bitmap, SkColorType colorType, SkAlphaType alphaType,
 }
 
 static sk_sp<SkData> encode_data(const SkBitmap& bitmap, SkEncodedImageFormat format) {
-    SkAutoLockPixels autoLockPixels(bitmap);
     SkPixmap src;
     if (!bitmap.peekPixels(&src)) {
         return nullptr;
     }
     SkDynamicMemoryWStream buf;
 
-    SkEncodeOptions options;
-    if (bitmap.colorSpace()) {
-        options.fUnpremulBehavior = SkTransferFunctionBehavior::kRespect;
-    }
+    SkPngEncoder::Options pngOptions;
+    SkWebpEncoder::Options webpOptions;
+    SkTransferFunctionBehavior behavior = bitmap.colorSpace()
+            ? SkTransferFunctionBehavior::kRespect : SkTransferFunctionBehavior::kIgnore;
+    pngOptions.fUnpremulBehavior = behavior;
+    webpOptions.fUnpremulBehavior = behavior;
 
     switch (format) {
         case SkEncodedImageFormat::kPNG:
-            SkAssertResult(SkEncodeImageAsPNG(&buf, src, options));
+            SkAssertResult(SkPngEncoder::Encode(&buf, src, pngOptions));
             break;
         case SkEncodedImageFormat::kWEBP:
-            SkAssertResult(SkEncodeImageAsWEBP(&buf, src, options));
+            SkAssertResult(SkWebpEncoder::Encode(&buf, src, webpOptions));
             break;
         case SkEncodedImageFormat::kJPEG:
-            SkAssertResult(SkEncodeImageAsJPEG(&buf, src, options));
+            SkAssertResult(SkJpegEncoder::Encode(&buf, src, SkJpegEncoder::Options()));
             break;
         default:
             break;

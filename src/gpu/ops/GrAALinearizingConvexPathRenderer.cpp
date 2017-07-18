@@ -48,6 +48,10 @@ bool GrAALinearizingConvexPathRenderer::onCanDrawPath(const CanDrawPathArgs& arg
     if (args.fShape->inverseFilled()) {
         return false;
     }
+    if (args.fShape->bounds().width() <= 0 && args.fShape->bounds().height() <= 0) {
+        // Stroked zero length lines should draw, but this PR doesn't handle that case
+        return false;
+    }
     const SkStrokeRec& stroke = args.fShape->style().strokeRec();
 
     if (stroke.getStyle() == SkStrokeRec::kStroke_Style ||
@@ -100,9 +104,9 @@ static void extract_verts(const GrAAConvexTessellator& tess,
     }
 }
 
-static sk_sp<GrGeometryProcessor> create_fill_gp(bool tweakAlphaForCoverage,
-                                                 const SkMatrix& viewMatrix,
-                                                 bool usesLocalCoords) {
+static sk_sp<GrGeometryProcessor> create_lines_only_gp(bool tweakAlphaForCoverage,
+                                                       const SkMatrix& viewMatrix,
+                                                       bool usesLocalCoords) {
     using namespace GrDefaultGeoProcFactory;
 
     Coverage::Type coverageType;
@@ -117,17 +121,17 @@ static sk_sp<GrGeometryProcessor> create_fill_gp(bool tweakAlphaForCoverage,
                               viewMatrix);
 }
 
-class AAFlatteningConvexPathOp final : public GrMeshDrawOp {
+class AAFlatteningConvexPathOp final : public GrLegacyMeshDrawOp {
 public:
     DEFINE_OP_CLASS_ID
-    static std::unique_ptr<GrMeshDrawOp> Make(GrColor color,
-                                              const SkMatrix& viewMatrix,
-                                              const SkPath& path,
-                                              SkScalar strokeWidth,
-                                              SkStrokeRec::Style style,
-                                              SkPaint::Join join,
-                                              SkScalar miterLimit) {
-        return std::unique_ptr<GrMeshDrawOp>(new AAFlatteningConvexPathOp(
+    static std::unique_ptr<GrLegacyMeshDrawOp> Make(GrColor color,
+                                                    const SkMatrix& viewMatrix,
+                                                    const SkPath& path,
+                                                    SkScalar strokeWidth,
+                                                    SkStrokeRec::Style style,
+                                                    SkPaint::Join join,
+                                                    SkScalar miterLimit) {
+        return std::unique_ptr<GrLegacyMeshDrawOp>(new AAFlatteningConvexPathOp(
                 color, viewMatrix, path, strokeWidth, style, join, miterLimit));
     }
 
@@ -172,25 +176,25 @@ private:
         this->setTransformedBounds(bounds, viewMatrix, HasAABloat::kYes, IsZeroArea::kNo);
     }
 
-    void getFragmentProcessorAnalysisInputs(GrPipelineAnalysisColor* color,
-                                            GrPipelineAnalysisCoverage* coverage) const override {
+    void getProcessorAnalysisInputs(GrProcessorAnalysisColor* color,
+                                    GrProcessorAnalysisCoverage* coverage) const override {
         color->setToConstant(fPaths[0].fColor);
-        *coverage = GrPipelineAnalysisCoverage::kSingleChannel;
+        *coverage = GrProcessorAnalysisCoverage::kSingleChannel;
     }
 
-    void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
+    void applyPipelineOptimizations(const PipelineOptimizations& optimizations) override {
         optimizations.getOverrideColorIfSet(&fPaths[0].fColor);
         fUsesLocalCoords = optimizations.readsLocalCoords();
         fCanTweakAlphaForCoverage = optimizations.canTweakAlphaForCoverage();
     }
 
-    void draw(GrMeshDrawOp::Target* target, const GrGeometryProcessor* gp, int vertexCount,
+    void draw(GrLegacyMeshDrawOp::Target* target, const GrGeometryProcessor* gp, int vertexCount,
               size_t vertexStride, void* vertices, int indexCount, uint16_t* indices) const {
         if (vertexCount == 0 || indexCount == 0) {
             return;
         }
         const GrBuffer* vertexBuffer;
-        GrMesh mesh;
+        GrMesh mesh(GrPrimitiveType::kTriangles);
         int firstVertex;
         void* verts = target->makeVertexSpace(vertexStride, vertexCount, &vertexBuffer,
                                               &firstVertex);
@@ -208,16 +212,16 @@ private:
             return;
         }
         memcpy(idxs, indices, indexCount * sizeof(uint16_t));
-        mesh.initIndexed(kTriangles_GrPrimitiveType, vertexBuffer, indexBuffer, firstVertex,
-                         firstIndex, vertexCount, indexCount);
-        target->draw(gp, mesh);
+        mesh.setIndexed(indexBuffer, indexCount, firstIndex, 0, vertexCount - 1);
+        mesh.setVertexData(vertexBuffer, firstVertex);
+        target->draw(gp, this->pipeline(), mesh);
     }
 
     void onPrepareDraws(Target* target) const override {
         bool canTweakAlphaForCoverage = this->canTweakAlphaForCoverage();
 
         // Setup GrGeometryProcessor
-        sk_sp<GrGeometryProcessor> gp(create_fill_gp(
+        sk_sp<GrGeometryProcessor> gp(create_lines_only_gp(
                 canTweakAlphaForCoverage, this->viewMatrix(), this->usesLocalCoords()));
         if (!gp) {
             SkDebugf("Couldn't create a GrGeometryProcessor\n");
@@ -318,13 +322,13 @@ private:
     bool fCanTweakAlphaForCoverage;
     SkSTArray<1, PathData, true> fPaths;
 
-    typedef GrMeshDrawOp INHERITED;
+    typedef GrLegacyMeshDrawOp INHERITED;
 };
 
 bool GrAALinearizingConvexPathRenderer::onDrawPath(const DrawPathArgs& args) {
     GR_AUDIT_TRAIL_AUTO_FRAME(args.fRenderTargetContext->auditTrail(),
                               "GrAALinearizingConvexPathRenderer::onDrawPath");
-    SkASSERT(!args.fRenderTargetContext->isUnifiedMultisampled());
+    SkASSERT(GrFSAAType::kUnifiedMSAA != args.fRenderTargetContext->fsaaType());
     SkASSERT(!args.fShape->isEmpty());
     SkASSERT(!args.fShape->style().pathEffect());
 
@@ -336,14 +340,15 @@ bool GrAALinearizingConvexPathRenderer::onDrawPath(const DrawPathArgs& args) {
     SkPaint::Join join = fill ? SkPaint::Join::kMiter_Join : stroke.getJoin();
     SkScalar miterLimit = stroke.getMiter();
 
-    std::unique_ptr<GrMeshDrawOp> op =
+    std::unique_ptr<GrLegacyMeshDrawOp> op =
             AAFlatteningConvexPathOp::Make(args.fPaint.getColor(), *args.fViewMatrix, path,
                                            strokeWidth, stroke.getStyle(), join, miterLimit);
 
     GrPipelineBuilder pipelineBuilder(std::move(args.fPaint), args.fAAType);
     pipelineBuilder.setUserStencil(args.fUserStencilSettings);
 
-    args.fRenderTargetContext->addMeshDrawOp(pipelineBuilder, *args.fClip, std::move(op));
+    args.fRenderTargetContext->addLegacyMeshDrawOp(std::move(pipelineBuilder), *args.fClip,
+                                                   std::move(op));
 
     return true;
 }
@@ -352,7 +357,7 @@ bool GrAALinearizingConvexPathRenderer::onDrawPath(const DrawPathArgs& args) {
 
 #if GR_TEST_UTILS
 
-DRAW_OP_TEST_DEFINE(AAFlatteningConvexPathOp) {
+GR_LEGACY_MESH_DRAW_OP_TEST_DEFINE(AAFlatteningConvexPathOp) {
     GrColor color = GrRandomColor(random);
     SkMatrix viewMatrix = GrTest::TestMatrixPreservesRightAngles(random);
     SkPath path = GrTest::TestPathConvex(random);

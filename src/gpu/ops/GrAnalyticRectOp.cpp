@@ -11,7 +11,6 @@
 #include "GrGeometryProcessor.h"
 #include "GrOpFlushState.h"
 #include "GrProcessor.h"
-#include "GrResourceProvider.h"
 #include "SkRRect.h"
 #include "SkStrokeRec.h"
 #include "glsl/GrGLSLFragmentShaderBuilder.h"
@@ -59,8 +58,6 @@ public:
         fInRectEdge = &this->addVertexAttrib("inRectEdge", kVec4f_GrVertexAttribType);
         fInWidthHeight = &this->addVertexAttrib("inWidthHeight", kVec2f_GrVertexAttribType);
     }
-
-    bool implementsDistanceVector() const override { return true; }
 
     const Attribute* inPosition() const { return fInPosition; }
     const Attribute* inColor() const { return fInColor; }
@@ -141,46 +138,17 @@ public:
             fragBuilder->codeAppendf("float perpDot = abs(offset.x * %s.w - offset.y * %s.z);",
                                      rectEdgeVary.fsIn(), rectEdgeVary.fsIn());
 
-            if (args.fDistanceVectorName) {
-                fragBuilder->codeAppendf("float widthDistance = %s.x - perpDot;",
-                                         widthHeightVary.fsIn());
-            }
-
             fragBuilder->codeAppendf(
                     "float coverage = scaleW*clamp((%s.x-perpDot)/spanW, 0.0, 1.0);",
                     widthHeightVary.fsIn());
             // Compute the coverage for the rect's height and merge with the width
             fragBuilder->codeAppendf("perpDot = abs(dot(offset, %s.zw));", rectEdgeVary.fsIn());
 
-            if (args.fDistanceVectorName) {
-                fragBuilder->codeAppendf("float heightDistance = %s.y - perpDot;",
-                                         widthHeightVary.fsIn());
-            }
-
             fragBuilder->codeAppendf(
                     "coverage = coverage*scaleH*clamp((%s.y-perpDot)/spanH, 0.0, 1.0);",
                     widthHeightVary.fsIn());
 
             fragBuilder->codeAppendf("%s = vec4(coverage);", args.fOutputCoverage);
-
-            if (args.fDistanceVectorName) {
-                fragBuilder->codeAppend("// Calculating distance vector\n");
-                fragBuilder->codeAppend("vec2 dvAxis;");
-                fragBuilder->codeAppend("float dvLength;");
-
-                fragBuilder->codeAppend("if (heightDistance < widthDistance) {");
-                fragBuilder->codeAppendf("    dvAxis = %s.zw;", rectEdgeVary.fsIn());
-                fragBuilder->codeAppend("     dvLength = heightDistance;");
-                fragBuilder->codeAppend("} else {");
-                fragBuilder->codeAppendf("    dvAxis = vec2(-%s.w, %s.z);", rectEdgeVary.fsIn(),
-                                         rectEdgeVary.fsIn());
-                fragBuilder->codeAppend("     dvLength = widthDistance;");
-                fragBuilder->codeAppend("}");
-
-                fragBuilder->codeAppend("float dvSign = sign(dot(offset, dvAxis));");
-                fragBuilder->codeAppendf("%s = vec4(dvSign * dvAxis, dvLength, 0.0);",
-                                         args.fDistanceVectorName);
-            }
         }
 
         static void GenKey(const GrGeometryProcessor& gp,
@@ -215,7 +183,7 @@ private:
     const Attribute* fInRectEdge;
     const Attribute* fInWidthHeight;
 
-    GR_DECLARE_GEOMETRY_PROCESSOR_TEST;
+    GR_DECLARE_GEOMETRY_PROCESSOR_TEST
 
     typedef GrGeometryProcessor INHERITED;
 };
@@ -230,7 +198,7 @@ sk_sp<GrGeometryProcessor> RectGeometryProcessor::TestCreate(GrProcessorTestData
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class AnalyticRectOp final : public GrMeshDrawOp {
+class AnalyticRectOp final : public GrLegacyMeshDrawOp {
 public:
     DEFINE_OP_CLASS_ID
 
@@ -269,13 +237,13 @@ public:
     }
 
 private:
-    void getFragmentProcessorAnalysisInputs(GrPipelineAnalysisColor* color,
-                                            GrPipelineAnalysisCoverage* coverage) const override {
+    void getProcessorAnalysisInputs(GrProcessorAnalysisColor* color,
+                                    GrProcessorAnalysisCoverage* coverage) const override {
         color->setToConstant(fGeoData[0].fColor);
-        *coverage = GrPipelineAnalysisCoverage::kSingleChannel;
+        *coverage = GrProcessorAnalysisCoverage::kSingleChannel;
     }
 
-    void applyPipelineOptimizations(const GrPipelineOptimizations& optimizations) override {
+    void applyPipelineOptimizations(const PipelineOptimizations& optimizations) override {
         optimizations.getOverrideColorIfSet(&fGeoData[0].fColor);
         if (!optimizations.readsLocalCoords()) {
             fViewMatrixIfUsingLocalCoords.reset();
@@ -344,7 +312,7 @@ private:
 
             verts += kVerticesPerQuad;
         }
-        helper.recordDraw(target, gp.get());
+        helper.recordDraw(target, gp.get(), this->pipeline());
     }
 
     bool onCombineIfPossible(GrOp* t, const GrCaps& caps) override {
@@ -375,27 +343,27 @@ private:
     SkMatrix fViewMatrixIfUsingLocalCoords;
     SkSTArray<1, Geometry, true> fGeoData;
 
-    typedef GrMeshDrawOp INHERITED;
+    typedef GrLegacyMeshDrawOp INHERITED;
 };
 
-std::unique_ptr<GrMeshDrawOp> GrAnalyticRectOp::Make(GrColor color,
-                                                     const SkMatrix& viewMatrix,
-                                                     const SkRect& rect,
-                                                     const SkRect& croppedRect,
-                                                     const SkRect& bounds) {
-    return std::unique_ptr<GrMeshDrawOp>(
+std::unique_ptr<GrLegacyMeshDrawOp> GrAnalyticRectOp::Make(GrColor color,
+                                                           const SkMatrix& viewMatrix,
+                                                           const SkRect& rect,
+                                                           const SkRect& croppedRect,
+                                                           const SkRect& bounds) {
+    return std::unique_ptr<GrLegacyMeshDrawOp>(
             new AnalyticRectOp(color, viewMatrix, rect, croppedRect, bounds));
 }
 
 #if GR_TEST_UTILS
 
-DRAW_OP_TEST_DEFINE(AnalyticRectOp) {
+GR_LEGACY_MESH_DRAW_OP_TEST_DEFINE(AnalyticRectOp) {
     SkMatrix viewMatrix = GrTest::TestMatrix(random);
     GrColor color = GrRandomColor(random);
     SkRect rect = GrTest::TestSquare(random);
     SkRect croppedRect = GrTest::TestSquare(random);
     SkRect bounds = GrTest::TestSquare(random);
-    return std::unique_ptr<GrMeshDrawOp>(
+    return std::unique_ptr<GrLegacyMeshDrawOp>(
             new AnalyticRectOp(color, viewMatrix, rect, croppedRect, bounds));
 }
 

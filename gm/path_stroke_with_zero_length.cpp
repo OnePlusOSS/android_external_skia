@@ -84,6 +84,9 @@ protected:
         bkgrnd.setColor(SK_ColorWHITE);
         canvas->drawRect(SkRect::MakeIWH(onISize().fWidth, onISize().fHeight), bkgrnd);
 
+        // Move to pixel centers. The non-AA parts of this test are really poorly defined otherwise.
+        canvas->translate(0.5f, 0.5f);
+
          auto drawPaths = [&](SkPaint& paint, int indexMask) {
             canvas->translate(0, 30.0f);
             int index = 0;
@@ -151,7 +154,7 @@ private:
         SkScalar pathX = bounds.fLeft - 2;
         SkScalar pathY = bounds.fTop - 2;
         SkMatrix cMatrix = canvas->getTotalMatrix();
-        if (!canvas->readPixels(&offscreen, SkScalarRoundToInt(pathX + cMatrix.getTranslateX()),
+        if (!canvas->readPixels(offscreen, SkScalarRoundToInt(pathX + cMatrix.getTranslateX()),
                 SkScalarRoundToInt(pathY + cMatrix.getTranslateY()))) {
             return;
         }

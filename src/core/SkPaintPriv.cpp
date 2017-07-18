@@ -10,7 +10,7 @@
 #include "SkPaintPriv.h"
 #include "SkImage.h"
 #include "SkPaint.h"
-#include "SkShader.h"
+#include "SkShaderBase.h"
 #include "SkXfermodePriv.h"
 
 static bool changes_alpha(const SkPaint& paint) {
@@ -69,3 +69,18 @@ void SkPaintPriv::ScaleFontMetrics(SkPaint::FontMetrics* metrics, SkScalar scale
     metrics->fUnderlinePosition *= scale;
 }
 
+bool SkPaintPriv::ShouldDither(const SkPaint& p, SkColorType dstCT) {
+    // The paint dither flag can veto.
+    if (!p.isDither()) {
+        return false;
+    }
+
+    // We always dither 565 when requested.
+    if (dstCT == SkColorType::kRGB_565_SkColorType) {
+        return true;
+    }
+
+    // Otherwise, dither is only needed for non-const paints.
+    return p.getImageFilter() || p.getMaskFilter()
+        || !p.getShader() || !as_SB(p.getShader())->isConstant();
+}

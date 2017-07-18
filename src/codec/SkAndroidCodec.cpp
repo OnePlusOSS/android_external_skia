@@ -105,39 +105,19 @@ SkAndroidCodec* SkAndroidCodec::NewFromData(sk_sp<SkData> data, SkPngChunkReader
 }
 
 SkColorType SkAndroidCodec::computeOutputColorType(SkColorType requestedColorType) {
-    // The legacy GIF and WBMP decoders always decode to kIndex_8_SkColorType.
-    // We will maintain this behavior when we can.
-    const SkColorType suggestedColorType = this->getInfo().colorType();
-    switch ((SkEncodedImageFormat) this->getEncodedFormat()) {
-        case SkEncodedImageFormat::kGIF:
-            if (suggestedColorType == kIndex_8_SkColorType) {
-                return kIndex_8_SkColorType;
-            }
-            break;
-        case SkEncodedImageFormat::kWBMP:
-            return kIndex_8_SkColorType;
-        default:
-            break;
-    }
-
     bool highPrecision = fCodec->getEncodedInfo().bitsPerComponent() > 8;
     switch (requestedColorType) {
         case kARGB_4444_SkColorType:
             return kN32_SkColorType;
         case kN32_SkColorType:
-            // F16 is the Android default for high precision images.
-            return highPrecision ? kRGBA_F16_SkColorType : kN32_SkColorType;
         case kIndex_8_SkColorType:
-            if (kIndex_8_SkColorType == suggestedColorType) {
-                return kIndex_8_SkColorType;
-            }
             break;
         case kAlpha_8_SkColorType:
             // Fall through to kGray_8.  Before kGray_8_SkColorType existed,
             // we allowed clients to request kAlpha_8 when they wanted a
             // grayscale decode.
         case kGray_8_SkColorType:
-            if (kGray_8_SkColorType == suggestedColorType) {
+            if (kGray_8_SkColorType == this->getInfo().colorType()) {
                 return kGray_8_SkColorType;
             }
             break;
@@ -152,14 +132,8 @@ SkColorType SkAndroidCodec::computeOutputColorType(SkColorType requestedColorTyp
             break;
     }
 
-    // Android has limited support for kGray_8 (using kAlpha_8).  We will not
-    // use kGray_8 for Android unless they specifically ask for it.
-    if (kGray_8_SkColorType == suggestedColorType) {
-        return kN32_SkColorType;
-    }
-
-    // |suggestedColorType| may be kN32_SkColorType or kIndex_8_SkColorType.
-    return highPrecision ? kRGBA_F16_SkColorType : suggestedColorType;
+    // F16 is the Android default for high precision images.
+    return highPrecision ? kRGBA_F16_SkColorType : kN32_SkColorType;
 }
 
 SkAlphaType SkAndroidCodec::computeOutputAlphaType(bool requestedUnpremul) {
@@ -209,7 +183,7 @@ sk_sp<SkColorSpace> SkAndroidCodec::computeOutputColorSpace(SkColorType outputCo
 
 SkISize SkAndroidCodec::getSampledDimensions(int sampleSize) const {
     if (!is_valid_sample_size(sampleSize)) {
-        return SkISize::Make(0, 0);
+        return {0, 0};
     }
 
     // Fast path for when we are not scaling.
@@ -230,7 +204,7 @@ bool SkAndroidCodec::getSupportedSubset(SkIRect* desiredSubset) const {
 
 SkISize SkAndroidCodec::getSampledSubsetDimensions(int sampleSize, const SkIRect& subset) const {
     if (!is_valid_sample_size(sampleSize)) {
-        return SkISize::Make(0, 0);
+        return {0, 0};
     }
 
     // We require that the input subset is a subset that is supported by SkAndroidCodec.
@@ -238,7 +212,7 @@ SkISize SkAndroidCodec::getSampledSubsetDimensions(int sampleSize, const SkIRect
     // are made to the subset.
     SkIRect copySubset = subset;
     if (!this->getSupportedSubset(&copySubset) || copySubset != subset) {
-        return SkISize::Make(0, 0);
+        return {0, 0};
     }
 
     // If the subset is the entire image, for consistency, use getSampledDimensions().
@@ -248,8 +222,8 @@ SkISize SkAndroidCodec::getSampledSubsetDimensions(int sampleSize, const SkIRect
 
     // This should perhaps call a virtual function, but currently both of our subclasses
     // want the same implementation.
-    return SkISize::Make(get_scaled_dimension(subset.width(), sampleSize),
-                get_scaled_dimension(subset.height(), sampleSize));
+    return {get_scaled_dimension(subset.width(), sampleSize),
+            get_scaled_dimension(subset.height(), sampleSize)};
 }
 
 SkCodec::Result SkAndroidCodec::getAndroidPixels(const SkImageInfo& info, void* pixels,

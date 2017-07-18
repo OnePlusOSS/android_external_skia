@@ -179,7 +179,7 @@ bool GrAtlasTextBlob::mustRegenerate(const GrTextUtils::Paint& paint,
     // to regenerate the blob on any color change
     // We use the grPaint to get any color filter effects
     if (fKey.fCanonicalColor == SK_ColorTRANSPARENT &&
-        fFilteredPaintColor != paint.filteredSkColor()) {
+        fLuminanceColor != paint.luminanceColor()) {
         return true;
     }
 
@@ -257,7 +257,7 @@ bool GrAtlasTextBlob::mustRegenerate(const GrTextUtils::Paint& paint,
     return false;
 }
 
-inline std::unique_ptr<GrMeshDrawOp> GrAtlasTextBlob::makeOp(
+inline std::unique_ptr<GrLegacyMeshDrawOp> GrAtlasTextBlob::makeOp(
         const Run::SubRunInfo& info, int glyphCount, int run, int subRun,
         const SkMatrix& viewMatrix, SkScalar x, SkScalar y, const GrTextUtils::Paint& paint,
         const SkSurfaceProps& props, const GrDistanceFieldAdjustTable* distanceAdjustTable,
@@ -266,11 +266,11 @@ inline std::unique_ptr<GrMeshDrawOp> GrAtlasTextBlob::makeOp(
 
     std::unique_ptr<GrAtlasTextOp> op;
     if (info.drawAsDistanceFields()) {
-        SkColor filteredColor = paint.filteredSkColor();
+        SkColor luminanceColor = paint.luminanceColor();
         bool useBGR = SkPixelGeometryIsBGR(props.pixelGeometry());
         op = GrAtlasTextOp::MakeDistanceField(glyphCount, cache, distanceAdjustTable,
-                                              useGammaCorrectDistanceTable, filteredColor,
-                                              info.hasUseLCDText(), useBGR);
+                                              useGammaCorrectDistanceTable, luminanceColor,
+                                              info.hasUseLCDText(), useBGR, info.isAntiAliased());
     } else {
         op = GrAtlasTextOp::MakeBitmap(format, glyphCount, cache);
     }
@@ -280,7 +280,7 @@ inline std::unique_ptr<GrMeshDrawOp> GrAtlasTextBlob::makeOp(
     geometry.fRun = run;
     geometry.fSubRun = subRun;
     geometry.fColor =
-            info.maskFormat() == kARGB_GrMaskFormat ? GrColor_WHITE : paint.filteredPremulGrColor();
+            info.maskFormat() == kARGB_GrMaskFormat ? GrColor_WHITE : paint.filteredPremulColor();
     geometry.fX = x;
     geometry.fY = y;
     op->init();
@@ -305,12 +305,12 @@ inline void GrAtlasTextBlob::flushRun(GrRenderTargetContext* rtc, const GrClip& 
             continue;
         }
 
-        std::unique_ptr<GrMeshDrawOp> op(this->makeOp(info, glyphCount, run, subRun, viewMatrix, x,
-                                                      y, paint, props, distanceAdjustTable,
-                                                      rtc->isGammaCorrect(), cache));
+        std::unique_ptr<GrLegacyMeshDrawOp> op(
+                this->makeOp(info, glyphCount, run, subRun, viewMatrix, x, y, paint, props,
+                             distanceAdjustTable, rtc->isGammaCorrect(), cache));
         GrPipelineBuilder pipelineBuilder(std::move(grPaint), GrAAType::kNone);
 
-        rtc->addMeshDrawOp(pipelineBuilder, clip, std::move(op));
+        rtc->addLegacyMeshDrawOp(std::move(pipelineBuilder), clip, std::move(op));
     }
 }
 
@@ -425,7 +425,7 @@ void GrAtlasTextBlob::flushThrowaway(GrContext* context, GrRenderTargetContext* 
     this->flushBigGlyphs(context, rtc, clip, paint, viewMatrix, x, y, clipBounds);
 }
 
-std::unique_ptr<GrMeshDrawOp> GrAtlasTextBlob::test_makeOp(
+std::unique_ptr<GrLegacyMeshDrawOp> GrAtlasTextBlob::test_makeOp(
         int glyphCount, int run, int subRun, const SkMatrix& viewMatrix, SkScalar x, SkScalar y,
         const GrTextUtils::Paint& paint, const SkSurfaceProps& props,
         const GrDistanceFieldAdjustTable* distanceAdjustTable, GrAtlasGlyphCache* cache) {

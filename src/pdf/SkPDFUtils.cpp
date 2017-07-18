@@ -479,12 +479,40 @@ void SkPDFUtils::WriteString(SkWStream* wStream, const char* cin, size_t len) {
         wStream->writeText("<");
         for (size_t i = 0; i < len; i++) {
             uint8_t c = static_cast<uint8_t>(cin[i]);
-            static const char gHex[] = "0123456789ABCDEF";
-            char hexValue[2];
-            hexValue[0] = gHex[(c >> 4) & 0xF];
-            hexValue[1] = gHex[ c       & 0xF];
+            char hexValue[2] = { SkHexadecimalDigits::gUpper[c >> 4],
+                                 SkHexadecimalDigits::gUpper[c & 0xF] };
             wStream->write(hexValue, 2);
         }
         wStream->writeText(">");
+    }
+}
+
+bool SkPDFUtils::InverseTransformBBox(const SkMatrix& matrix, SkRect* bbox) {
+    SkMatrix inverse;
+    if (!matrix.invert(&inverse)) {
+        return false;
+    }
+    inverse.mapRect(bbox);
+    return true;
+}
+
+void SkPDFUtils::PopulateTilingPatternDict(SkPDFDict* pattern,
+                                           SkRect& bbox,
+                                           sk_sp<SkPDFDict> resources,
+                                           const SkMatrix& matrix) {
+    const int kTiling_PatternType = 1;
+    const int kColoredTilingPattern_PaintType = 1;
+    const int kConstantSpacing_TilingType = 1;
+
+    pattern->insertName("Type", "Pattern");
+    pattern->insertInt("PatternType", kTiling_PatternType);
+    pattern->insertInt("PaintType", kColoredTilingPattern_PaintType);
+    pattern->insertInt("TilingType", kConstantSpacing_TilingType);
+    pattern->insertObject("BBox", SkPDFUtils::RectToArray(bbox));
+    pattern->insertScalar("XStep", bbox.width());
+    pattern->insertScalar("YStep", bbox.height());
+    pattern->insertObject("Resources", std::move(resources));
+    if (!matrix.isIdentity()) {
+        pattern->insertObject("Matrix", SkPDFUtils::MatrixToArray(matrix));
     }
 }
