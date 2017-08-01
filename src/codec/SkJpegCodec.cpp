@@ -561,6 +561,11 @@ static inline bool needs_swizzler_to_convert_from_cmyk(J_COLOR_SPACE jpegColorTy
     return !hasCMYKColorSpace || !hasColorSpaceXform;
 }
 
+void SkJpegCodec::setupJpegDecoding(jpeg_decompress_struct* dinfo)
+{
+
+}
+
 /*
  * Performs the jpeg decode
  */
@@ -589,6 +594,8 @@ SkCodec::Result SkJpegCodec::onGetPixels(const SkImageInfo& dstInfo,
     if (!this->setOutputColorSpace(dstInfo)) {
         return fDecoderMgr->returnFailure("setOutputColorSpace", kInvalidConversion);
     }
+
+    setupJpegDecoding(dinfo);
 
     if (!jpeg_start_decompress(dinfo)) {
         return fDecoderMgr->returnFailure("startDecompress", kInvalidInput);
@@ -698,6 +705,8 @@ SkCodec::Result SkJpegCodec::onStartScanlineDecode(const SkImageInfo& dstInfo,
     if (!this->setOutputColorSpace(dstInfo)) {
         return fDecoderMgr->returnFailure("setOutputColorSpace", kInvalidConversion);
     }
+
+    setupJpegDecoding(fDecoderMgr->dinfo());
 
     if (!jpeg_start_decompress(fDecoderMgr->dinfo())) {
         SkCodecPrintf("start decompress failed\n");
