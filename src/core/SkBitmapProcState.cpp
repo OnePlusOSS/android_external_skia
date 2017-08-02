@@ -52,28 +52,6 @@ static bool matrix_only_scale_translate(const SkMatrix& m) {
  *  For the purposes of drawing bitmaps, if a matrix is "almost" translate
  *  go ahead and treat it as if it were, so that subsequent code can go fast.
  */
-static bool just_trans_clamp(const SkMatrix& matrix, const SkPixmap& pixmap) {
-    SkASSERT(matrix_only_scale_translate(matrix));
-
-    SkRect dst;
-    SkRect src = SkRect::Make(pixmap.bounds());
-
-    // Can't call mapRect(), since that will fix up inverted rectangles,
-    // e.g. when scale is negative, and we don't want to return true for
-    // those.
-    matrix.mapPoints(SkTCast<SkPoint*>(&dst),
-                     SkTCast<const SkPoint*>(&src),
-                     2);
-
-    // Now round all 4 edges to device space, and then compare the device
-    // width/height to the original. Note: we must map all 4 and subtract
-    // rather than map the "width" and compare, since we care about the
-    // phase (in pixel space) that any translate in the matrix might impart.
-    SkIRect idst;
-    dst.round(&idst);
-    return idst.width() == pixmap.width() && idst.height() == pixmap.height();
-}
-
 static bool just_trans_general(const SkMatrix& matrix) {
     SkASSERT(matrix_only_scale_translate(matrix));
 
@@ -83,6 +61,22 @@ static bool just_trans_general(const SkMatrix& matrix) {
         && SkScalarNearlyZero(matrix[SkMatrix::kMScaleY] - SK_Scalar1, tol);
 }
 
+/**
+ *  Determine if the matrix can be treated as integral-only-translate,
+ *  for the purpose of filtering.
+ */
+static bool just_trans_integral(const SkMatrix& m) {
+#ifdef SK_SUPPORT_LEGACY_BILERP
+    return false;
+#else
+    static constexpr SkScalar tol = SK_Scalar1 / 256;
+
+    return m.getType() <= SkMatrix::kTranslate_Mask
+        && SkScalarNearlyEqual(m.getTranslateX(), SkScalarRoundToScalar(m.getTranslateX()), tol)
+        && SkScalarNearlyEqual(m.getTranslateY(), SkScalarRoundToScalar(m.getTranslateY()), tol);
+#endif
+}
+
 static bool valid_for_filtering(unsigned dimension) {
     // for filtering, width and height must fit in 14bits, since we use steal
     // 2 bits from each to store our 4bit subpixel data
@@ -90,21 +84,11 @@ static bool valid_for_filtering(unsigned dimension) {
 }
 
 bool SkBitmapProcInfo::init(const SkMatrix& inv, const SkPaint& paint) {
+    SkASSERT(!inv.hasPerspective());
+
     fPixmap.reset();
     fInvMatrix = inv;
     fFilterQuality = paint.getFilterQuality();
-
-#ifdef SK_SUPPORT_LEGACY_BILERP_IGNORING_HACK
-    const int origW = fProvider.info().width();
-    const int origH = fProvider.info().height();
-
-    bool allow_ignore_fractional_translate = true;  // historical default
-    if (kMedium_SkFilterQuality == fFilterQuality) {
-        allow_ignore_fractional_translate = false;
-    }
-#else
-    const bool allow_ignore_fractional_translate = false;
-#endif
 
     SkDefaultBitmapController controller(SkDefaultBitmapController::CanShadeHQ::kNo);
     fBMState = controller.requestBitmap(fProvider, inv, paint.getFilterQuality(),
@@ -120,10 +104,6 @@ bool SkBitmapProcInfo::init(const SkMatrix& inv, const SkPaint& paint) {
     fFilterQuality = fBMState->quality();
     SkASSERT(fPixmap.addr());
 
-    bool trivialMatrix = (fInvMatrix.getType() & ~SkMatrix::kTranslate_Mask) == 0;
-    bool clampClamp = SkShader::kClamp_TileMode == fTileModeX &&
-                      SkShader::kClamp_TileMode == fTileModeY;
-
     // Most of the scanline procs deal with "unit" texture coordinates, as this
     // makes it easy to perform tiling modes (repeat = (x & 0xFFFF)). To generate
     // those, we divide the matrix by its dimensions here.
@@ -131,9 +111,8 @@ bool SkBitmapProcInfo::init(const SkMatrix& inv, const SkPaint& paint) {
     // We don't do this if we're either trivial (can ignore the matrix) or clamping
     // in both X and Y since clamping to width,height is just as easy as to 0xFFFF.
 
-    // Note that we cannot ignore the matrix when allow_ignore_fractional_translate is false.
-
-    if (!(clampClamp || (trivialMatrix && allow_ignore_fractional_translate))) {
+    if (fTileModeX != SkShader::kClamp_TileMode ||
+        fTileModeY != SkShader::kClamp_TileMode) {
         fInvMatrix.postIDiv(fPixmap.width(), fPixmap.height());
     }
 
@@ -147,38 +126,17 @@ bool SkBitmapProcInfo::init(const SkMatrix& inv, const SkPaint& paint) {
 
     if (matrix_only_scale_translate(fInvMatrix)) {
         SkMatrix forward;
-        if (fInvMatrix.invert(&forward)) {
-            if ((clampClamp && allow_ignore_fractional_translate)
-                ? just_trans_clamp(forward, fPixmap)
-                : just_trans_general(forward)) {
-                fInvMatrix.setTranslate(-forward.getTranslateX(), -forward.getTranslateY());
-            }
+        if (fInvMatrix.invert(&forward) && just_trans_general(forward)) {
+            fInvMatrix.setTranslate(-forward.getTranslateX(), -forward.getTranslateY());
         }
     }
 
     fInvType = fInvMatrix.getType();
 
-#ifdef SK_SUPPORT_LEGACY_BILERP_IGNORING_HACK
-    // If our target pixmap is the same as the original, then we revert back to legacy behavior
-    // and allow the code to ignore fractional translate.
-    //
-    // The width/height check allows allow_ignore_fractional_translate to stay false if we
-    // previously set it that way (e.g. we started in kMedium).
-    //
-    if (fPixmap.width() == origW && fPixmap.height() == origH) {
-        allow_ignore_fractional_translate = true;
-    }
-#endif
-
-    if (kLow_SkFilterQuality == fFilterQuality && allow_ignore_fractional_translate) {
-        // Only try bilerp if the matrix is "interesting" and
-        // the image has a suitable size.
-
-        if (fInvType <= SkMatrix::kTranslate_Mask ||
-            !valid_for_filtering(fPixmap.width() | fPixmap.height()))
-        {
-            fFilterQuality = kNone_SkFilterQuality;
-        }
+    if (kLow_SkFilterQuality == fFilterQuality &&
+        (!valid_for_filtering(fPixmap.width() | fPixmap.height()) ||
+         just_trans_integral(fInvMatrix))) {
+        fFilterQuality = kNone_SkFilterQuality;
     }
 
     return true;
@@ -648,7 +606,7 @@ SkBitmapProcState::MatrixProc SkBitmapProcState::getMatrixProc() const {
     scale/translate     nofilter      Y(4bytes) + N * X
     affine/perspective  nofilter      N * (X Y)
     scale/translate     filter        Y Y + N * (X X)
-    affine/perspective  filter        N * (Y Y X X)
+    affine              filter        N * (Y Y X X)
  */
 int SkBitmapProcState::maxCountForBufferSize(size_t bufferSize) const {
     int32_t size = static_cast<int32_t>(bufferSize);

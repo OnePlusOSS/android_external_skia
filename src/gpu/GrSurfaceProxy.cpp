@@ -40,12 +40,10 @@ GrSurfaceProxy::~GrSurfaceProxy() {
     SkASSERT(!fLastOpList);
 }
 
-bool GrSurfaceProxy::instantiateImpl(GrResourceProvider* resourceProvider, int sampleCnt,
-                                     GrSurfaceFlags flags, bool isMipMapped,
-                                     SkDestinationSurfaceColorMode mipColorMode) {
-    if (fTarget) {
-        return true;
-    }
+sk_sp<GrSurface> GrSurfaceProxy::createSurfaceImpl(
+                                                GrResourceProvider* resourceProvider, int sampleCnt,
+                                                GrSurfaceFlags flags, bool isMipMapped,
+                                                SkDestinationSurfaceColorMode mipColorMode) const {
     GrSurfaceDesc desc;
     desc.fConfig = fConfig;
     desc.fWidth = fWidth;
@@ -58,16 +56,22 @@ bool GrSurfaceProxy::instantiateImpl(GrResourceProvider* resourceProvider, int s
         desc.fFlags |= kPerformInitialClear_GrSurfaceFlag;
     }
 
+    sk_sp<GrSurface> surface;
     if (SkBackingFit::kApprox == fFit) {
-        fTarget = resourceProvider->createApproxTexture(desc, fFlags).release();
+        surface.reset(resourceProvider->createApproxTexture(desc, fFlags).release());
     } else {
-        fTarget = resourceProvider->createTexture(desc, fBudgeted, fFlags).release();
+        surface.reset(resourceProvider->createTexture(desc, fBudgeted, fFlags).release());
     }
-    if (!fTarget) {
-        return false;
+    if (surface) {
+        surface->asTexture()->texturePriv().setMipColorMode(mipColorMode);
     }
 
-    fTarget->asTexture()->texturePriv().setMipColorMode(mipColorMode);
+    return surface;
+}
+
+void GrSurfaceProxy::assign(sk_sp<GrSurface> surface) {
+    SkASSERT(!fTarget && surface);
+    fTarget = surface.release();
     this->INHERITED::transferRefs();
 
 #ifdef SK_DEBUG
@@ -75,7 +79,22 @@ bool GrSurfaceProxy::instantiateImpl(GrResourceProvider* resourceProvider, int s
         SkASSERT(fTarget->gpuMemorySize() <= this->getRawGpuMemorySize_debugOnly());
     }
 #endif
+}
 
+bool GrSurfaceProxy::instantiateImpl(GrResourceProvider* resourceProvider, int sampleCnt,
+                                     GrSurfaceFlags flags, bool isMipMapped,
+                                     SkDestinationSurfaceColorMode mipColorMode) {
+    if (fTarget) {
+        return true;
+    }
+
+    sk_sp<GrSurface> surface = this->createSurfaceImpl(resourceProvider, sampleCnt, flags,
+                                                       isMipMapped, mipColorMode);
+    if (!surface) {
+        return false;
+    }
+
+    this->assign(std::move(surface));
     return true;
 }
 
@@ -166,7 +185,7 @@ sk_sp<GrTextureProxy> GrSurfaceProxy::MakeDeferred(GrResourceProvider* resourceP
     }
 
     GrSurfaceDesc copyDesc = desc;
-    copyDesc.fSampleCnt = SkTMin(desc.fSampleCnt, caps->maxSampleCount());
+    copyDesc.fSampleCnt = caps->getSampleCount(desc.fSampleCnt, desc.fConfig);
 
     if (willBeRT) {
         // We know anything we instantiate later from this deferred path will be
@@ -196,7 +215,7 @@ sk_sp<GrTextureProxy> GrSurfaceProxy::MakeDeferredMipMap(
                                                     GrResourceProvider* resourceProvider,
                                                     const GrSurfaceDesc& desc,
                                                     SkBudgeted budgeted,
-                                                    const GrMipLevel* texels,
+                                                    const GrMipLevel texels[],
                                                     int mipLevelCount,
                                                     SkDestinationSurfaceColorMode mipColorMode) {
     if (!mipLevelCount) {
@@ -211,24 +230,20 @@ sk_sp<GrTextureProxy> GrSurfaceProxy::MakeDeferredMipMap(
         return resourceProvider->createTextureProxy(desc, budgeted, texels[0]);
     }
 
-    SkTArray<GrMipLevel> texelsShallowCopy(mipLevelCount);
     for (int i = 0; i < mipLevelCount; ++i) {
         if (!texels[i].fPixels) {
             return nullptr;
         }
-
-        texelsShallowCopy.push_back(texels[i]);
     }
 
     sk_sp<GrTexture> tex(resourceProvider->createTexture(desc, budgeted,
-                                                         texelsShallowCopy, mipColorMode));
+                                                         texels, mipLevelCount, mipColorMode));
     if (!tex) {
         return nullptr;
     }
 
     return GrSurfaceProxy::MakeWrapped(std::move(tex));
 }
-
 
 sk_sp<GrTextureProxy> GrSurfaceProxy::MakeWrappedBackend(GrContext* context,
                                                          GrBackendTexture& backendTex,

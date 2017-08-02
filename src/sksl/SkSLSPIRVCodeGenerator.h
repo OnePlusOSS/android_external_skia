@@ -153,6 +153,8 @@ private:
 
     SpvId writeIntConstructor(const Constructor& c, OutputStream& out);
 
+    SpvId writeUIntConstructor(const Constructor& c, OutputStream& out);
+
     /**
      * Writes a matrix with the diagonal entries all equal to the provided expression, and all other
      * entries equal to zero.
@@ -184,6 +186,9 @@ private:
      * returns the original id value.
      */
     SpvId foldToBool(SpvId id, const Type& operandType, OutputStream& out);
+
+    SpvId writeMatrixComparison(const Type& operandType, SpvId lhs, SpvId rhs, SpvOp_ floatOperator,
+                                SpvOp_ intOperator, OutputStream& out);
 
     SpvId writeBinaryOperation(const Type& resultType, const Type& operandType, SpvId lhs,
                                SpvId rhs, SpvOp_ ifFloat, SpvOp_ ifInt, SpvOp_ ifUInt,

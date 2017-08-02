@@ -37,6 +37,8 @@
 
 #include "imgui.h"
 
+#include "ccpr/GrCoverageCountingPathRenderer.h"
+
 #include <stdlib.h>
 #include <map>
 
@@ -262,6 +264,7 @@ Viewer::Viewer(int argc, char** argv, void* platformData)
         gPathRendererNames[GpuPathRenderers::kStencilAndCover] = "NV_path_rendering";
         gPathRendererNames[GpuPathRenderers::kMSAA] = "Sample shading";
         gPathRendererNames[GpuPathRenderers::kSmall] = "Small paths (cached sdf or alpha masks)";
+        gPathRendererNames[GpuPathRenderers::kCoverageCounting] = "Coverage counting";
         gPathRendererNames[GpuPathRenderers::kTessellating] = "Tessellating";
         gPathRendererNames[GpuPathRenderers::kDefault] = "Original Ganesh path renderer";
         gPathRendererNames[GpuPathRenderers::kNone] = "Software masks";
@@ -667,9 +670,10 @@ void Viewer::setBackend(sk_app::Window::BackendType backendType) {
     fWindow->detach();
 
 #if defined(SK_BUILD_FOR_WIN) && defined(SK_VULKAN)
-    // Switching from OpenGL to Vulkan in the same window is problematic at this point on
-    // Windows, so we just delete the window and recreate it.
-    if (sk_app::Window::kVulkan_BackendType == fBackendType) {
+    // Switching from OpenGL to Vulkan (or vice-versa on some systems) in the same window is
+    // problematic at this point on Windows, so we just delete the window and recreate it.
+    if (sk_app::Window::kVulkan_BackendType == fBackendType ||
+            sk_app::Window::kNativeGL_BackendType == fBackendType) {
         DisplayParams params = fWindow->getRequestedDisplayParams();
         delete fWindow;
         fWindow = Window::CreateNativeWindow(nullptr);
@@ -1068,6 +1072,9 @@ void Viewer::drawImGui(SkCanvas* canvas) {
                         prButton(GpuPathRenderers::kNone);
                     } else {
                         prButton(GpuPathRenderers::kAll);
+                        if (GrCoverageCountingPathRenderer::IsSupported(*ctx->caps())) {
+                            prButton(GpuPathRenderers::kCoverageCounting);
+                        }
                         prButton(GpuPathRenderers::kSmall);
                         prButton(GpuPathRenderers::kTessellating);
                         prButton(GpuPathRenderers::kNone);
@@ -1304,6 +1311,9 @@ void Viewer::updateUIState() {
         prState[kOptions].append(gPathRendererNames[GpuPathRenderers::kNone]);
     } else {
         prState[kOptions].append(gPathRendererNames[GpuPathRenderers::kAll]);
+        if (GrCoverageCountingPathRenderer::IsSupported(*ctx->caps())) {
+            prState[kOptions].append(gPathRendererNames[GpuPathRenderers::kCoverageCounting]);
+        }
         prState[kOptions].append(gPathRendererNames[GpuPathRenderers::kSmall]);
         prState[kOptions].append(gPathRendererNames[GpuPathRenderers::kTessellating]);
         prState[kOptions].append(gPathRendererNames[GpuPathRenderers::kNone]);

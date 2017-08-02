@@ -95,7 +95,7 @@ static const SkPixmap* compute_desc(const GrCaps& caps, const SkPixmap& pixmap,
         // destination (claim they're linear):
         SkImageInfo linSrcInfo = SkImageInfo::Make(pixmap.width(), pixmap.height(),
                                                    pixmap.colorType(), pixmap.alphaType());
-        SkPixmap linSrcPixmap(linSrcInfo, pixmap.addr(), pixmap.rowBytes(), pixmap.ctable());
+        SkPixmap linSrcPixmap(linSrcInfo, pixmap.addr(), pixmap.rowBytes());
 
         SkImageInfo dstInfo = SkImageInfo::Make(pixmap.width(), pixmap.height(),
                                                 kN32_SkColorType, kPremul_SkAlphaType,
@@ -105,18 +105,6 @@ static const SkPixmap* compute_desc(const GrCaps& caps, const SkPixmap& pixmap,
 
         SkImageInfo linDstInfo = SkImageInfo::MakeN32Premul(pixmap.width(), pixmap.height());
         if (!linSrcPixmap.readPixels(linDstInfo, tmpBitmap->getPixels(), tmpBitmap->rowBytes())) {
-            return nullptr;
-        }
-        if (!tmpBitmap->peekPixels(tmpPixmap)) {
-            return nullptr;
-        }
-        pmap = tmpPixmap;
-        // must rebuild desc, since we've forced the info to be N32
-        *desc = GrImageInfoToSurfaceDesc(pmap->info(), caps);
-    } else if (kIndex_8_SkColorType == pixmap.colorType()) {
-        SkImageInfo info = SkImageInfo::MakeN32Premul(pixmap.width(), pixmap.height());
-        tmpBitmap->allocPixels(info);
-        if (!pixmap.readPixels(info, tmpBitmap->getPixels(), tmpBitmap->rowBytes())) {
             return nullptr;
         }
         if (!tmpBitmap->peekPixels(tmpPixmap)) {
@@ -222,7 +210,7 @@ sk_sp<GrTextureProxy> GrGenerateMipMapsAndUploadToTextureProxy(GrContext* ctx,
 }
 
 sk_sp<GrTextureProxy> GrUploadMipMapToTextureProxy(GrContext* ctx, const SkImageInfo& info,
-                                                   const GrMipLevel* texels,
+                                                   const GrMipLevel texels[],
                                                    int mipLevelCount,
                                                    SkDestinationSurfaceColorMode colorMode) {
     if (!SkImageInfoIsValid(info, colorMode)) {
@@ -320,11 +308,11 @@ GrColor4f SkColorToUnpremulGrColor4f(SkColor c, SkColorSpace* dstColorSpace,
 
 ///////////////////////////////////////////////////////////////////////////////
 
-GrPixelConfig SkImageInfo2GrPixelConfig(const SkImageInfo& info, const GrCaps& caps) {
+GrPixelConfig SkImageInfo2GrPixelConfig(const SkColorType type, SkColorSpace* cs,
+                                        const GrCaps& caps) {
     // We intentionally ignore profile type for non-8888 formats. Anything we can't support
     // in hardware will be expanded to sRGB 8888 in GrUploadPixmapToTexture.
-    SkColorSpace* cs = info.colorSpace();
-    switch (info.colorType()) {
+    switch (type) {
         case kUnknown_SkColorType:
             return kUnknown_GrPixelConfig;
         case kAlpha_8_SkColorType:
@@ -339,8 +327,6 @@ GrPixelConfig SkImageInfo2GrPixelConfig(const SkImageInfo& info, const GrCaps& c
         case kBGRA_8888_SkColorType:
             return (caps.srgbSupport() && cs && cs->gammaCloseToSRGB())
                    ? kSBGRA_8888_GrPixelConfig : kBGRA_8888_GrPixelConfig;
-        case kIndex_8_SkColorType:
-            return kSkia8888_GrPixelConfig;
         case kGray_8_SkColorType:
             return kGray_8_GrPixelConfig;
         case kRGBA_F16_SkColorType:
@@ -348,6 +334,10 @@ GrPixelConfig SkImageInfo2GrPixelConfig(const SkImageInfo& info, const GrCaps& c
     }
     SkASSERT(0);    // shouldn't get here
     return kUnknown_GrPixelConfig;
+}
+
+GrPixelConfig SkImageInfo2GrPixelConfig(const SkImageInfo& info, const GrCaps& caps) {
+    return SkImageInfo2GrPixelConfig(info.colorType(), info.colorSpace(), caps);
 }
 
 bool GrPixelConfigToColorType(GrPixelConfig config, SkColorType* ctOut) {
@@ -549,7 +539,10 @@ static inline bool skpaint_to_grpaint_impl(GrContext* context,
     GrPixelConfigToColorType(rtc->config(), &ct);
     if (SkPaintPriv::ShouldDither(skPaint, ct) && grPaint->numColorFragmentProcessors() > 0
         && !rtc->isGammaCorrect()) {
-        grPaint->addColorFragmentProcessor(GrDitherEffect::Make());
+        auto ditherFP = GrDitherEffect::Make(rtc->config());
+        if (ditherFP) {
+            grPaint->addColorFragmentProcessor(std::move(ditherFP));
+        }
     }
 #endif
     return true;

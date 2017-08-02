@@ -245,6 +245,22 @@ public:
         return this->state()->allocPipeline(std::forward<Args>(args)...);
     }
 
+    /**
+     * Helper that makes a pipeline targeting the op's render target that incorporates the op's
+     * GrAppliedClip.
+     * */
+    GrPipeline* makePipeline(uint32_t pipelineFlags, const GrProcessorSet* processorSet) {
+        GrPipeline::InitArgs pipelineArgs;
+        pipelineArgs.fFlags = pipelineFlags;
+        pipelineArgs.fProcessors = processorSet;
+        pipelineArgs.fRenderTarget = this->renderTarget();
+        pipelineArgs.fAppliedClip = this->clip();
+        pipelineArgs.fDstProxy = this->dstProxy();
+        pipelineArgs.fCaps = &this->caps();
+        pipelineArgs.fResourceProvider = this->resourceProvider();
+        return this->allocPipeline(pipelineArgs);
+    }
+
 private:
     GrMeshDrawOp* meshDrawOp() { return static_cast<GrMeshDrawOp*>(this->op()); }
     typedef GrDrawOp::Target INHERITED;

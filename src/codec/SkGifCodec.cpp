@@ -35,6 +35,7 @@
 #include "SkColorPriv.h"
 #include "SkColorTable.h"
 #include "SkGifCodec.h"
+#include "SkRasterPipeline.h"
 #include "SkStream.h"
 #include "SkSwizzler.h"
 
@@ -66,21 +67,18 @@ static SkCodec::Result gif_error(const char* msg, SkCodec::Result result = SkCod
     return result;
 }
 
-/*
- * Assumes IsGif was called and returned true
- * Creates a gif decoder
- * Reads enough of the stream to determine the image format
- */
-SkCodec* SkGifCodec::NewFromStream(SkStream* stream) {
+SkCodec* SkGifCodec::NewFromStream(SkStream* stream, Result* result) {
     std::unique_ptr<SkGifImageReader> reader(new SkGifImageReader(stream));
-    if (!reader->parse(SkGifImageReader::SkGIFSizeQuery)) {
-        // Fatal error occurred.
+    *result = reader->parse(SkGifImageReader::SkGIFSizeQuery);
+    if (*result != kSuccess) {
         return nullptr;
     }
 
     // If no images are in the data, or the first header is not yet defined, we cannot
     // create a codec. In either case, the width and height are not yet known.
-    if (0 == reader->imagesCount() || !reader->frameContext(0)->isHeaderDefined()) {
+    auto* frame = reader->frameContext(0);
+    if (!frame || !frame->isHeaderDefined()) {
+        *result = kInvalidInput;
         return nullptr;
     }
 
@@ -139,9 +137,7 @@ bool SkGifCodec::onGetFrameInfo(int i, SkCodec::FrameInfo* frameInfo) const {
     }
 
     const SkGIFFrameContext* frameContext = fReader->frameContext(i);
-    if (!frameContext->reachedStartOfData()) {
-        return false;
-    }
+    SkASSERT(frameContext->reachedStartOfData());
 
     if (frameInfo) {
         frameInfo->fDuration = frameContext->getDuration();
@@ -512,43 +508,38 @@ bool SkGifCodec::haveDecodedRow(int frameIndex, const unsigned char* rowBegin,
     if (writeTransparentPixels) {
         this->applyXformRow(dstInfo, dstLine, rowBegin);
     } else {
-        sk_bzero(fTmpBuffer.get(), dstInfo.minRowBytes());
         this->applyXformRow(dstInfo, fTmpBuffer.get(), rowBegin);
 
-        const size_t offsetBytes = fSwizzler->swizzleOffsetBytes();
+        size_t offsetBytes = fSwizzler->swizzleOffsetBytes();
+        if (dstInfo.colorType() == kRGBA_F16_SkColorType) {
+            // Account for the fact that post-swizzling we converted to F16,
+            // which is twice as wide.
+            offsetBytes *= 2;
+        }
+        SkRasterPipeline_<256> p;
+        SkRasterPipeline::StockStage storeDst;
+        void* src = SkTAddOffset<void>(fTmpBuffer.get(), offsetBytes);
+        void* dst = SkTAddOffset<void>(dstLine, offsetBytes);
         switch (dstInfo.colorType()) {
             case kBGRA_8888_SkColorType:
-            case kRGBA_8888_SkColorType: {
-                uint32_t* dstPixel = SkTAddOffset<uint32_t>(dstLine, offsetBytes);
-                uint32_t* srcPixel = SkTAddOffset<uint32_t>(fTmpBuffer.get(), offsetBytes);
-                for (int i = 0; i < fSwizzler->swizzleWidth(); i++) {
-                    // Technically SK_ColorTRANSPARENT is an SkPMColor, and srcPixel would have
-                    // the opposite swizzle for the non-native swizzle, but TRANSPARENT is all
-                    // zeroes, which is the same either way.
-                    if (*srcPixel != SK_ColorTRANSPARENT) {
-                        *dstPixel = *srcPixel;
-                    }
-                    dstPixel++;
-                    srcPixel++;
-                }
+            case kRGBA_8888_SkColorType:
+                p.append(SkRasterPipeline::load_8888_dst, &dst);
+                p.append(SkRasterPipeline::load_8888, &src);
+                storeDst = SkRasterPipeline::store_8888;
                 break;
-            }
-            case kRGBA_F16_SkColorType: {
-                uint64_t* dstPixel = SkTAddOffset<uint64_t>(dstLine, offsetBytes);
-                uint64_t* srcPixel = SkTAddOffset<uint64_t>(fTmpBuffer.get(), offsetBytes);
-                for (int i = 0; i < fSwizzler->swizzleWidth(); i++) {
-                    if (*srcPixel != 0) {
-                        *dstPixel = *srcPixel;
-                    }
-                    dstPixel++;
-                    srcPixel++;
-                }
+            case kRGBA_F16_SkColorType:
+                p.append(SkRasterPipeline::load_f16_dst, &dst);
+                p.append(SkRasterPipeline::load_f16, &src);
+                storeDst = SkRasterPipeline::store_f16;
                 break;
-            }
             default:
                 SkASSERT(false);
+                return false;
                 break;
         }
+        p.append(SkRasterPipeline::srcover);
+        p.append(storeDst, &dst);
+        p.run(0, 0, fSwizzler->swizzleWidth());
     }
 
     // Tell the frame to copy the row data if need be.

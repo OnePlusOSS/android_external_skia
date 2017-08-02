@@ -159,6 +159,12 @@ private:
 
     uint32_t getUniqueID(CachedFormat) const;
 
+    // Repeated calls to onMakeColorSpace will result in a proliferation of unique IDs and
+    // SkImage_Lazy instances. Cache the result of the last successful onMakeColorSpace call.
+    mutable SkMutex             fOnMakeColorSpaceMutex;
+    mutable sk_sp<SkColorSpace> fOnMakeColorSpaceTarget;
+    mutable sk_sp<SkImage>      fOnMakeColorSpaceResult;
+
     typedef SkImage_Base INHERITED;
 };
 
@@ -200,12 +206,6 @@ SkImage_Lazy::Validator::Validator(sk_sp<SharedGenerator> gen, const SkIRect* su
         fInfo = fInfo.makeColorSpace(colorSpace);
         fUniqueID = SkNextID::ImageID();
     }
-
-    // colortables are poorly to not-at-all supported in our resourcecache, so we
-    // bully them into N32 (the generator will perform the up-sample)
-    if (fInfo.colorType() == kIndex_8_SkColorType) {
-        fInfo = fInfo.makeColorType(kN32_SkColorType);
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -240,7 +240,6 @@ SkImage_Lazy::SkImage_Lazy(Validator* validator)
         , fInfo(validator->fInfo)
         , fOrigin(validator->fOrigin) {
     SkASSERT(fSharedGenerator);
-    SkASSERT(kIndex_8_SkColorType != fInfo.colorType());
     // We explicit set the legacy format slot, but leave the others uninitialized (via SkOnce)
     // and only resolove them to IDs as needed (by calling getUniqueID()).
     fIDRecs[kLegacy_CachedFormat].fOnce([this, validator] {
@@ -305,10 +304,6 @@ SkImageCacherator::CachedFormat SkImage_Lazy::chooseCacheFormat(SkColorSpace* ds
         case kARGB_4444_SkColorType:
             // We don't support color space on these formats, so always decode in legacy mode:
             // TODO: Ask the codec to decode these to something else (at least sRGB 8888)?
-            return kLegacy_CachedFormat;
-
-        case kIndex_8_SkColorType:
-            SkDEBUGFAIL("Index_8 should have been remapped at construction time.");
             return kLegacy_CachedFormat;
 
         case kGray_8_SkColorType:
@@ -643,10 +638,20 @@ sk_sp<SkImage> SkImage_Lazy::onMakeSubset(const SkIRect& subset) const {
 sk_sp<SkImage> SkImage_Lazy::onMakeColorSpace(sk_sp<SkColorSpace> target,
                                               SkColorType targetColorType,
                                               SkTransferFunctionBehavior premulBehavior) const {
+    SkAutoExclusive autoAquire(fOnMakeColorSpaceMutex);
+    if (target && fOnMakeColorSpaceTarget &&
+        SkColorSpace::Equals(target.get(), fOnMakeColorSpaceTarget.get())) {
+        return fOnMakeColorSpaceResult;
+    }
     const SkIRect generatorSubset =
             SkIRect::MakeXYWH(fOrigin.x(), fOrigin.y(), fInfo.width(), fInfo.height());
     Validator validator(fSharedGenerator, &generatorSubset, target);
-    return validator ? sk_sp<SkImage>(new SkImage_Lazy(&validator)) : nullptr;
+    sk_sp<SkImage> result = validator ? sk_sp<SkImage>(new SkImage_Lazy(&validator)) : nullptr;
+    if (result) {
+        fOnMakeColorSpaceTarget = target;
+        fOnMakeColorSpaceResult = result;
+    }
+    return result;
 }
 
 sk_sp<SkImage> SkImage::MakeFromGenerator(std::unique_ptr<SkImageGenerator> generator,

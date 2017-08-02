@@ -24,17 +24,15 @@
 
 void SkPixmap::reset() {
     fPixels = nullptr;
-    fCTable = nullptr;
     fRowBytes = 0;
     fInfo = SkImageInfo::MakeUnknown();
 }
 
-void SkPixmap::reset(const SkImageInfo& info, const void* addr, size_t rowBytes, SkColorTable* ct) {
+void SkPixmap::reset(const SkImageInfo& info, const void* addr, size_t rowBytes) {
     if (addr) {
         SkASSERT(info.validRowBytes(rowBytes));
     }
     fPixels = addr;
-    fCTable = ct;
     fRowBytes = rowBytes;
     fInfo = info;
 }
@@ -42,7 +40,7 @@ void SkPixmap::reset(const SkImageInfo& info, const void* addr, size_t rowBytes,
 bool SkPixmap::reset(const SkMask& src) {
     if (SkMask::kA8_Format == src.fFormat) {
         this->reset(SkImageInfo::MakeA8(src.fBounds.width(), src.fBounds.height()),
-                    src.fImage, src.fRowBytes, nullptr);
+                    src.fImage, src.fRowBytes);
         return true;
     }
     this->reset();
@@ -70,7 +68,7 @@ bool SkPixmap::extractSubset(SkPixmap* result, const SkIRect& subset) const {
         const size_t bpp = fInfo.bytesPerPixel();
         pixels = (const uint8_t*)fPixels + r.fTop * fRowBytes + r.fLeft * bpp;
     }
-    result->reset(fInfo.makeWH(r.width(), r.height()), pixels, fRowBytes, fCTable);
+    result->reset(fInfo.makeWH(r.width(), r.height()), pixels, fRowBytes);
     return true;
 }
 
@@ -88,7 +86,7 @@ bool SkPixmap::readPixels(const SkImageInfo& dstInfo, void* dstPixels, size_t ds
     const void* srcPixels = this->addr(rec.fX, rec.fY);
     const SkImageInfo srcInfo = fInfo.makeWH(rec.fInfo.width(), rec.fInfo.height());
     SkConvertPixels(rec.fInfo, rec.fPixels, rec.fRowBytes, srcInfo, srcPixels, this->rowBytes(),
-                    this->ctable(), behavior);
+                    nullptr, behavior);
     return true;
 }
 
@@ -272,11 +270,6 @@ SkColor SkPixmap::getColor(int x, int y) const {
         case kAlpha_8_SkColorType: {
             return SkColorSetA(0, *this->addr8(x, y));
         }
-        case kIndex_8_SkColorType: {
-            SkASSERT(this->ctable());
-            SkPMColor c = (*this->ctable())[*this->addr8(x, y)];
-            return toColor(c);
-        }
         case kRGB_565_SkColorType: {
             return SkPixel16ToColor(*this->addr16(x, y));
         }
@@ -331,18 +324,6 @@ bool SkPixmap::computeIsOpaque() const {
                 }
             }
             return true;
-        } break;
-        case kIndex_8_SkColorType: {
-            const SkColorTable* ctable = this->ctable();
-            if (nullptr == ctable) {
-                return false;
-            }
-            const SkPMColor* table = ctable->readColors();
-            SkPMColor c = (SkPMColor)~0;
-            for (int i = ctable->count() - 1; i >= 0; --i) {
-                c &= table[i];
-            }
-            return 0xFF == SkGetPackedA32(c);
         } break;
         case kRGB_565_SkColorType:
         case kGray_8_SkColorType:

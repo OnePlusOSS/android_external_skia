@@ -22,11 +22,16 @@
 #include "GrSurfaceProxyPriv.h"
 #include "GrTexture.h"
 #include "GrTextureContext.h"
+#include "GrTracing.h"
 #include "SkConvertPixels.h"
 #include "SkGr.h"
 #include "SkUnPreMultiplyPriv.h"
 #include "effects/GrConfigConversionEffect.h"
 #include "text/GrTextBlobCache.h"
+
+#ifdef SK_METAL
+#include "mtl/GrMtlTrampoline.h"
+#endif
 
 #define ASSERT_OWNED_PROXY(P) \
 SkASSERT(!(P) || !((P)->priv().peekTexture()) || (P)->priv().peekTexture()->getContext() == this)
@@ -61,6 +66,21 @@ GrContext* GrContext::Create(GrBackend backend, GrBackendContext backendContext,
     return context.release();
 }
 
+#ifdef SK_METAL
+sk_sp<GrContext> GrContext::MakeMetal(void* device, void* queue, const GrContextOptions& options) {
+    sk_sp<GrContext> context(new GrContext);
+    context->fGpu = GrMtlTrampoline::CreateGpu(context.get(), options, device, queue);
+    if (!context->fGpu) {
+        return nullptr;
+    }
+    context->fBackend = kMetal_GrBackend;
+    if (!context->init(options)) {
+        return nullptr;
+    }
+    return context;
+}
+#endif
+
 static int32_t gNextID = 1;
 static int32_t next_id() {
     int32_t id;
@@ -89,7 +109,11 @@ bool GrContext::init(GrBackend backend, GrBackendContext backendContext,
     if (!fGpu) {
         return false;
     }
+    return this->init(options);
+}
 
+bool GrContext::init(const GrContextOptions& options) {
+    ASSERT_SINGLE_OWNER
     fCaps = SkRef(fGpu->caps());
     fResourceCache = new GrResourceCache(fCaps, fUniqueID);
     fResourceProvider = new GrResourceProvider(fGpu, fResourceCache, &fSingleOwner);
@@ -302,7 +326,7 @@ bool GrContextPriv::writeSurfacePixels(GrSurfaceContext* dst,
     RETURN_FALSE_IF_ABANDONED_PRIV
     SkASSERT(dst);
     ASSERT_OWNED_PROXY_PRIV(dst->asSurfaceProxy());
-    GR_AUDIT_TRAIL_AUTO_FRAME(&fContext->fAuditTrail, "GrContextPriv::writeSurfacePixels");
+    GR_CREATE_TRACE_MARKER_CONTEXT("GrContextPriv", "writeSurfacePixels", fContext);
 
     if (!dst->asSurfaceProxy()->instantiate(fContext->resourceProvider())) {
         return false;
@@ -431,7 +455,7 @@ bool GrContextPriv::readSurfacePixels(GrSurfaceContext* src,
     RETURN_FALSE_IF_ABANDONED_PRIV
     SkASSERT(src);
     ASSERT_OWNED_PROXY_PRIV(src->asSurfaceProxy());
-    GR_AUDIT_TRAIL_AUTO_FRAME(&fContext->fAuditTrail, "GrContextPriv::readSurfacePixels");
+    GR_CREATE_TRACE_MARKER_CONTEXT("GrContextPriv", "readSurfacePixels", fContext);
 
     // MDB TODO: delay this instantiation until later in the method
     if (!src->asSurfaceProxy()->instantiate(fContext->resourceProvider())) {
@@ -612,7 +636,8 @@ int GrContext::getRecommendedSampleCount(GrPixelConfig config,
             chosenSampleCount = 16;
         }
     }
-    return chosenSampleCount <= fGpu->caps()->maxSampleCount() ? chosenSampleCount : 0;
+    int supportedSampleCount = fGpu->caps()->getSampleCount(chosenSampleCount, config);
+    return chosenSampleCount <= supportedSampleCount ? supportedSampleCount : 0;
 }
 
 sk_sp<GrSurfaceContext> GrContextPriv::makeWrappedSurfaceContext(sk_sp<GrSurfaceProxy> proxy,
@@ -783,6 +808,10 @@ sk_sp<GrRenderTargetContext> GrContext::makeDeferredRenderTargetContext(
                                                         const SkSurfaceProps* surfaceProps,
                                                         SkBudgeted budgeted) {
     SkASSERT(kDefault_GrSurfaceOrigin != origin);
+
+    if (this->abandoned()) {
+        return nullptr;
+    }
 
     GrSurfaceDesc desc;
     desc.fFlags = kRenderTarget_GrSurfaceFlag;

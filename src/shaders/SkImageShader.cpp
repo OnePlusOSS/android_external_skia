@@ -9,7 +9,6 @@
 #include "SkBitmapController.h"
 #include "SkBitmapProcShader.h"
 #include "SkBitmapProvider.h"
-#include "SkColorTable.h"
 #include "SkEmptyShader.h"
 #include "SkImage_Base.h"
 #include "SkImageShader.h"
@@ -75,7 +74,7 @@ bool SkImageShader::IsRasterPipelineOnly(SkColorType ct, SkShader::TileMode tx,
     return false;
 }
 
-bool SkImageShader::isRasterPipelineOnly() const {
+bool SkImageShader::onIsRasterPipelineOnly() const {
     SkBitmapProvider provider(fImage.get(), nullptr);
     return IsRasterPipelineOnly(provider.info().colorType(), fTileModeX, fTileModeY);
 }
@@ -301,10 +300,9 @@ bool SkImageShader::onAppendStages(SkRasterPipeline* p, SkColorSpace* dstCS, SkA
     misc->paint_color = SkColor4f_from_SkColor(paint.getColor(), dstCS);
     p->append_matrix(alloc, matrix);
 
-    auto gather = alloc->make<SkJumper_GatherCtx>();
-    gather->pixels  = pm.addr();
-    gather->ctable  = pm.ctable() ? pm.ctable()->readColors() : nullptr;
-    gather->stride  = pm.rowBytesAsPixels();
+    auto gather = alloc->make<SkJumper_MemoryCtx>();
+    gather->pixels = pm.writable_addr();  // Don't worry, we won't write to it.
+    gather->stride = pm.rowBytesAsPixels();
 
     auto limit_x = alloc->make<SkJumper_TileCtx>(),
          limit_y = alloc->make<SkJumper_TileCtx>();
@@ -326,7 +324,6 @@ bool SkImageShader::onAppendStages(SkRasterPipeline* p, SkColorSpace* dstCS, SkA
         }
         switch (info.colorType()) {
             case kAlpha_8_SkColorType:   p->append(SkRasterPipeline::gather_a8,   gather); break;
-            case kIndex_8_SkColorType:   p->append(SkRasterPipeline::gather_i8,   gather); break;
             case kGray_8_SkColorType:    p->append(SkRasterPipeline::gather_g8,   gather); break;
             case kRGB_565_SkColorType:   p->append(SkRasterPipeline::gather_565,  gather); break;
             case kARGB_4444_SkColorType: p->append(SkRasterPipeline::gather_4444, gather); break;
@@ -390,9 +387,6 @@ bool SkImageShader::onAppendStages(SkRasterPipeline* p, SkColorSpace* dstCS, SkA
         p->append(SkRasterPipeline::move_dst_src);
     }
 
-    if (info.colorType() == kIndex_8_SkColorType && kN32_SkColorType == kBGRA_8888_SkColorType) {
-        p->append(SkRasterPipeline::swap_rb);
-    }
     if (info.colorType() == kAlpha_8_SkColorType) {
         p->append(SkRasterPipeline::set_rgb, &misc->paint_color);
     }

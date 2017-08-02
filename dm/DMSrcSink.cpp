@@ -171,8 +171,6 @@ Error BRDSrc::draw(SkCanvas* canvas) const {
             }
             alpha8_to_gray8(&bitmap);
 
-            // Verify that we no longer support kIndex8 from this API.
-            SkASSERT(kIndex_8_SkColorType != bitmap.colorType());
             canvas->drawBitmap(bitmap, 0, 0);
             return "";
         }
@@ -229,7 +227,6 @@ Error BRDSrc::draw(SkCanvas* canvas) const {
                     }
 
                     alpha8_to_gray8(&bitmap);
-                    SkASSERT(kIndex_8_SkColorType != bitmap.colorType());
                     canvas->drawBitmapRect(bitmap,
                             SkRect::MakeXYWH((SkScalar) scaledBorder, (SkScalar) scaledBorder,
                                     (SkScalar) (subsetWidth / fSampleSize),
@@ -342,9 +339,6 @@ static void premultiply_if_necessary(SkBitmap& bitmap) {
                 uint32_t* row = (uint32_t*) bitmap.getAddr(0, y);
                 SkOpts::RGBA_to_rgbA(row, row, bitmap.width());
             }
-            break;
-        case kIndex_8_SkColorType:
-            SkASSERT(false);
             break;
         default:
             // No need to premultiply kGray or k565 outputs.
@@ -531,10 +525,9 @@ Error CodecSrc::draw(SkCanvas* canvas) const {
                         break;
                     }
                     case SkCodec::kInvalidConversion:
-                        if (i > 0 && (decodeInfo.colorType() == kRGB_565_SkColorType
-                                      || decodeInfo.colorType() == kIndex_8_SkColorType)) {
+                        if (i > 0 && (decodeInfo.colorType() == kRGB_565_SkColorType)) {
                             return Error::Nonfatal(SkStringPrintf(
-                                "Cannot decode frame %i to 565/Index8 (%s).", i, fPath.c_str()));
+                                "Cannot decode frame %i to 565 (%s).", i, fPath.c_str()));
                         }
                         // Fall through.
                     default:
@@ -1307,15 +1300,17 @@ GPUSink::GPUSink(GrContextFactory::ContextType ct,
                  int samples,
                  bool diText,
                  SkColorType colorType,
+                 SkAlphaType alphaType,
                  sk_sp<SkColorSpace> colorSpace,
                  bool threaded)
-    : fContextType(ct)
-    , fContextOverrides(overrides)
-    , fSampleCount(samples)
-    , fUseDIText(diText)
-    , fColorType(colorType)
-    , fColorSpace(std::move(colorSpace))
-    , fThreaded(threaded) {}
+        : fContextType(ct)
+        , fContextOverrides(overrides)
+        , fSampleCount(samples)
+        , fUseDIText(diText)
+        , fColorType(colorType)
+        , fAlphaType(alphaType)
+        , fColorSpace(std::move(colorSpace))
+        , fThreaded(threaded) {}
 
 DEFINE_bool(drawOpClip, false, "Clip each GrDrawOp to its device bounds for testing.");
 
@@ -1326,9 +1321,8 @@ Error GPUSink::draw(const Src& src, SkBitmap* dst, SkWStream*, SkString* log) co
 
     GrContextFactory factory(grOptions);
     const SkISize size = src.size();
-    const SkImageInfo info =
-        SkImageInfo::Make(size.width(), size.height(), fColorType,
-                          kPremul_SkAlphaType, fColorSpace);
+    SkImageInfo info =
+            SkImageInfo::Make(size.width(), size.height(), fColorType, fAlphaType, fColorSpace);
 #if SK_SUPPORT_GPU
     GrContext* context = factory.getContextInfo(fContextType, fContextOverrides).grContext();
     const int maxDimension = context->caps()->maxTextureSize();
@@ -1354,6 +1348,12 @@ Error GPUSink::draw(const Src& src, SkBitmap* dst, SkWStream*, SkString* log) co
     if (FLAGS_gpuStats) {
         canvas->getGrContext()->dumpCacheStats(log);
         canvas->getGrContext()->dumpGpuStats(log);
+    }
+    if (info.colorType() == kRGB_565_SkColorType || info.colorType() == kARGB_4444_SkColorType) {
+        // We don't currently support readbacks into these formats on the GPU backend. Convert to
+        // 32 bit.
+        info = SkImageInfo::Make(size.width(), size.height(), kRGBA_8888_SkColorType,
+                                 kPremul_SkAlphaType, fColorSpace);
     }
     dst->allocPixels(info);
     canvas->readPixels(*dst, 0, 0);
@@ -1506,9 +1506,9 @@ Error RasterSink::draw(const Src& src, SkBitmap* dst, SkWStream*, SkString*) con
     SkAlphaType alphaType = kPremul_SkAlphaType;
     (void)SkColorTypeValidateAlphaType(fColorType, alphaType, &alphaType);
 
-    dst->allocPixels(SkImageInfo::Make(size.width(), size.height(),
-                                       fColorType, alphaType, fColorSpace),
-                     nullptr/*colortable*/, SkBitmap::kZeroPixels_AllocFlag);
+    dst->allocPixelsFlags(SkImageInfo::Make(size.width(), size.height(),
+                                            fColorType, alphaType, fColorSpace),
+                          SkBitmap::kZeroPixels_AllocFlag);
     SkCanvas canvas(*dst);
     return src.draw(&canvas);
 }

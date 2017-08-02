@@ -22,11 +22,6 @@ static SkImageInfo adjust_info(const SkImageInfo& info) {
     if (kUnpremul_SkAlphaType == info.alphaType()) {
         newInfo = newInfo.makeAlphaType(kPremul_SkAlphaType);
     }
-
-    if (kIndex_8_SkColorType == info.colorType()) {
-        newInfo = newInfo.makeColorType(kN32_SkColorType);
-    }
-
     return newInfo;
 }
 

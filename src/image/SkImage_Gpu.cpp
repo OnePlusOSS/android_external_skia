@@ -680,8 +680,7 @@ size_t SkImage::getDeferredTextureImageData(const GrContextThreadSafeProxy& prox
     SkAutoPixmapStorage pixmap;
     SkImageInfo info;
     size_t pixelSize = 0;
-    if (!isScaled && this->peekPixels(&pixmap) && !pixmap.ctable() &&
-        pixmap.info().colorType() == dstColorType) {
+    if (!isScaled && this->peekPixels(&pixmap) && pixmap.info().colorType() == dstColorType) {
         info = pixmap.info();
         pixelSize = SkAlign8(pixmap.getSafeSize());
         if (!dstColorSpace) {
@@ -723,7 +722,6 @@ size_t SkImage::getDeferredTextureImageData(const GrContextThreadSafeProxy& prox
                     return 0;
                 }
             }
-            SkASSERT(!decodePixmap.ctable());
 
             if (decodeInfo.colorType() != info.colorType()) {
                 pixmap.alloc(info);
@@ -891,7 +889,7 @@ sk_sp<SkImage> SkImage::MakeFromDeferredTextureImageData(GrContext* context, con
     }
     const DeferredTextureImage* dti = reinterpret_cast<const DeferredTextureImage*>(data);
 
-    if (!context || context->uniqueID() != dti->fContextUniqueID) {
+    if (!context || context->uniqueID() != dti->fContextUniqueID || context->abandoned()) {
         return nullptr;
     }
     int mipLevelCount = dti->fMipMapLevelCount;
@@ -932,7 +930,7 @@ sk_sp<SkImage> SkImage::MakeFromDeferredTextureImageData(GrContext* context, con
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 sk_sp<SkImage> SkImage::MakeTextureFromMipMap(GrContext* ctx, const SkImageInfo& info,
-                                              const GrMipLevel* texels, int mipLevelCount,
+                                              const GrMipLevel texels[], int mipLevelCount,
                                               SkBudgeted budgeted,
                                               SkDestinationSurfaceColorMode colorMode) {
     SkASSERT(mipLevelCount >= 1);

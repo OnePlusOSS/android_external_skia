@@ -104,11 +104,6 @@ public:
         , fSrcPtr(nullptr)
     {}
 
-    static bool Supports(const SkPixmap& src) {
-        // We'd need to add a load_i8 stage.
-        return src.colorType() != kIndex_8_SkColorType;
-    }
-
     void setup(const SkPixmap& dst, int left, int top, const SkPaint& paint) override {
         fDst  = dst;
         fLeft = left;
@@ -194,7 +189,7 @@ SkBlitter* SkBlitter::ChooseSprite(const SkPixmap& dst, const SkPaint& paint,
     if (!blitter && !dst.colorSpace() && dst.colorType() == kN32_SkColorType) {
         blitter = SkSpriteBlitter::ChooseL32(source, paint, allocator);
     }
-    if (!blitter && SkRasterPipelineSpriteBlitter::Supports(source)) {
+    if (!blitter) {
         blitter = allocator->make<SkRasterPipelineSpriteBlitter>(source, allocator);
     }
 

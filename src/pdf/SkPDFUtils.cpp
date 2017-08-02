@@ -5,15 +5,16 @@
  * found in the LICENSE file.
  */
 
+#include "SkPDFUtils.h"
 
 #include "SkData.h"
 #include "SkFixed.h"
 #include "SkGeometry.h"
+#include "SkImage_Base.h"
 #include "SkPDFResourceDict.h"
-#include "SkPDFUtils.h"
+#include "SkPDFTypes.h"
 #include "SkStream.h"
 #include "SkString.h"
-#include "SkPDFTypes.h"
 
 #include <cmath>
 
@@ -128,7 +129,9 @@ void SkPDFUtils::EmitPath(const SkPath& path, SkPaint::Style paintStyle,
     bool isClosed; // Both closure and direction need to be checked.
     SkPath::Direction direction;
     if (path.isRect(&rect, &isClosed, &direction) &&
-        isClosed && SkPath::kCW_Direction == direction)
+        isClosed &&
+        (SkPath::kCW_Direction == direction ||
+         SkPath::kEvenOdd_FillType == path.getFillType()))
     {
         SkPDFUtils::AppendRectangle(rect, content);
         return;
@@ -515,4 +518,17 @@ void SkPDFUtils::PopulateTilingPatternDict(SkPDFDict* pattern,
     if (!matrix.isIdentity()) {
         pattern->insertObject("Matrix", SkPDFUtils::MatrixToArray(matrix));
     }
+}
+
+bool SkPDFUtils::ToBitmap(const SkImage* img, SkBitmap* dst) {
+    SkASSERT(img);
+    SkASSERT(dst);
+    SkBitmap bitmap;
+    if(as_IB(img)->getROPixels(&bitmap, nullptr)) {
+        SkASSERT(bitmap.dimensions() == img->dimensions());
+        SkASSERT(!bitmap.drawsNothing());
+        *dst = std::move(bitmap);
+        return true;
+    }
+    return false;
 }

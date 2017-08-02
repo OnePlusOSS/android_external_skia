@@ -20,12 +20,12 @@
 #include "SkSurfaceProps.h"
 
 class GrBackendSemaphore;
+class GrCCPRAtlas;
 class GrClip;
+class GrCoverageCountingPathRenderer;
 class GrDrawingManager;
 class GrDrawOp;
 class GrFixedClip;
-class GrLegacyMeshDrawOp;
-class GrPipelineBuilder;
 class GrRenderTarget;
 class GrRenderTargetContextPriv;
 class GrRenderTargetOpList;
@@ -154,13 +154,13 @@ public:
      * Use a fast method to render the ambient and spot shadows for a path.
      * Will return false if not possible for the given path.
      *
-     * @param paint        describes how to color pixels.
+     * @param color        shadow color.
      * @param viewMatrix   transformation matrix
      * @param path         the path to shadow
      * @param rec          parameters for shadow rendering
      */
     bool drawFastShadow(const GrClip&,
-                        GrPaint&&,
+                        GrColor color,
                         const SkMatrix& viewMatrix,
                         const SkPath& path,
                         const SkDrawShadowRec& rec);
@@ -381,6 +381,8 @@ private:
     friend class GrMSAAPathRenderer;                 // for access to add[Mesh]DrawOp
     friend class GrStencilAndCoverPathRenderer;      // for access to add[Mesh]DrawOp
     friend class GrTessellatingPathRenderer;         // for access to add[Mesh]DrawOp
+    friend class GrCCPRAtlas;                        // for access to addDrawOp
+    friend class GrCoverageCountingPathRenderer;     // for access to addDrawOp
     // for a unit test
     friend void test_draw_op(GrRenderTargetContext*,
                              sk_sp<GrFragmentProcessor>, sk_sp<GrTextureProxy>);
@@ -410,8 +412,6 @@ private:
     // the op list. They return the id of the opList to which the op was added, or 0, if it was
     // dropped (e.g., due to clipping).
     uint32_t addDrawOp(const GrClip&, std::unique_ptr<GrDrawOp>);
-    uint32_t addLegacyMeshDrawOp(GrPipelineBuilder&&, const GrClip&,
-                                 std::unique_ptr<GrLegacyMeshDrawOp>);
 
     // Makes a copy of the proxy if it is necessary for the draw and places the texture that should
     // be used by GrXferProcessor to access the destination color in 'result'. If the return
