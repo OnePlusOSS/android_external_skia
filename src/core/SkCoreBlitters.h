@@ -14,6 +14,12 @@
 #include "SkShader.h"
 #include "SkXfermodePriv.h"
 
+#ifdef QTI_STRONG
+#define QTI_WEAK
+#else
+#define QTI_WEAK __attribute__((weak))
+#endif
+
 class SkRasterBlitter : public SkBlitter {
 public:
     SkRasterBlitter(const SkPixmap& device) : fDevice(device) {}
@@ -159,7 +165,7 @@ public:
     ~SkARGB32_Shader_Blitter() override;
     void blitH(int x, int y, int width) override;
     void blitV(int x, int y, int height, SkAlpha alpha) override;
-    void blitRect(int x, int y, int width, int height) override;
+    void blitRect(int x, int y, int width, int height) override QTI_WEAK;
     void blitAntiH(int x, int y, const SkAlpha[], const int16_t[]) override;
     void blitMask(const SkMask&, const SkIRect&) override;
 

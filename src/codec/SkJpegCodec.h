@@ -16,6 +16,16 @@
 #include "SkStream.h"
 #include "SkTemplates.h"
 
+extern "C" {
+    #include "jpeglib.h"
+}
+
+#ifdef QTI_STRONG
+#define QTI_WEAK
+#else
+#define QTI_WEAK __attribute__((weak))
+#endif
+
 class JpegDecoderMgr;
 
 /*
@@ -124,6 +134,8 @@ private:
             SkPMColor ctable[], int* ctableCount) override;
     int onGetScanlines(void* dst, int count, size_t rowBytes) override;
     bool onSkipScanlines(int count) override;
+
+    void setupJpegDecoding(jpeg_decompress_struct* dinfo) QTI_WEAK;
 
     std::unique_ptr<JpegDecoderMgr>    fDecoderMgr;
 
