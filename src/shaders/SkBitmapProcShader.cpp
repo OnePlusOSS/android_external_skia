@@ -55,6 +55,8 @@ public:
         , fState(state)
     {}
 
+    virtual SkShaderIds getID() { return kSkBitmapProcShader_Class; }
+
     void shadeSpan(int x, int y, SkPMColor dstC[], int count) override {
         const SkBitmapProcState& state = *fState;
         if (state.getShaderProc32()) {
